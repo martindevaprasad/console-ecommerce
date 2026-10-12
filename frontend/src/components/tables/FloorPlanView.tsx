@@ -14,7 +14,7 @@ import { Empty } from '../shared/ui';
 export const FloorPlanView: React.FC<{ locationId: string }> = ({ locationId }) => {
   const navigate = useNavigate();
   const mutate = useMutate();
-  const { data, loading, error, reload } = useApi(TABLE_MANAGEMENT.ZONES, { locationId }, { pollMs: 10000 });
+  const { data, loading, error, reload } = useApi(TABLE_MANAGEMENT.ZONES, { locationId }, { pollMs: 30000, live: locationId });
   const zones = data?.zones || [];
   const [zoneId, setZoneId] = useState<string | null>(null);
   const [selected, setSelected] = useState<any | null>(null);

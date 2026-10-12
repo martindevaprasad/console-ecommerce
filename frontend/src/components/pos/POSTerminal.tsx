@@ -60,7 +60,7 @@ export const POSTerminal: React.FC = () => {
   const [splitMode, setSplitMode] = useState(false);
   const [splitIds, setSplitIds] = useState<string[]>([]);
 
-  const openChecks = useApi(ORDERS.OPEN, { locationId: location?.id }, { skip: !showChecks });
+  const openChecks = useApi(ORDERS.OPEN, { locationId: location?.id }, { skip: !showChecks, live: location?.id });
 
   const orderTypes = settings?.orderTypes?.length ? settings.orderTypes : ['TAKEAWAY'];
   useEffect(() => {

@@ -57,11 +57,46 @@ export const useMultiTenantContext = () => {
   };
 };
 
+// ---- Live sync: one shared `syncState` poller per location (shared with the Android app's protocol).
+const SYNC_QUERY = `query Sync($locationId: ID) { syncState(locationId: $locationId) { revision } }`;
+const SYNC_MS = 3000;
+const syncPollers = new Map<string, { listeners: Set<() => void>; timer: number; revision: string | null }>();
+
+function subscribeLive(locationId: string, token: string, onChange: () => void) {
+  const key = `${locationId}|${token}`;
+  let p = syncPollers.get(key);
+  if (!p) {
+    const poller = { listeners: new Set<() => void>(), timer: 0, revision: null as string | null };
+    const tick = async () => {
+      if (document.visibilityState !== 'visible') return;
+      try {
+        const res = await api.query(SYNC_QUERY, { locationId }, token);
+        const rev = res?.syncState?.revision ?? null;
+        if (poller.revision !== null && rev !== poller.revision) poller.listeners.forEach((l) => l());
+        poller.revision = rev;
+      } catch {
+        // Transient network errors: keep the last revision and retry on the next tick.
+      }
+    };
+    poller.timer = window.setInterval(tick, SYNC_MS);
+    tick();
+    syncPollers.set(key, poller);
+    p = poller;
+  }
+  p.listeners.add(onChange);
+  return () => {
+    p!.listeners.delete(onChange);
+    if (!p!.listeners.size) { clearInterval(p!.timer); syncPollers.delete(key); }
+  };
+}
+
 /**
  * Declarative data loader: `const { data, loading, reload } = useApi(QUERY, vars)`.
  * Re-runs when the serialized variables change; `skip` defers loading.
+ * `live: locationId` reloads silently whenever that location's floor/orders/kitchen change
+ * (from any device: web POS, KDS or the Android app).
  */
-export function useApi<T = any>(query: string, variables: Record<string, any> = {}, opts: { skip?: boolean; pollMs?: number } = {}) {
+export function useApi<T = any>(query: string, variables: Record<string, any> = {}, opts: { skip?: boolean; pollMs?: number; live?: string | null } = {}) {
   const token = useAppSelector((state) => state.auth.token);
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(!opts.skip);
@@ -93,6 +128,11 @@ export function useApi<T = any>(query: string, variables: Record<string, any> = 
     const id = setInterval(() => reload(true), opts.pollMs);
     return () => clearInterval(id);
   }, [opts.pollMs, opts.skip, reload]);
+
+  useEffect(() => {
+    if (!opts.live || opts.skip || !token) return;
+    return subscribeLive(opts.live, token, () => reload(true));
+  }, [opts.live, opts.skip, token, reload]);
 
   return { data, loading, error, reload, setData };
 }

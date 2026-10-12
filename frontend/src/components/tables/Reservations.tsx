@@ -25,7 +25,7 @@ export const ReservationsPage: React.FC = () => {
     const to = new Date(`${day}T23:59:59`);
     return { from: from.toISOString(), to: to.toISOString() };
   }, [day]);
-  const { data, reload } = useApi(RESERVATIONS.LIST, { locationId: location?.id, ...range }, { skip: !location, pollMs: 30000 });
+  const { data, reload } = useApi(RESERVATIONS.LIST, { locationId: location?.id, ...range }, { skip: !location, pollMs: 60000, live: location?.id });
   const floor = useApi(TABLE_MANAGEMENT.ZONES, { locationId: location?.id }, { skip: !seating || !location || !tablesOn });
 
   const all = data?.reservations || [];

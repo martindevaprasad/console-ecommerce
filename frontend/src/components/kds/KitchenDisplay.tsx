@@ -22,7 +22,7 @@ export const KitchenDisplay: React.FC = () => {
   const [view, setView] = useState<'active' | 'ready'>('active');
   const [sound, setSound] = useState(false);
   const [now, setNow] = useState(Date.now());
-  const { data, reload } = useApi(ORDERS.KDS, { locationId: location?.id, stationId: stationId === 'ALL' ? null : stationId }, { skip: !location, pollMs: 5000 });
+  const { data, reload } = useApi(ORDERS.KDS, { locationId: location?.id, stationId: stationId === 'ALL' ? null : stationId }, { skip: !location, pollMs: 30000, live: location?.id });
 
   useEffect(() => { const id = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(id); }, []);
   useEffect(() => { localStorage.setItem('kds-station', stationId); }, [stationId]);

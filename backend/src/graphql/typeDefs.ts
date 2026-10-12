@@ -7,7 +7,8 @@ import * as operations from './modules/operations';
 import * as inventory from './modules/inventory';
 import * as crm from './modules/crm';
 import * as reports from './modules/reports';
+import * as sync from './modules/sync';
 
-export const modules = [base, org, catalog, orders, operations, inventory, crm, reports];
+export const modules = [base, org, catalog, orders, operations, inventory, crm, reports, sync];
 
 export const typeDefs = mergeTypeDefs(modules.map((m) => m.typeDefs));

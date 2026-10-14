@@ -205,6 +205,26 @@ async function syncModifiers(groupId: string, modifiers?: any[]) {
   }
 }
 
+/** Relations the Product field resolvers need, fetched in one query for product lists. */
+const PRODUCT_INCLUDE = {
+  category: true,
+  taxRateRef: true,
+  station: true,
+  inventory: true,
+  recipe: { include: { stockItem: true } },
+  modifierGroups: {
+    where: { group: { isActive: true } },
+    include: { group: { include: { modifiers: { orderBy: { sortOrder: 'asc' as const } } } } },
+    orderBy: { sortOrder: 'asc' as const },
+  },
+};
+
+/** Stash preloaded relations under `_pre` so they don't collide with GraphQL field names. */
+function withPreloaded(row: any) {
+  const { category, taxRateRef, station, inventory, recipe, modifierGroups, ...p } = row;
+  return { ...p, _pre: { category, tax: taxRateRef, station, inventory, recipe, modifierGroups: modifierGroups.map((l: any) => l.group) } };
+}
+
 export const resolvers = {
   Query: {
     categories: async (_: any, { includeInactive }: any, ctx: Ctx) => {
@@ -217,7 +237,10 @@ export const resolvers = {
 
     products: async (_: any, { categoryId, search, isActive, channel }: any, ctx: Ctx) => {
       const auth = await requireAuth(ctx);
-      return prisma.product.findMany({
+      // Load relations up front: per-product field resolvers would otherwise issue
+      // hundreds of queries and exhaust the small serverless connection pool.
+      const rows = await prisma.product.findMany({
+        include: PRODUCT_INCLUDE,
         where: {
           organizationId: auth.orgId,
           ...(categoryId ? { categoryId } : {}),
@@ -233,6 +256,7 @@ export const resolvers = {
         },
         orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
       });
+      return rows.map(withPreloaded);
     },
 
     product: async (_: any, { id }: any, ctx: Ctx) => {
@@ -430,12 +454,12 @@ export const resolvers = {
   },
 
   ModifierGroup: {
-    modifiers: (g: any) => prisma.modifier.findMany({ where: { groupId: g.id }, orderBy: { sortOrder: 'asc' } }),
+    modifiers: (g: any) => g.modifiers ?? prisma.modifier.findMany({ where: { groupId: g.id }, orderBy: { sortOrder: 'asc' } }),
     productIds: async (g: any) => (await prisma.productModifierGroup.findMany({ where: { groupId: g.id } })).map((p) => p.productId),
   },
 
   RecipeLine: {
-    stockItem: (r: any) => prisma.stockItem.findUnique({ where: { id: r.stockItemId } }),
+    stockItem: (r: any) => r.stockItem ?? prisma.stockItem.findUnique({ where: { id: r.stockItemId } }),
   },
 
   Inventory: {
@@ -444,10 +468,11 @@ export const resolvers = {
   },
 
   Product: {
-    category: (p: any) => (p.categoryId ? prisma.category.findUnique({ where: { id: p.categoryId } }) : null),
-    tax: (p: any) => (p.taxRateId ? prisma.taxRate.findUnique({ where: { id: p.taxRateId } }) : null),
-    station: (p: any) => (p.stationId ? prisma.kitchenStation.findUnique({ where: { id: p.stationId } }) : null),
+    category: (p: any) => (p._pre ? p._pre.category : p.categoryId ? prisma.category.findUnique({ where: { id: p.categoryId } }) : null),
+    tax: (p: any) => (p._pre ? p._pre.tax : p.taxRateId ? prisma.taxRate.findUnique({ where: { id: p.taxRateId } }) : null),
+    station: (p: any) => (p._pre ? p._pre.station : p.stationId ? prisma.kitchenStation.findUnique({ where: { id: p.stationId } }) : null),
     modifierGroups: async (p: any) => {
+      if (p._pre) return p._pre.modifierGroups;
       const links = await prisma.productModifierGroup.findMany({
         where: { productId: p.id, group: { isActive: true } },
         include: { group: true },
@@ -455,11 +480,11 @@ export const resolvers = {
       });
       return links.map((l) => l.group);
     },
-    recipe: (p: any) => prisma.recipeLine.findMany({ where: { productId: p.id } }),
-    inventory: (p: any) => prisma.inventory.findMany({ where: { productId: p.id } }),
+    recipe: (p: any) => p._pre?.recipe ?? prisma.recipeLine.findMany({ where: { productId: p.id } }),
+    inventory: (p: any) => p._pre?.inventory ?? prisma.inventory.findMany({ where: { productId: p.id } }),
     priceOverrides: (p: any) => p.priceOverrides || {},
     recipeCost: async (p: any) => {
-      const lines = await prisma.recipeLine.findMany({ where: { productId: p.id }, include: { stockItem: true } });
+      const lines = p._pre?.recipe ?? await prisma.recipeLine.findMany({ where: { productId: p.id }, include: { stockItem: true } });
       if (!lines.length) return null;
       return Math.round(lines.reduce((s, l) => s + l.quantity * l.stockItem.costPerUnit, 0) * 100) / 100;
     },

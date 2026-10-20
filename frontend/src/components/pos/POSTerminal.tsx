@@ -4,13 +4,14 @@ import toast from 'react-hot-toast';
 import {
   IconSearch, IconUser, IconUsers, IconDiscount2, IconSend, IconPlayerPause, IconCreditCard, IconTrash, IconMinus, IconPlus,
   IconClipboardList, IconFileInvoice, IconArrowsSplit, IconBan, IconNote, IconX, IconLayoutGrid, IconStar, IconChefHat,
+  IconPencil, IconCategory,
 } from '@tabler/icons-react';
-import { useApi, useCan, useCurrentLocation, useMutate, useOrg } from '@/hooks';
+import { useApi, useAuth, useCan, useCurrentLocation, useMutate, useOrg } from '@/hooks';
 import { CATALOG, ORDERS } from '@/services/api';
 import { money, minutesSince } from '@/lib/format';
 import { previewTotals } from '@/lib/pricing';
 import { ORDER_TYPE_LABELS } from '@/lib/constants';
-import { Drawer, Empty, Segmented, useApproval, withApproval } from '../shared/ui';
+import { Drawer, Empty, useApproval, withApproval } from '../shared/ui';
 import Modal from '../shared/Modal';
 import LoadingSpinner from '../shared/LoadingSpinner';
 import ModifierModal, { LineDraft } from './ModifierModal';
@@ -21,11 +22,16 @@ import Receipt from './Receipt';
 
 const ITEM_STATUS_BADGE: Record<string, string> = { PENDING: 'badge-neutral', FIRED: 'badge-warning', PREPARING: 'badge-warning', READY: 'badge-info', SERVED: 'badge-success', VOIDED: 'badge-danger' };
 
+/** Two-letter monogram for items without a photo, e.g. "Masala Dosa" → "MD". */
+const monogram = (name: string) => name.replace(/\(.*?\)/g, '').trim().split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
+const isVeg = (p: any) => (p?.dietary || []).includes('VEGETARIAN') || (p?.dietary || []).includes('VEGAN');
+
 export const POSTerminal: React.FC = () => {
   const navigate = useNavigate();
   const routerLocation = useRouterLocation();
   const location = useCurrentLocation();
   const { org, settings } = useOrg();
+  const { user } = useAuth();
   const can = useCan();
   const mutate = useMutate();
   const approval = useApproval();
@@ -266,129 +272,194 @@ export const POSTerminal: React.FC = () => {
   const courses = [...new Set([...activeSent.map((i) => i.course), ...drafts.map((d) => d.course)])].sort();
   const showCourses = !!settings?.pos.courses && courses.length > 1;
 
+  const productById = new Map<string, any>((menu?.products || []).map((p: any) => [p.id, p]));
+  const colorOf = (p: any) => p?.color || p?.category?.color || 'var(--color-primary)';
+  const showImages = !!settings?.modules?.menuImages;
+  // Show veg/non-veg marks only when the menu actually carries dietary tags
+  const vegMarks = (menu?.products || []).some(isVeg);
+  // Plain computations (not hooks): we're past the early `loading` return
+  const inTicket: Record<string, number> = {};
+  for (const d of drafts) inTicket[d.productId] = (inTicket[d.productId] || 0) + d.quantity;
+  const categoryCounts: Record<string, number> = {};
+  for (const p of menu?.products || []) if (p.categoryId) categoryCounts[p.categoryId] = (categoryCounts[p.categoryId] || 0) + 1;
+
+  const setQty = (key: string, delta: number) => {
+    const line = drafts.find((x) => x.key === key);
+    if (!line) return;
+    if (line.quantity + delta < 1) { setDrafts(drafts.filter((x) => x.key !== key)); return; }
+    setDrafts(drafts.map((x) => (x.key === key ? { ...x, quantity: x.quantity + delta } : x)));
+  };
+
+  const thumb = (p: any, name: string) => (
+    <div className="tl-thumb" style={{ ['--c' as any]: colorOf(p) }}>
+      {showImages && p?.imageUrl ? <img src={p.imageUrl} alt="" /> : monogram(name)}
+    </div>
+  );
+
   const renderSent = (i: any) => (
-    <div key={i.id} className={`ticket-line${i.status === 'VOIDED' ? ' voided' : ''}${splitIds.includes(i.id) ? ' selected' : ''}`}
+    <div key={i.id} className={`tl${i.status === 'VOIDED' ? ' voided' : ''}${splitIds.includes(i.id) ? ' selected' : ''}${splitMode ? ' pickable' : ''}`}
       onClick={() => splitMode && i.status !== 'VOIDED' && setSplitIds(splitIds.includes(i.id) ? splitIds.filter((x) => x !== i.id) : [...splitIds, i.id])}>
-      <span className="ticket-qty">{i.quantity}</span>
-      <div>
-        <div className="ticket-name">{i.name} {i.seat ? <span className="muted small">· S{i.seat}</span> : null}</div>
-        {(i.modifiers || []).length > 0 && <div className="ticket-mods">{i.modifiers.map((m: any) => m.name).join(', ')}</div>}
-        {i.notes && <div className="ticket-mods text-warning">“{i.notes}”</div>}
-        <span className={`badge ${ITEM_STATUS_BADGE[i.status]}`} style={{ marginTop: 3 }}>{i.status === 'PENDING' ? 'Not sent' : i.status.toLowerCase()}</span>
-      </div>
-      <div style={{ textAlign: 'right' }}>
-        <div className="ticket-price">{money(i.subtotal)}</div>
-        {!isClosed && !splitMode && i.status !== 'VOIDED' && order?.paidAmount === 0 && (
-          <button className="btn btn-ghost btn-icon btn-sm" title="Void" onClick={(e) => { e.stopPropagation(); voidItem(i); }}><IconBan size={12} /></button>
-        )}
+      {thumb(productById.get(i.productId), i.name)}
+      <div className="tl-main">
+        <div className="tl-top">
+          <div className="tl-name">{i.name}{i.seat ? <span className="muted"> · S{i.seat}</span> : null}</div>
+          {!isClosed && !splitMode && i.status !== 'VOIDED' && order?.paidAmount === 0 && (
+            <button className="tl-x" title="Void item" onClick={(e) => { e.stopPropagation(); voidItem(i); }}><IconBan size={14} /></button>
+          )}
+        </div>
+        {(i.modifiers || []).length > 0 && <div className="tl-mods">{i.modifiers.map((m: any) => m.name).join(', ')}</div>}
+        {i.notes && <div className="tl-mods text-warning">“{i.notes}”</div>}
+        <div className="tl-foot">
+          <span className="tl-price">{money(i.subtotal)}</span>
+          <span className={`badge ${ITEM_STATUS_BADGE[i.status]}`}>{i.status === 'PENDING' ? 'Not sent' : i.status.toLowerCase()}</span>
+          <span className="tl-qty-static">× {i.quantity}</span>
+        </div>
       </div>
     </div>
   );
 
-  const renderDraft = (d: LineDraft) => (
-    <div key={d.key}>
-      <div className={`ticket-line${selected === d.key ? ' selected' : ''}`} onClick={() => setSelected(selected === d.key ? null : d.key)}>
-        <span className="ticket-qty">{d.quantity}</span>
-        <div>
-          <div className="ticket-name">{d.name} {d.seat ? <span className="muted small">· S{d.seat}</span> : null}</div>
-          {d.modifiers.length > 0 && <div className="ticket-mods">{d.modifiers.map((m) => m.name).join(', ')}</div>}
-          {d.notes && <div className="ticket-mods text-warning">“{d.notes}”</div>}
+  const renderDraft = (d: LineDraft) => {
+    const p = productById.get(d.productId);
+    const editable = p && (p.modifierGroups.length > 0 || p.isOpenPrice || settings?.pos.courses || settings?.pos.seats);
+    return (
+      <div key={d.key} className="tl">
+        {thumb(p, d.name)}
+        <div className="tl-main">
+          <div className="tl-top">
+            <div className="tl-name">{d.name}{d.seat ? <span className="muted"> · S{d.seat}</span> : null}</div>
+            <button className="tl-x" title="Remove" onClick={() => setDrafts(drafts.filter((x) => x.key !== d.key))}><IconTrash size={14} /></button>
+          </div>
+          {d.modifiers.length > 0 && <div className="tl-mods">{d.modifiers.map((m) => m.name).join(', ')}</div>}
+          {d.notes && <div className="tl-mods text-warning">“{d.notes}”</div>}
+          {editable && <button className="tl-edit" onClick={() => { setEditing(d); setModProduct(p); }}><IconPencil size={11} /> Edit options</button>}
+          <div className="tl-foot">
+            <span className="tl-price">{money(d.unitPrice * d.quantity)}</span>
+            <div className="stepper">
+              <button aria-label="Decrease" onClick={() => setQty(d.key, -1)}><IconMinus size={14} /></button>
+              <span>{d.quantity}</span>
+              <button aria-label="Increase" className="plus" onClick={() => setQty(d.key, 1)}><IconPlus size={14} /></button>
+            </div>
+          </div>
         </div>
-        <div className="ticket-price">{money(d.unitPrice * d.quantity)}</div>
       </div>
-      {selected === d.key && (
-        <div className="ticket-tools">
-          <button className="btn btn-secondary btn-icon btn-sm" onClick={() => setDrafts(drafts.map((x) => (x.key === d.key ? { ...x, quantity: Math.max(1, x.quantity - 1) } : x)))}><IconMinus size={12} /></button>
-          <button className="btn btn-secondary btn-icon btn-sm" onClick={() => setDrafts(drafts.map((x) => (x.key === d.key ? { ...x, quantity: x.quantity + 1 } : x)))}><IconPlus size={12} /></button>
-          <button className="btn btn-secondary btn-sm" onClick={() => { const p = menu.products.find((x: any) => x.id === d.productId); setEditing(d); setModProduct(p); }}>Edit</button>
-          <div className="spacer" />
-          <button className="btn btn-danger btn-icon btn-sm" onClick={() => { setDrafts(drafts.filter((x) => x.key !== d.key)); setSelected(null); }}><IconTrash size={12} /></button>
-        </div>
-      )}
-    </div>
-  );
+    );
+  };
 
   const tableName = order?.table?.name;
+  const lineCount = activeSent.length + drafts.length;
+  const firstName = user?.name?.split(' ')[0] || 'Staff';
+  const userInitials = (user?.name || 'S').split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
+  const payAmount = order?.paidAmount > 0 && !drafts.length ? order.balanceDue : totals.total;
 
   return (
     <div className="pos-shell">
       <section className="pos-main">
-        <div className="pos-bar">
-          <div className="search-input-wrapper" style={{ flex: '1 1 240px', maxWidth: 360 }}>
-            <span className="search-icon" style={{ display: 'flex' }}><IconSearch size={14} /></span>
-            <input ref={searchRef} className="form-input search-input" placeholder="Search item, SKU or scan barcode (F2)" value={search}
+        <header className="pos-head">
+          <div className="pos-staff">
+            <span className="pos-avatar">{userInitials}</span>
+            <div>
+              <div className="pos-staff-name">{firstName}</div>
+              <div className="pos-staff-meta">{location?.name || org?.name}</div>
+            </div>
+          </div>
+          <div className="pos-search">
+            <IconSearch size={18} />
+            <input ref={searchRef} placeholder="Search by name, SKU or scan barcode (F2)" value={search}
               onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && onSearchEnter()} />
+            {search && <button className="pos-search-clear" onClick={() => setSearch('')} aria-label="Clear search"><IconX size={14} /></button>}
           </div>
-          <Segmented value={orderType} onChange={setOrderType} options={orderTypes.map((t) => ({ value: t, label: ORDER_TYPE_LABELS[t] || t }))} />
-          <div className="spacer" />
-          <button className="btn btn-secondary btn-sm" onClick={() => setShowChecks(true)}><IconClipboardList size={13} /> Open checks</button>
-          {settings?.modules.tables && <button className="btn btn-secondary btn-sm" onClick={() => navigate('/tables')}><IconLayoutGrid size={13} /> Floor</button>}
-        </div>
+          <button className="pos-head-btn" onClick={() => setShowChecks(true)}><IconClipboardList size={18} /> <span>Open checks</span></button>
+          {settings?.modules.tables && <button className="pos-head-btn" onClick={() => navigate('/tables')}><IconLayoutGrid size={18} /> <span>Floor</span></button>}
+        </header>
 
-        <div className="pos-body">
-          <nav className="pos-cats">
-            <button className={`pos-cat${category === 'ALL' ? ' active' : ''}`} onClick={() => setCategory('ALL')}>All items</button>
-            {(menu?.categories || []).map((c: any) => (
-              <button key={c.id} className={`pos-cat${category === c.id ? ' active' : ''}`} onClick={() => setCategory(c.id)}>
-                <span className="dot" style={{ background: c.color || 'var(--color-primary)' }} />{c.name}
+        <nav className="pos-cats">
+          <button className={`pos-cat${category === 'ALL' ? ' active' : ''}`} onClick={() => setCategory('ALL')}>
+            <span className="pos-cat-icon"><IconCategory size={16} /></span>
+            <span className="pos-cat-label">All<small>{menu?.products?.length || 0} items</small></span>
+          </button>
+          {(menu?.categories || []).map((c: any) => (
+            <button key={c.id} className={`pos-cat${category === c.id ? ' active' : ''}`} onClick={() => setCategory(c.id)} style={{ ['--c' as any]: c.color || 'var(--color-primary)' }}>
+              <span className="pos-cat-icon">{monogram(c.name)}</span>
+              <span className="pos-cat-label">{c.name}<small>{categoryCounts[c.id] || 0} items</small></span>
+            </button>
+          ))}
+        </nav>
+
+        <div className="pos-grid">
+          {products.map((p: any) => {
+            const stock = stockFor(p);
+            const soldOut = stock !== null && stock <= 0;
+            const qty = inTicket[p.id] || 0;
+            return (
+              <button key={p.id} className={`pc${soldOut ? ' disabled' : ''}${qty ? ' in-ticket' : ''}`} style={{ ['--c' as any]: colorOf(p) }} onClick={() => addProduct(p)}>
+                <div className="pc-media">
+                  {showImages && p.imageUrl ? <img src={p.imageUrl} alt="" loading="lazy" /> : <span className="pc-mono">{monogram(p.name)}</span>}
+                  {vegMarks && <span className={`veg-mark${isVeg(p) ? '' : ' nonveg'}`} title={isVeg(p) ? 'Vegetarian' : 'Non-vegetarian'} />}
+                  {qty > 0 && <span className="pc-qty">{qty}</span>}
+                  {soldOut && <span className="pc-flag danger">Sold out</span>}
+                  {!soldOut && stock !== null && <span className="pc-flag">{stock} left</span>}
+                </div>
+                <div className="pc-body">
+                  <div className="pc-name">{p.name}</div>
+                  {p.description && <div className="pc-desc">{p.description}</div>}
+                  <div className="pc-foot">
+                    <span className="pc-price">{p.isOpenPrice ? 'Open price' : money(p.price)}</span>
+                    {p.modifierGroups.length > 0 && <span className="pc-opts">Options</span>}
+                    <span className="pc-add"><IconPlus size={16} /></span>
+                  </div>
+                </div>
               </button>
-            ))}
-          </nav>
-          <div className="pos-grid">
-            {products.map((p: any) => {
-              const stock = stockFor(p);
-              const soldOut = stock !== null && stock <= 0;
-              return (
-                <button key={p.id} className={`pos-item${soldOut ? ' disabled' : ''}${settings?.modules?.menuImages && p.imageUrl ? ' has-image' : ''}`} style={{ ['--item-color' as any]: p.color || p.category?.color || 'var(--color-primary)' }} onClick={() => addProduct(p)}>
-                  {settings?.modules?.menuImages && p.imageUrl && <img className="pos-item-img" src={p.imageUrl} alt="" loading="lazy" />}
-                  {p.modifierGroups.length > 0 && <span className="pos-item-flag">OPTIONS</span>}
-                  {soldOut && <span className="pos-item-flag text-danger">86</span>}
-                  <span className="pos-item-name">{p.name}</span>
-                  <span className="row" style={{ justifyContent: 'space-between' }}>
-                    <span className="pos-item-price">{p.isOpenPrice ? 'Open' : money(p.price)}</span>
-                    {stock !== null && !soldOut && <span className="small muted">{stock} left</span>}
-                  </span>
-                </button>
-              );
-            })}
-            {!products.length && <div style={{ gridColumn: '1 / -1' }}><Empty title="No items" hint="Try another category or search term." /></div>}
-          </div>
+            );
+          })}
+          {!products.length && <div style={{ gridColumn: '1 / -1' }}><Empty title="No items" hint="Try another category or search term." /></div>}
         </div>
       </section>
 
       <aside className="ticket">
         <div className="ticket-head">
-          <div className="row">
+          {orderTypes.length > 1 && (
+            <div className="pos-types">
+              {orderTypes.map((t: string) => (
+                <button key={t} className={orderType === t ? 'active' : ''} onClick={() => setOrderType(t)}>{ORDER_TYPE_LABELS[t] || t}</button>
+              ))}
+            </div>
+          )}
+          <div className="ticket-title">
             <div>
-              <div className="strong">{order ? `Check #${order.ticketNumber}` : 'New order'}{tableName ? ` · ${tableName}` : ''}</div>
+              <div className="ticket-title-main">{order ? `Check #${order.ticketNumber}` : 'New order'}{tableName ? ` · ${tableName}` : ''}</div>
               <div className="small muted">
                 {ORDER_TYPE_LABELS[orderType]}{order ? ` · ${minutesSince(order.createdAt)} min` : ''}{order?.user ? ` · ${order.user.name}` : ''}
               </div>
             </div>
             <div className="spacer" />
             {order && <span className={`badge ${order.paymentStatus === 'PAID' ? 'badge-success' : order.paymentStatus === 'PARTIAL' ? 'badge-info' : 'badge-warning'}`}>{order.paymentStatus.toLowerCase()}</span>}
-            <button className="btn btn-ghost btn-icon btn-sm" title="New order" onClick={resetTicket}><IconX size={14} /></button>
+            {(order || drafts.length > 0) && <button className="ticket-clear" title="Start a new order" onClick={resetTicket}><IconX size={14} /> {order ? 'Close' : 'Clear all'}</button>}
           </div>
-          <div className="row row-wrap" style={{ gap: 4 }}>
-            <button className="chip" onClick={() => setShowCustomer(true)}>
-              <IconUser size={12} /> {customer ? customer.name : 'Customer'}
-              {customer && settings?.modules.loyalty ? <span className="text-warning"><IconStar size={10} /> {customer.loyaltyPoints}</span> : null}
+          <div className="ticket-chips">
+            <button className={`chip${customer ? ' active' : ''}`} onClick={() => setShowCustomer(true)}>
+              <IconUser size={14} /> {customer ? customer.name : 'Customer'}
+              {customer && settings?.modules.loyalty ? <span><IconStar size={11} /> {customer.loyaltyPoints}</span> : null}
             </button>
             {(orderType === 'DINE_IN') && (
-              <span className="chip" style={{ cursor: 'default' }}>
-                <IconUsers size={12} />
-                <button className="btn btn-ghost btn-icon btn-sm" style={{ width: 16, height: 16 }} onClick={() => setGuestCount(Math.max(1, guestCount - 1))}><IconMinus size={10} /></button>
+              <span className="chip chip-stepper">
+                <IconUsers size={14} />
+                <button onClick={() => setGuestCount(Math.max(1, guestCount - 1))} aria-label="Fewer guests"><IconMinus size={12} /></button>
                 {guestCount}
-                <button className="btn btn-ghost btn-icon btn-sm" style={{ width: 16, height: 16 }} onClick={() => setGuestCount(guestCount + 1)}><IconPlus size={10} /></button>
+                <button onClick={() => setGuestCount(guestCount + 1)} aria-label="More guests"><IconPlus size={12} /></button>
               </span>
             )}
-            <button className={`chip${notes ? ' active' : ''}`} onClick={() => setShowNote(true)}><IconNote size={12} /> Note</button>
+            <button className={`chip${notes ? ' active' : ''}`} onClick={() => setShowNote(true)}><IconNote size={14} /> {notes ? 'Note added' : 'Note'}</button>
           </div>
+        </div>
+
+        <div className="ticket-items-head">
+          <span>Items</span>
+          {lineCount > 0 && <span className="ticket-count">{lineCount}</span>}
         </div>
 
         <div className="ticket-body">
           {!sentItems.length && !drafts.length ? (
-            <Empty icon={<IconChefHat size={28} />} title="Empty ticket" hint="Tap menu items to start an order." />
+            <Empty icon={<IconChefHat size={32} />} title="No items yet" hint="Tap a menu item to add it to the order." />
           ) : showCourses ? (
             courses.map((c) => (
               <div key={c}>
@@ -425,22 +496,26 @@ export const POSTerminal: React.FC = () => {
               <div className="totals-row"><span>{settings?.taxLabel || 'Tax'}{org?.taxInclusive ? ' (included)' : ''}</span><span>{money(totals.tax)}</span></div>
               {order?.paidAmount > 0 && <div className="totals-row text-accent"><span>Paid</span><span>-{money(order.paidAmount)}</span></div>}
               <div className="totals-row grand"><span>{order?.paidAmount > 0 ? 'Balance' : 'Total'}{totals.estimate && (drafts.length > 0) ? ' (est.)' : ''}</span>
-                <span className="text-accent">{money(order?.paidAmount > 0 && !drafts.length ? order.balanceDue : totals.total)}</span></div>
+                <span>{money(payAmount)}</span></div>
 
               <div className="ticket-actions">
-                <button className="btn btn-secondary btn-sm" disabled={!!isClosed} onClick={() => setShowDiscount(true)}><IconDiscount2 size={13} /> Discount</button>
-                <button className="btn btn-secondary btn-sm" disabled={!order || !!isClosed || order.paidAmount > 0 || activeSent.length < 2} onClick={() => setSplitMode(true)}><IconArrowsSplit size={13} /> Split</button>
-                <button className="btn btn-secondary btn-sm" disabled={!order} onClick={printCheck}><IconFileInvoice size={13} /> Print</button>
-                <button className="btn btn-secondary btn-sm" disabled={busy || !!isClosed || (!drafts.length && !order)} onClick={hold}><IconPlayerPause size={13} /> Hold</button>
-                {settings?.modules.kds !== false && (
-                  <button className="btn btn-secondary btn-sm" disabled={busy || !!isClosed || (!drafts.length && !activeSent.some((i) => i.status === 'PENDING'))} onClick={send}><IconSend size={13} /> Send</button>
-                )}
-                <button className="btn btn-danger btn-sm" disabled={!!isClosed || (!order && !drafts.length) || (order?.paidAmount > 0)} onClick={cancelOrder}><IconBan size={13} /> Void</button>
+                <button className="tact" title="Discount" disabled={!!isClosed} onClick={() => setShowDiscount(true)}><IconDiscount2 size={18} /> Discount</button>
+                <button className="tact" title="Split" disabled={!order ||!!isClosed || order.paidAmount > 0 || activeSent.length < 2} onClick={() => setSplitMode(true)}><IconArrowsSplit size={18} /> Split</button>
+                <button className="tact" title="Hold" disabled={busy || !!isClosed || (!drafts.length && !order)} onClick={hold}><IconPlayerPause size={18} /> Hold</button>
+                <button className="tact" title="Print" disabled={!order} onClick={printCheck}><IconFileInvoice size={18} /> Print</button>
+                <button className="tact danger" title="Void" disabled={!!isClosed || (!order && !drafts.length) || (order?.paidAmount > 0)} onClick={cancelOrder}><IconBan size={18} /> Void</button>
               </div>
-              <button className="btn btn-primary btn-lg btn-block" style={{ marginTop: 8 }} disabled={busy || !!isClosed || (!drafts.length && !order)} onClick={pay}>
-                {busy ? <span className="spinner" style={{ width: 16, height: 16 }} /> : <IconCreditCard size={16} />}
-                Pay {money(order?.paidAmount > 0 && !drafts.length ? order.balanceDue : totals.total)}
-              </button>
+              <div className="ticket-cta">
+                {settings?.modules.kds !== false && (
+                  <button className="cta cta-secondary" disabled={busy || !!isClosed || (!drafts.length && !activeSent.some((i) => i.status === 'PENDING'))} onClick={send}>
+                    <IconSend size={18} /> Send
+                  </button>
+                )}
+                <button className="cta cta-primary" disabled={busy || !!isClosed || (!drafts.length && !order)} onClick={pay}>
+                  {busy ? <span className="spinner" style={{ width: 18, height: 18 }} /> : <IconCreditCard size={18} />}
+                  Pay {money(payAmount)}
+                </button>
+              </div>
             </>
           )}
         </div>

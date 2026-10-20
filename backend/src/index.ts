@@ -6,6 +6,7 @@ import { expressMiddleware } from '@apollo/server/express4';
 import { typeDefs } from './graphql/typeDefs';
 import { resolvers } from './graphql/resolvers';
 import { buildContext } from './lib/context';
+import { buildOpenApi, swaggerHtml } from './lib/openapi';
 
 const PORT = process.env.PORT || 5002;
 
@@ -36,6 +37,12 @@ async function main() {
   app.get('/health', (_, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
   });
+
+  // Swagger / OpenAPI docs generated from the GraphQL schema
+  app.get('/openapi.json', (req, res) => {
+    res.json(buildOpenApi([{ url: `${req.protocol}://${req.get('host')}`, description: 'This server' }]));
+  });
+  app.get('/docs', (_, res) => res.type('html').send(swaggerHtml('/openapi.json')));
 
   app.listen(PORT, () => {
     console.log(`🚀 NexusPOS Backend running at http://localhost:${PORT}/graphql`);

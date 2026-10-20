@@ -15,7 +15,8 @@
     "db:studio": "prisma studio",
     "seed": "ts-node src/seed.ts",
     "db:backfill": "ts-node --transpile-only src/scripts/backfill.ts",
-    "db:seed:tamilnadu": "ts-node --transpile-only src/scripts/seed-tamilnadu.ts"
+    "db:seed:tamilnadu": "ts-node --transpile-only src/scripts/seed-tamilnadu.ts",
+    "docs:openapi": "ts-node --transpile-only src/scripts/openapi-export.ts"
   },
   "dependencies": {
     "@apollo/server": "^4.10.0",

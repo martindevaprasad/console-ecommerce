@@ -35,6 +35,21 @@ app.get('/api/health', async (_req, res) => {
   });
 });
 
+// Swagger / OpenAPI docs generated from the GraphQL schema
+app.get('/api/openapi.json', async (req, res) => {
+  try {
+    const { buildOpenApi } = await import('../src/lib/openapi');
+    const proto = (req.headers['x-forwarded-proto'] as string) || req.protocol;
+    res.json(buildOpenApi([{ url: `${proto}://${req.get('host')}/api`, description: 'This deployment' }]));
+  } catch (e: any) {
+    res.status(500).json({ error: e?.message || String(e) });
+  }
+});
+app.get('/api/docs', async (_req, res) => {
+  const { swaggerHtml } = await import('../src/lib/openapi');
+  res.type('html').send(swaggerHtml('/api/openapi.json'));
+});
+
 async function startServer() {
   try {
     const { typeDefs } = await import('../src/graphql/typeDefs');

@@ -1,16 +1,17 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation as useRouterLocation, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import {
   IconSearch, IconUser, IconUsers, IconDiscount2, IconSend, IconPlayerPause, IconCreditCard, IconTrash, IconMinus, IconPlus,
   IconClipboardList, IconFileInvoice, IconArrowsSplit, IconBan, IconNote, IconX, IconLayoutGrid, IconStar, IconChefHat,
-  IconPencil, IconCategory,
+  IconPencil, IconKeyboard,
 } from '@tabler/icons-react';
-import { useApi, useAuth, useCan, useCurrentLocation, useMutate, useOrg } from '@/hooks';
+import { useApi, useCan, useCurrentLocation, useMutate, useOrg } from '@/hooks';
 import { CATALOG, ORDERS } from '@/services/api';
 import { money, minutesSince } from '@/lib/format';
 import { previewTotals } from '@/lib/pricing';
 import { ORDER_TYPE_LABELS } from '@/lib/constants';
+import { buildIndex, parseQuery, searchMenu } from '@/lib/posSearch';
 import { Drawer, Empty, useApproval, withApproval } from '../shared/ui';
 import Modal from '../shared/Modal';
 import LoadingSpinner from '../shared/LoadingSpinner';
@@ -19,19 +20,39 @@ import CustomerPicker from './CustomerPicker';
 import DiscountModal, { DiscountChoice } from './DiscountModal';
 import PaymentModal from './PaymentModal';
 import Receipt from './Receipt';
+import ProductCard, { isVeg, monogram } from './ProductCard';
 
 const ITEM_STATUS_BADGE: Record<string, string> = { PENDING: 'badge-neutral', FIRED: 'badge-warning', PREPARING: 'badge-warning', READY: 'badge-info', SERVED: 'badge-success', VOIDED: 'badge-danger' };
 
-/** Two-letter monogram for items without a photo, e.g. "Masala Dosa" → "MD". */
-const monogram = (name: string) => name.replace(/\(.*?\)/g, '').trim().split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
-const isVeg = (p: any) => (p?.dietary || []).includes('VEGETARIAN') || (p?.dietary || []).includes('VEGAN');
+type DietFilter = 'ALL' | 'VEG' | 'NONVEG';
+type SortKey = 'MENU' | 'NAME' | 'PRICE_ASC' | 'PRICE_DESC';
+const SORTS: { key: SortKey; label: string }[] = [
+  { key: 'MENU', label: 'Menu order' }, { key: 'NAME', label: 'Name A–Z' }, { key: 'PRICE_ASC', label: 'Price ↑' }, { key: 'PRICE_DESC', label: 'Price ↓' },
+];
+
+// Shown in the F1 / "?" sheet; keep in sync with the key handler below
+const SHORTCUTS: [string, string][][] = [
+  [
+    ['F2  or  /', 'Search the menu'], ['↑ ↓ ← →', 'Move between items'], ['Enter', 'Add highlighted item'], ['1 – 9', 'Quick-add item by position'],
+    ['Esc', 'Clear search / selection'], ['Alt + 0 – 9', 'Category (0 = All)'], ['[  ]', 'Previous / next category'],
+  ],
+  [
+    ['F3', 'Open checks'], ['F4', 'Customer'], ['F6', 'Discount'], ['F7', 'Hold check'], ['F8', 'Send to kitchen'], ['F9', 'Pay'], ['F10', 'Print check'],
+  ],
+  [
+    ['Alt + ↑ ↓', 'Select line in order'], ['+  −', 'Change quantity'], ['Delete', 'Remove line'], ['Alt + I', 'Edit item options'],
+    ['Alt + O', 'Next order type'], ['Alt + G  /  Alt + Shift + G', 'Guests + / −'], ['Alt + M', 'Order note'], ['Alt + T', 'Floor plan'],
+    ['Alt + S', 'Split check'], ['Alt + X', 'Void check'], ['Alt + N', 'New order'], ['F1  or  ?', 'This help'],
+  ],
+];
+const SHORTCUT_GROUPS = ['Menu & search', 'Order actions', 'Ticket'];
+const NO_TERMS: string[] = [];
 
 export const POSTerminal: React.FC = () => {
   const navigate = useNavigate();
   const routerLocation = useRouterLocation();
   const location = useCurrentLocation();
   const { org, settings } = useOrg();
-  const { user } = useAuth();
   const can = useCan();
   const mutate = useMutate();
   const approval = useApproval();
@@ -43,6 +64,15 @@ export const POSTerminal: React.FC = () => {
   const { data: menu, loading } = useApi(CATALOG.POS_MENU);
   const [category, setCategory] = useState<string>('ALL');
   const [search, setSearch] = useState('');
+  const [diet, setDiet] = useState<DietFilter>('ALL');
+  const [inStockOnly, setInStockOnly] = useState(false);
+  const [sort, setSort] = useState<SortKey>('MENU');
+  /** Keyboard cursor in the item grid (-1 = none) */
+  const [cursor, setCursor] = useState(-1);
+  const [showKeys, setShowKeys] = useState(false);
+  const gridRef = useRef<HTMLDivElement>(null);
+  // Typing stays instant; filtering a big menu runs at lower priority
+  const deferredSearch = useDeferredValue(search);
 
   // Ticket state
   const [order, setOrder] = useState<any | null>(null);
@@ -106,35 +136,65 @@ export const POSTerminal: React.FC = () => {
     })();
   }, [tableIdParam, orderIdParam, mutate, loadOrder]);
 
-  // F2 focuses search
+  // One window listener for every POS shortcut; the handler is reassigned each render (see keyRef.current below)
+  const keyRef = useRef<(e: KeyboardEvent) => void>(() => {});
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'F2') { e.preventDefault(); searchRef.current?.focus(); } };
+    const onKey = (e: KeyboardEvent) => keyRef.current(e);
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
+  // Menu-derived lookups, rebuilt only when the menu or location changes
+  const allProducts: any[] = useMemo(() => menu?.products || [], [menu]);
+  const index = useMemo(() => buildIndex(allProducts), [allProducts]);
+  const productById = useMemo(() => new Map<string, any>(allProducts.map((p) => [p.id, p])), [allProducts]);
+  const categoryCounts = useMemo(() => {
+    const c: Record<string, number> = {};
+    for (const p of allProducts) if (p.categoryId) c[p.categoryId] = (c[p.categoryId] || 0) + 1;
+    return c;
+  }, [allProducts]);
+  const vegMarks = useMemo(() => allProducts.some(isVeg), [allProducts]);
+  const tracksStock = useMemo(() => allProducts.some((p) => p.trackStock), [allProducts]);
+  const stockFor = useCallback((p: any) => (p.trackStock ? (p.inventory.find((i: any) => i.locationId === location?.id)?.quantity ?? 0) : null), [location?.id]);
+
+  const query = useMemo(() => parseQuery(deferredSearch), [deferredSearch]);
+  const searching = query.terms.length > 0 || query.min !== undefined || query.max !== undefined;
   const products = useMemo(() => {
-    const list = menu?.products || [];
-    const q = search.trim().toLowerCase();
-    return list.filter((p: any) => (category === 'ALL' || p.categoryId === category) && (!q || p.name.toLowerCase().includes(q) || p.sku?.toLowerCase() === q || p.barcode === q));
-  }, [menu, category, search]);
+    // Searching looks across every category, so the cashier never has to switch first
+    let list = searching ? searchMenu(index, query).map((x) => x.p) : allProducts.filter((p) => category === 'ALL' || p.categoryId === category);
+    if (diet !== 'ALL') list = list.filter((p) => (diet === 'VEG') === isVeg(p));
+    if (inStockOnly) list = list.filter((p) => { const s = stockFor(p); return s === null || s > 0; });
+    if (sort !== 'MENU') {
+      list = [...list].sort((a, b) => (sort === 'NAME' ? a.name.localeCompare(b.name) : sort === 'PRICE_ASC' ? a.price - b.price : b.price - a.price));
+    }
+    return list;
+  }, [searching, index, query, allProducts, category, diet, inStockOnly, sort, stockFor]);
 
-  const stockFor = (p: any) => (p.trackStock ? (p.inventory.find((i: any) => i.locationId === location?.id)?.quantity ?? 0) : null);
+  // Search puts the cursor on the best match so Enter adds it; browsing starts with no cursor
+  useEffect(() => { setCursor(searching ? 0 : -1); }, [searching, query, category, diet, inStockOnly, sort]);
+  useEffect(() => {
+    if (cursor >= 0) gridRef.current?.querySelector('.kb-active')?.scrollIntoView({ block: 'nearest' });
+  }, [cursor]);
 
-  const addProduct = (p: any) => {
+  const addProduct = (p: any, qty = 1) => {
     if (order && !['OPEN', 'PENDING', 'IN_PROGRESS', 'READY'].includes(order.status)) { toast.error('This order is closed. Start a new one.'); return; }
+    if (stockFor(p) === 0) { toast.error(`${p.name} is sold out`); return; }
     const needsModal = p.modifierGroups.length > 0 || p.isOpenPrice || settings?.pos.courses || settings?.pos.seats;
     if (needsModal) { setEditing(null); setModProduct(p); return; }
     // Merge identical simple lines
     const existing = drafts.find((d) => d.productId === p.id && !d.modifierIds.length && !d.notes);
-    if (existing) setDrafts(drafts.map((d) => (d.key === existing.key ? { ...d, quantity: d.quantity + 1 } : d)));
-    else setDrafts([...drafts, { key: `${p.id}-${Date.now()}`, productId: p.id, name: p.name, basePrice: p.price, unitPrice: p.price, taxRate: p.tax?.rate ?? 0, quantity: 1, modifierIds: [], modifiers: [], course: 1 }]);
+    if (existing) { setDrafts(drafts.map((d) => (d.key === existing.key ? { ...d, quantity: d.quantity + qty } : d))); setSelected(existing.key); }
+    else {
+      const key = `${p.id}-${Date.now()}`;
+      setDrafts([...drafts, { key, productId: p.id, name: p.name, basePrice: p.price, unitPrice: p.price, taxRate: p.tax?.rate ?? 0, quantity: qty, modifierIds: [], modifiers: [], course: 1 }]);
+      setSelected(key);
+    }
     if (search) setSearch('');
   };
-
-  const onSearchEnter = () => {
-    if (products.length === 1) addProduct(products[0]);
-  };
+  // Stable callback for the memoized cards; always calls the latest addProduct
+  const addRef = useRef(addProduct);
+  addRef.current = addProduct;
+  const onCardAdd = useCallback((p: any) => addRef.current(p), []);
 
   const sentItems = (order?.items || []) as any[];
   const activeSent = sentItems.filter((i) => i.status !== 'VOIDED');
@@ -272,16 +332,11 @@ export const POSTerminal: React.FC = () => {
   const courses = [...new Set([...activeSent.map((i) => i.course), ...drafts.map((d) => d.course)])].sort();
   const showCourses = !!settings?.pos.courses && courses.length > 1;
 
-  const productById = new Map<string, any>((menu?.products || []).map((p: any) => [p.id, p]));
   const colorOf = (p: any) => p?.color || p?.category?.color || 'var(--color-primary)';
   const showImages = !!settings?.modules?.menuImages;
-  // Show veg/non-veg marks only when the menu actually carries dietary tags
-  const vegMarks = (menu?.products || []).some(isVeg);
-  // Plain computations (not hooks): we're past the early `loading` return
+  // Plain computation (not a hook): we're past the early `loading` return
   const inTicket: Record<string, number> = {};
   for (const d of drafts) inTicket[d.productId] = (inTicket[d.productId] || 0) + d.quantity;
-  const categoryCounts: Record<string, number> = {};
-  for (const p of menu?.products || []) if (p.categoryId) categoryCounts[p.categoryId] = (categoryCounts[p.categoryId] || 0) + 1;
 
   const setQty = (key: string, delta: number) => {
     const line = drafts.find((x) => x.key === key);
@@ -322,7 +377,7 @@ export const POSTerminal: React.FC = () => {
     const p = productById.get(d.productId);
     const editable = p && (p.modifierGroups.length > 0 || p.isOpenPrice || settings?.pos.courses || settings?.pos.seats);
     return (
-      <div key={d.key} className="tl">
+      <div key={d.key} className={`tl${selected === d.key ? ' active' : ''}`} onClick={() => setSelected(d.key)}>
         {thumb(p, d.name)}
         <div className="tl-main">
           <div className="tl-top">
@@ -347,71 +402,183 @@ export const POSTerminal: React.FC = () => {
 
   const tableName = order?.table?.name;
   const lineCount = activeSent.length + drafts.length;
-  const firstName = user?.name?.split(' ')[0] || 'Staff';
-  const userInitials = (user?.name || 'S').split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
   const payAmount = order?.paidAmount > 0 && !drafts.length ? order.balanceDue : totals.total;
+  const categories: any[] = menu?.categories || [];
+  const canSend = settings?.modules.kds !== false && !busy && !isClosed && (drafts.length > 0 || activeSent.some((i) => i.status === 'PENDING'));
+  const canHold = !busy && !isClosed && (drafts.length > 0 || !!order);
+  const canPay = canHold;
+  const canSplit = !!order && !isClosed && order.paidAmount === 0 && activeSent.length >= 2;
+  const canVoid = !isClosed && (!!order || drafts.length > 0) && !(order?.paidAmount > 0);
+  const filtersOn = diet !== 'ALL' || inStockOnly || sort !== 'MENU';
+
+  /** Columns currently laid out in the item grid (for ↑ ↓ navigation). */
+  const gridColumns = () => {
+    const cards = gridRef.current?.querySelectorAll<HTMLElement>('.pc');
+    if (!cards?.length) return 1;
+    const top = cards[0].offsetTop;
+    let n = 0;
+    while (n < cards.length && cards[n].offsetTop === top) n++;
+    return Math.max(1, n);
+  };
+  const moveCursor = (delta: number) => {
+    if (!products.length) return;
+    setCursor((c) => Math.min(products.length - 1, Math.max(0, c < 0 ? 0 : c + delta)));
+  };
+  const lineKeys = drafts.map((d) => d.key);
+  const selectLine = (delta: number) => {
+    if (!lineKeys.length) return;
+    const i = selected ? lineKeys.indexOf(selected) : -1;
+    setSelected(lineKeys[i < 0 ? (delta > 0 ? 0 : lineKeys.length - 1) : Math.min(lineKeys.length - 1, Math.max(0, i + delta))]);
+  };
+  const activeLine = drafts.find((d) => d.key === selected) || drafts[drafts.length - 1];
+  const pickCategory = (id: string) => { setCategory(id); if (search) setSearch(''); };
+
+  keyRef.current = (e: KeyboardEvent) => {
+    // Open dialogs and drawers own the keyboard
+    if (document.querySelector('.modal-overlay, .drawer-overlay')) return;
+    const el = e.target as HTMLElement;
+    const inSearch = el === searchRef.current;
+    if (!inSearch && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT' || el.isContentEditable)) return;
+    const run = (fn: () => unknown) => { e.preventDefault(); fn(); };
+    const plain = !e.altKey && !e.ctrlKey && !e.metaKey;
+
+    switch (e.key) {
+      case 'F1': return run(() => setShowKeys(true));
+      case 'F2': return run(() => searchRef.current?.select());
+      case 'F3': return run(() => setShowChecks(true));
+      case 'F4': return run(() => setShowCustomer(true));
+      case 'F6': return run(() => !isClosed && setShowDiscount(true));
+      case 'F7': return run(() => canHold && hold());
+      case 'F8': return run(() => canSend && send());
+      case 'F9': return run(() => canPay && pay());
+      case 'F10': return run(() => order && printCheck());
+    }
+
+    if (e.altKey && !e.ctrlKey && !e.metaKey) {
+      const digit = e.code.match(/^(?:Digit|Numpad)(\d)$/);
+      if (digit) {
+        const n = parseInt(digit[1], 10);
+        return run(() => (n === 0 ? pickCategory('ALL') : categories[n - 1] && pickCategory(categories[n - 1].id)));
+      }
+      switch (e.code) {
+        case 'ArrowUp': return run(() => selectLine(-1));
+        case 'ArrowDown': return run(() => selectLine(1));
+        case 'KeyI': return run(() => { const p = activeLine && productById.get(activeLine.productId); if (p) { setEditing(activeLine); setModProduct(p); } });
+        case 'KeyO': return run(() => setOrderType(orderTypes[(orderTypes.indexOf(orderType) + 1) % orderTypes.length]));
+        case 'KeyG': return run(() => setGuestCount(Math.max(1, guestCount + (e.shiftKey ? -1 : 1))));
+        case 'KeyM': return run(() => setShowNote(true));
+        case 'KeyT': return run(() => settings?.modules.tables && navigate('/tables'));
+        case 'KeyS': return run(() => canSplit && setSplitMode((m) => !m));
+        case 'KeyX': return run(() => canVoid && cancelOrder());
+        case 'KeyN': return run(() => (!drafts.length || window.confirm('Discard the unsent items and start a new order?')) && resetTicket());
+      }
+      return;
+    }
+    if (!plain) return;
+
+    if (inSearch) {
+      if (e.key === 'ArrowDown') return run(() => moveCursor(gridColumns()));
+      if (e.key === 'ArrowUp') return run(() => moveCursor(-gridColumns()));
+      if (e.key === 'Escape') return run(() => (search ? setSearch('') : searchRef.current?.blur()));
+      if (e.key === 'Enter') {
+        return run(() => {
+          // Use the live query so a fast barcode scan + Enter isn't lost to the deferred value
+          const q = parseQuery(search);
+          const hits = q.terms.length || q.min !== undefined || q.max !== undefined ? searchMenu(index, q).map((x) => x.p) : products;
+          const pick = search === deferredSearch && cursor >= 0 ? products[cursor] : hits[0];
+          if (pick) addProduct(pick, q.qty);
+          else if (search.trim()) toast.error(`No item matches “${search.trim()}”`);
+        });
+      }
+      return;
+    }
+
+    switch (e.key) {
+      case '/': return run(() => searchRef.current?.focus());
+      case '?': return run(() => setShowKeys(true));
+      case 'ArrowRight': return run(() => moveCursor(1));
+      case 'ArrowLeft': return run(() => moveCursor(-1));
+      case 'ArrowDown': return run(() => moveCursor(gridColumns()));
+      case 'ArrowUp': return run(() => moveCursor(-gridColumns()));
+      case 'Enter': if (cursor >= 0 && products[cursor] && el.tagName !== 'BUTTON') return run(() => addProduct(products[cursor])); return;
+      case 'Escape': return run(() => { setCursor(-1); setSelected(null); });
+      case '[': return run(() => { const i = categories.findIndex((c) => c.id === category); pickCategory(i <= 0 ? 'ALL' : categories[i - 1].id); });
+      case ']': return run(() => { const i = categories.findIndex((c) => c.id === category); if (i < categories.length - 1) pickCategory(categories[i + 1].id); });
+      case '+': case '=': return run(() => activeLine && setQty(activeLine.key, 1));
+      case '-': return run(() => activeLine && setQty(activeLine.key, -1));
+      case 'Delete': return run(() => activeLine && setDrafts(drafts.filter((x) => x.key !== activeLine.key)));
+    }
+    if (/^[1-9]$/.test(e.key)) { const p = products[parseInt(e.key, 10) - 1]; if (p) run(() => addProduct(p)); return; }
+    // Any letter starts a search, like a launcher
+    if (/^[a-z0-9]$/i.test(e.key)) searchRef.current?.focus();
+  };
 
   return (
     <div className="pos-shell">
       <section className="pos-main">
         <header className="pos-head">
-          <div className="pos-staff">
-            <span className="pos-avatar">{userInitials}</span>
-            <div>
-              <div className="pos-staff-name">{firstName}</div>
-              <div className="pos-staff-meta">{location?.name || org?.name}</div>
-            </div>
-          </div>
           <div className="pos-search">
-            <IconSearch size={18} />
-            <input ref={searchRef} placeholder="Search by name, SKU or scan barcode (F2)" value={search}
-              onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && onSearchEnter()} />
-            {search && <button className="pos-search-clear" onClick={() => setSearch('')} aria-label="Clear search"><IconX size={14} /></button>}
+            <IconSearch size={16} />
+            <input ref={searchRef} placeholder="Search items, SKU, barcode · try “cc”, “3*idli”, “<100”" value={search}
+              onChange={(e) => setSearch(e.target.value)} aria-label="Search menu" />
+            {search ? <button className="pos-search-clear" onClick={() => { setSearch(''); searchRef.current?.focus(); }} aria-label="Clear search"><IconX size={13} /></button>
+              : <kbd className="kbd">F2</kbd>}
           </div>
-          <button className="pos-head-btn" onClick={() => setShowChecks(true)}><IconClipboardList size={18} /> <span>Open checks</span></button>
-          {settings?.modules.tables && <button className="pos-head-btn" onClick={() => navigate('/tables')}><IconLayoutGrid size={18} /> <span>Floor</span></button>}
+          {vegMarks && (
+            <div className="pos-seg" role="group" aria-label="Diet">
+              {(['ALL', 'VEG', 'NONVEG'] as DietFilter[]).map((d) => (
+                <button key={d} className={diet === d ? 'active' : ''} onClick={() => setDiet(d)}>
+                  {d !== 'ALL' && <span className={`veg-dot${d === 'NONVEG' ? ' nonveg' : ''}`} />}{d === 'ALL' ? 'All' : d === 'VEG' ? 'Veg' : 'Non-veg'}
+                </button>
+              ))}
+            </div>
+          )}
+          {tracksStock && <button className={`pos-head-btn${inStockOnly ? ' on' : ''}`} onClick={() => setInStockOnly((v) => !v)} title="Hide sold-out items">In stock</button>}
+          <select className="pos-sort" value={sort} onChange={(e) => setSort(e.target.value as SortKey)} aria-label="Sort items">
+            {SORTS.map((s) => <option key={s.key} value={s.key}>{s.label}</option>)}
+          </select>
+          <button className="pos-head-btn" onClick={() => setShowChecks(true)} title="Open checks (F3)"><IconClipboardList size={16} /> <span>Open checks</span></button>
+          {settings?.modules.tables && <button className="pos-head-btn" onClick={() => navigate('/tables')} title="Floor plan (Alt+T)"><IconLayoutGrid size={16} /> <span>Floor</span></button>}
+          <button className="pos-head-btn icon" onClick={() => setShowKeys(true)} title="Keyboard shortcuts (F1)" aria-label="Keyboard shortcuts"><IconKeyboard size={16} /></button>
         </header>
 
-        <nav className="pos-cats">
-          <button className={`pos-cat${category === 'ALL' ? ' active' : ''}`} onClick={() => setCategory('ALL')}>
-            <span className="pos-cat-icon"><IconCategory size={16} /></span>
-            <span className="pos-cat-label">All<small>{menu?.products?.length || 0} items</small></span>
+        <nav className="pos-cats" aria-label="Categories">
+          <button className={`pos-cat${category === 'ALL' && !searching ? ' active' : ''}`} onClick={() => pickCategory('ALL')} title="Alt+0">
+            All<span className="pos-cat-count">{allProducts.length}</span>
           </button>
-          {(menu?.categories || []).map((c: any) => (
-            <button key={c.id} className={`pos-cat${category === c.id ? ' active' : ''}`} onClick={() => setCategory(c.id)} style={{ ['--c' as any]: c.color || 'var(--color-primary)' }}>
-              <span className="pos-cat-icon">{monogram(c.name)}</span>
-              <span className="pos-cat-label">{c.name}<small>{categoryCounts[c.id] || 0} items</small></span>
+          {categories.map((c: any, i: number) => (
+            <button key={c.id} className={`pos-cat${category === c.id && !searching ? ' active' : ''}`} onClick={() => pickCategory(c.id)}
+              style={{ ['--c' as any]: c.color || 'var(--color-primary)' }} title={i < 9 ? `Alt+${i + 1}` : undefined}>
+              <span className="pos-cat-dot" />{c.name}<span className="pos-cat-count">{categoryCounts[c.id] || 0}</span>
             </button>
           ))}
         </nav>
 
-        <div className="pos-grid">
-          {products.map((p: any) => {
-            const stock = stockFor(p);
-            const soldOut = stock !== null && stock <= 0;
-            const qty = inTicket[p.id] || 0;
-            return (
-              <button key={p.id} className={`pc${soldOut ? ' disabled' : ''}${qty ? ' in-ticket' : ''}`} style={{ ['--c' as any]: colorOf(p) }} onClick={() => addProduct(p)}>
-                <div className="pc-media">
-                  {showImages && p.imageUrl ? <img src={p.imageUrl} alt="" loading="lazy" /> : <span className="pc-mono">{monogram(p.name)}</span>}
-                  {vegMarks && <span className={`veg-mark${isVeg(p) ? '' : ' nonveg'}`} title={isVeg(p) ? 'Vegetarian' : 'Non-vegetarian'} />}
-                  {qty > 0 && <span className="pc-qty">{qty}</span>}
-                  {soldOut && <span className="pc-flag danger">Sold out</span>}
-                  {!soldOut && stock !== null && <span className="pc-flag">{stock} left</span>}
-                </div>
-                <div className="pc-body">
-                  <div className="pc-name">{p.name}</div>
-                  {p.description && <div className="pc-desc">{p.description}</div>}
-                  <div className="pc-foot">
-                    <span className="pc-price">{p.isOpenPrice ? 'Open price' : money(p.price)}</span>
-                    {p.modifierGroups.length > 0 && <span className="pc-opts">Options</span>}
-                    <span className="pc-add"><IconPlus size={16} /></span>
-                  </div>
-                </div>
-              </button>
-            );
-          })}
-          {!products.length && <div style={{ gridColumn: '1 / -1' }}><Empty title="No items" hint="Try another category or search term." /></div>}
+        {(searching || filtersOn) && (
+          <div className="pos-results">
+            <span><strong>{products.length}</strong> {products.length === 1 ? 'item' : 'items'}{searching ? ` matching “${deferredSearch.trim()}” in all categories` : ''}</span>
+            {searching && products.length > 0 && <span className="muted">· Enter adds{query.qty > 1 ? ` ${query.qty} ×` : ''} the highlighted item</span>}
+            {filtersOn && <button className="pos-results-reset" onClick={() => { setDiet('ALL'); setInStockOnly(false); setSort('MENU'); }}>Reset filters</button>}
+          </div>
+        )}
+
+        <div className="pos-grid" ref={gridRef}>
+          {products.map((p: any, i: number) => (
+            <ProductCard
+              key={p.id}
+              p={p}
+              qty={inTicket[p.id] || 0}
+              stock={stockFor(p)}
+              color={colorOf(p)}
+              showImage={showImages}
+              vegMark={vegMarks}
+              active={i === cursor}
+              terms={searching ? query.terms : NO_TERMS}
+              hotkey={!searching && i < 9 ? i + 1 : undefined}
+              onAdd={onCardAdd}
+            />
+          ))}
+          {!products.length && <div style={{ gridColumn: '1 / -1' }}><Empty title="No items" hint={searching ? 'Try fewer letters, the item initials (e.g. “cc”), or a price like “<100”.' : 'Try another category or clear the filters.'} /></div>}
         </div>
       </section>
 
@@ -459,7 +626,7 @@ export const POSTerminal: React.FC = () => {
 
         <div className="ticket-body">
           {!sentItems.length && !drafts.length ? (
-            <Empty icon={<IconChefHat size={32} />} title="No items yet" hint="Tap a menu item to add it to the order." />
+            <Empty icon={<IconChefHat size={32} />} title="No items yet" hint="Tap an item, or start typing to search. Press F1 for shortcuts." />
           ) : showCourses ? (
             courses.map((c) => (
               <div key={c}>
@@ -499,21 +666,21 @@ export const POSTerminal: React.FC = () => {
                 <span>{money(payAmount)}</span></div>
 
               <div className="ticket-actions">
-                <button className="tact" title="Discount" disabled={!!isClosed} onClick={() => setShowDiscount(true)}><IconDiscount2 size={18} /> Discount</button>
-                <button className="tact" title="Split" disabled={!order ||!!isClosed || order.paidAmount > 0 || activeSent.length < 2} onClick={() => setSplitMode(true)}><IconArrowsSplit size={18} /> Split</button>
-                <button className="tact" title="Hold" disabled={busy || !!isClosed || (!drafts.length && !order)} onClick={hold}><IconPlayerPause size={18} /> Hold</button>
-                <button className="tact" title="Print" disabled={!order} onClick={printCheck}><IconFileInvoice size={18} /> Print</button>
-                <button className="tact danger" title="Void" disabled={!!isClosed || (!order && !drafts.length) || (order?.paidAmount > 0)} onClick={cancelOrder}><IconBan size={18} /> Void</button>
+                <button className="tact" title="Discount (F6)" disabled={!!isClosed} onClick={() => setShowDiscount(true)}><IconDiscount2 size={18} /> Discount</button>
+                <button className="tact" title="Split (Alt+S)" disabled={!canSplit} onClick={() => setSplitMode(true)}><IconArrowsSplit size={18} /> Split</button>
+                <button className="tact" title="Hold (F7)" disabled={!canHold} onClick={hold}><IconPlayerPause size={18} /> Hold</button>
+                <button className="tact" title="Print (F10)" disabled={!order} onClick={printCheck}><IconFileInvoice size={18} /> Print</button>
+                <button className="tact danger" title="Void (Alt+X)" disabled={!canVoid} onClick={cancelOrder}><IconBan size={18} /> Void</button>
               </div>
               <div className="ticket-cta">
                 {settings?.modules.kds !== false && (
-                  <button className="cta cta-secondary" disabled={busy || !!isClosed || (!drafts.length && !activeSent.some((i) => i.status === 'PENDING'))} onClick={send}>
-                    <IconSend size={18} /> Send
+                  <button className="cta cta-secondary" disabled={!canSend} onClick={send} title="Send to kitchen (F8)">
+                    <IconSend size={18} /> Send <kbd className="kbd">F8</kbd>
                   </button>
                 )}
-                <button className="cta cta-primary" disabled={busy || !!isClosed || (!drafts.length && !order)} onClick={pay}>
+                <button className="cta cta-primary" disabled={!canPay} onClick={pay} title="Pay (F9)">
                   {busy ? <span className="spinner" style={{ width: 18, height: 18 }} /> : <IconCreditCard size={18} />}
-                  Pay {money(payAmount)}
+                  Pay {money(payAmount)} <kbd className="kbd">F9</kbd>
                 </button>
               </div>
             </>
@@ -543,6 +710,22 @@ export const POSTerminal: React.FC = () => {
         onClose={() => setShowDiscount(false)} onApply={applyDiscount} onRemove={order?.discountAmount || draftDiscount ? removeDiscount : undefined} />
       <PaymentModal open={showPay} order={order} onClose={() => setShowPay(false)} onUpdated={setOrder} onPrint={() => setTimeout(() => window.print(), 50)}
         onFinished={() => { setShowPay(false); resetTicket(); }} />
+      <Modal isOpen={showKeys} onClose={() => setShowKeys(false)} title="Keyboard shortcuts" size="lg"
+        footer={<button className="btn btn-primary" onClick={() => setShowKeys(false)}>Got it</button>}>
+        <div className="kb-help">
+          {SHORTCUTS.map((group, gi) => (
+            <section key={gi}>
+              <div className="form-section-title" style={{ marginTop: 0 }}>{SHORTCUT_GROUPS[gi]}</div>
+              {group.map(([keys, what]) => (
+                <div key={keys} className="kb-row"><span>{what}</span><kbd className="kbd">{keys}</kbd></div>
+              ))}
+            </section>
+          ))}
+        </div>
+        <p className="small muted" style={{ marginTop: 12 }}>
+          Search tips: <strong>cc</strong> finds items by initials · <strong>3*idli</strong> adds three · <strong>&lt;100</strong>, <strong>&gt;200</strong>, <strong>100-200</strong> filter by price · a scanned barcode adds instantly.
+        </p>
+      </Modal>
       <Modal isOpen={showNote} onClose={() => setShowNote(false)} title="Order note" footer={<button className="btn btn-primary" onClick={() => setShowNote(false)}>Done</button>}>
         <textarea className="form-input" autoFocus value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Delivery address, allergy info, pickup time…" />
       </Modal>

@@ -67,7 +67,7 @@ export const Register: React.FC = () => {
       <div style={{ marginBottom: '2rem' }}>
         <div style={{ color: 'var(--color-primary)', fontSize: '0.875rem', fontWeight: 600, letterSpacing: '0.1em', marginBottom: '0.5rem', textTransform: 'uppercase' }}>Sign Up</div>
         <h2 className="auth-title">Create workspace.</h2>
-        <p className="auth-subtitle" style={{ margin: 0 }}>Join MageOS to get started.</p>
+        <p className="auth-subtitle" style={{ margin: 0 }}>Join GMOS to get started.</p>
       </div>
 
       <div style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>

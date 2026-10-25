@@ -81,7 +81,7 @@ export const TopBar: React.FC = () => {
     <header className="topbar">
       <div className="topbar-left">
         <div>
-          <div className="topbar-title">{page?.label || 'MageOS'}</div>
+          <div className="topbar-title">{page?.label || 'GMOS'}</div>
           {page?.subtitle && <div className="topbar-sub">{page.subtitle}</div>}
         </div>
       </div>

@@ -1,8 +1,9 @@
 import { createContext, useContext, useEffect, useState } from 'react';
+import { MARK_PATHS } from '@/components/layout/AppSvgs';
 
 export type Theme = 'dark' | 'light' | 'system';
-/** Brand color palette, independent of light/dark. 'default' is the original MageOS look. */
-export type Palette = 'default' | 'fintech' | 'hospitality' | 'minimal' | 'oceanic';
+/** Brand color palette, independent of light/dark. 'default' is the original GMOS look. */
+export type Palette = 'default' | 'bistro' | 'fintech' | 'hospitality' | 'minimal' | 'oceanic';
 export type SidebarVariant = 'aurora' | 'onyx' | 'frost';
 export type Density = 'compact' | 'comfortable';
 
@@ -56,6 +57,18 @@ export function applyToDOM(s: AppearanceSettings) {
 
   // Animations
   root.setAttribute('data-animations', s.animations ? 'on' : 'off');
+
+  applyFavicon();
+}
+
+/** Redraws the tab icon in the palette's logo colours (--logo-tile / --logo-fold). */
+function applyFavicon() {
+  const cs = getComputedStyle(document.documentElement);
+  const tile = cs.getPropertyValue('--logo-tile').trim() || '#5E84FF';
+  const fold = cs.getPropertyValue('--logo-fold').trim() || '#000000';
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 8 36 36"><rect y="8" width="36" height="36" rx="11" fill="${tile}"/><path d="${MARK_PATHS.fold}" fill="${fold}"/></svg>`;
+  const href = `data:image/svg+xml,${encodeURIComponent(svg)}`;
+  document.querySelectorAll<HTMLLinkElement>('link[rel="icon"]').forEach((l) => { l.href = href; });
 }
 
 // --- Context ---

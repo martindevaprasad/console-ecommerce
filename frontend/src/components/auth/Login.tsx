@@ -37,7 +37,7 @@ export const Login: React.FC = () => {
       <div style={{ marginBottom: '2rem' }}>
         <div style={{ color: 'var(--color-primary)', fontSize: '0.875rem', fontWeight: 600, letterSpacing: '0.1em', marginBottom: '0.5rem', textTransform: 'uppercase' }}>Sign In</div>
         <h2 className="auth-title">Welcome back.</h2>
-        <p className="auth-subtitle" style={{ margin: 0 }}>Access your MageOS workspace.</p>
+        <p className="auth-subtitle" style={{ margin: 0 }}>Access your GMOS workspace.</p>
       </div>
 
       <form onSubmit={handleSubmit} id="login-form">
@@ -110,7 +110,7 @@ export const Login: React.FC = () => {
       </div>
 
       <p className="text-center" style={{ fontSize: '0.875rem', color: '#a3a3a3', marginTop: '2rem' }}>
-        New to MageOS?{' '}
+        New to GMOS?{' '}
         <Link to="/register" className="auth-link">
           Request workspace access
         </Link>

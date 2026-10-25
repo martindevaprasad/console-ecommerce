@@ -22,7 +22,7 @@
   font-size: 17px;
   line-height: 1.6;
   overflow-x: hidden;
-  min-height: 100vh;
+  min-height: calc(var(--vh) * 100);
   -webkit-font-smoothing: antialiased;
 }
 .lp *, .lp *::before, .lp *::after { box-sizing: border-box; }
@@ -35,6 +35,8 @@
 html:has(.lp) { scroll-behavior: smooth; scroll-padding-top: 90px; }
 
 .lp-container { width: 100%; max-width: 1240px; margin: 0 auto; padding: 0 24px; }
+/* Feature cards (architecture, split stories, start cards) run edge to edge with a 24px gutter */
+.lp-container-wide { max-width: none; }
 .lp-center { text-align: center; }
 .lp-section { padding: 96px 0; }
 .lp-h1 { font-size: clamp(2.4rem, 5.5vw, 4.4rem); font-weight: 700; }
@@ -145,7 +147,7 @@ html:has(.lp) { scroll-behavior: smooth; scroll-padding-top: 90px; }
 
 /* ── Architecture diagram ── */
 .lp-arch {
-  margin: 64px auto 0; max-width: 1340px; background: #062285; border-radius: 40px; padding: 110px 60px;
+  margin: 64px auto 0; background: #062285; border-radius: 40px; padding: 110px 60px;
   display: flex; align-items: flex-start; justify-content: center; gap: 4px;
 }
 .lp-arch-col { display: flex; flex-direction: column; align-items: center; }
@@ -168,7 +170,7 @@ html:has(.lp) { scroll-behavior: smooth; scroll-padding-top: 90px; }
 
 /* ── Split sections ── */
 .lp-split { background: #062285; border-radius: 30px; padding: 64px 50px; display: grid; grid-template-columns: 1fr 1.35fr; gap: 50px; align-items: center; }
-.lp-split-copy p { color: var(--lp-blue-soft); font-size: clamp(1.05rem, 1.7vw, 1.45rem); margin-top: 26px; line-height: 1.4; }
+.lp-split-copy p { max-width: 640px; color: var(--lp-blue-soft); font-size: clamp(1.05rem, 1.7vw, 1.45rem); margin-top: 26px; line-height: 1.4; }
 .lp-muted-link a { color: var(--lp-blue); text-decoration: underline; text-underline-offset: 4px; }
 .lp-split-mascot { margin-top: 28px; animation: lp-bob 3.8s ease-in-out infinite; }
 .lp-split-art-title { text-align: center; color: var(--lp-blue-soft); font-size: clamp(1.4rem, 2.6vw, 2.3rem); font-weight: 600; margin-bottom: 26px; }
@@ -185,15 +187,26 @@ html:has(.lp) { scroll-behavior: smooth; scroll-padding-top: 90px; }
 
 /* ── Chaos vs calm ── */
 .lp-compare { display: flex; flex-direction: column; gap: 50px; }
-.lp-compare-title { text-align: center; font-size: 1.7rem; font-style: italic; font-weight: 700; color: #fff; margin-bottom: 20px; }
-.lp-chaos, .lp-calm { display: flex; align-items: center; gap: 14px; }
-.lp-mini { flex-shrink: 0; width: 130px; height: 110px; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; font-size: .85rem; }
+.lp-compare-title { text-align: center; font-size: clamp(1.7rem, 2vw, 2.2rem); font-style: italic; font-weight: 700; color: #fff; margin-bottom: 20px; }
+.lp-chaos { display: flex; align-items: center; }
+.lp-calm { display: flex; align-items: center; gap: 14px; }
+.lp-mini { flex-shrink: 0; width: clamp(130px, 10vw, 180px); height: clamp(110px, 8vw, 150px); border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; font-size: .95rem; }
+.lp-mini > svg:first-child { width: clamp(30px, 2.4vw, 40px); height: auto; }
 .lp-mini-blue { background: var(--lp-royal-2); color: #fff; }
 .lp-mini-white { background: #fff; color: var(--lp-royal-2); border: 2px solid var(--lp-blue-soft); }
 .lp-mini-dashed { border: 2.5px dashed var(--lp-royal-2); color: var(--lp-blue-soft); background: rgba(13,59,209,.2); position: relative; }
-.lp-calm-mascot { position: absolute; right: -24px; bottom: -14px; }
-.lp-pit { position: relative; flex: 1; min-height: 190px; display: flex; flex-wrap: wrap; align-content: center; justify-content: center; gap: 10px; padding: 10px; }
-.lp-pit-hole { position: absolute; z-index: 0; left: 8%; right: 8%; top: 32%; bottom: 32%; border-radius: 50%; background: radial-gradient(ellipse at center, #020A1A 45%, #3A2A20 70%, #D9B892 72%); }
+.lp-calm-mascot { position: absolute; right: -40px; bottom: -22px; animation: lp-bob 3.6s ease-in-out infinite; }
+/* Chaos: dashed amber hand-offs into and out of a blueberry-jam pit, problems piled around it */
+.lp-chaos-link { flex-shrink: 0; width: clamp(48px, 5vw, 110px); display: flex; flex-direction: column; gap: 16px; }
+.lp-chaos-link i { position: relative; height: 3px; background: repeating-linear-gradient(90deg, var(--lp-amber) 0 8px, transparent 8px 14px); }
+.lp-chaos-link i::after { content: ""; position: absolute; top: 50%; width: 10px; height: 10px; border: solid var(--lp-amber); border-width: 0 0 3px 3px; }
+.lp-chaos-link i:first-child::after { right: 0; transform: translateY(-50%) rotate(-135deg); }
+.lp-chaos-link i:last-child::after { left: 0; transform: translateY(-50%) rotate(45deg); }
+.lp-pit { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; }
+.lp-pit-chips { position: relative; z-index: 1; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 10px; }
+.lp-pit-chips:first-child { margin-bottom: -18px; }
+.lp-pit-chips:last-child { margin-top: -30px; max-width: 520px; }
+.lp-pit-art { display: block; width: 100%; max-width: 560px; height: auto; }
 .lp-chip { position: relative; z-index: 1; background: #020A1A; color: var(--lp-amber); border-radius: 999px; padding: 6px 16px; font-size: .95rem; white-space: nowrap; animation: lp-jitter 2.8s ease-in-out infinite; }
 .lp-chip-1 { animation-delay: -.6s; } .lp-chip-2 { animation-delay: -1.2s; } .lp-chip-3 { animation-delay: -1.8s; } .lp-chip-4 { animation-delay: -.3s; } .lp-chip-5 { animation-delay: -2.2s; }
 .lp-calm-line { flex: 1; position: relative; height: 4px; background: #fff; border-radius: 2px; margin: 0 6px; }
@@ -234,16 +247,16 @@ html:has(.lp) { scroll-behavior: smooth; scroll-padding-top: 90px; }
 .lp-plan li svg { color: var(--lp-mint); flex-shrink: 0; margin-top: 4px; }
 
 /* ── Start today ── */
-.lp-start { margin-top: 44px; display: grid; grid-template-columns: 1fr 1fr; gap: 36px; max-width: 1280px; margin-left: auto; margin-right: auto; }
+.lp-start { margin-top: 44px; display: grid; grid-template-columns: 1fr 1fr; gap: 36px; }
 .lp-start-card { background: #062285; border-radius: 16px; padding: 46px 48px; display: flex; flex-direction: column; align-items: center; gap: 34px; }
 .lp-start-card h3 { font-size: clamp(1.7rem, 3vw, 2.6rem); font-weight: 700; color: #fff; text-align: center; }
-.lp-start-art { position: relative; width: 100%; aspect-ratio: 4 / 3; border-radius: 12px; overflow: hidden; }
+.lp-start-art { position: relative; width: 100%; height: clamp(260px, 24vw, 420px); border-radius: 12px; overflow: hidden; }
 .lp-start-sky { background: linear-gradient(180deg, #0A3CC8, #1F55E8); }
 .lp-start-night { background: #020A1A; }
 .lp-start-clouds { position: absolute; inset: 0; width: 100%; height: 100%; }
-.lp-start-mascot { position: absolute; left: 50%; bottom: -8px; transform: translateX(-50%); width: 48%; height: auto; }
-.lp-start-mascot.right { left: auto; right: 6%; transform: none; width: 40%; }
-.lp-laptop { position: absolute; left: 8%; bottom: 10%; width: 46%; aspect-ratio: 1.3; background: #F3F5FA; border-radius: 10px; display: grid; place-items: center; transform: perspective(500px) rotateY(18deg) skewY(-3deg); box-shadow: 0 14px 0 -6px #9BA3B8; }
+.lp-start-mascot { position: absolute; left: 50%; bottom: -8px; transform: translateX(-50%); width: auto; height: 82%; }
+.lp-start-mascot.right { left: auto; right: 8%; transform: none; height: 72%; }
+.lp-laptop { position: absolute; left: 8%; bottom: 12%; height: 62%; aspect-ratio: 1.3; background: #F3F5FA; border-radius: 10px; display: grid; place-items: center; transform: perspective(500px) rotateY(18deg) skewY(-3deg); box-shadow: 0 14px 0 -6px #9BA3B8; }
 
 /* ── Roles ── */
 .lp-roles { margin-top: 64px; columns: 3 320px; column-gap: 30px; }
@@ -270,12 +283,14 @@ html:has(.lp) { scroll-behavior: smooth; scroll-padding-top: 90px; }
 /* ── Motion ── */
 .lp-reveal { opacity: 0; transform: translateY(26px); transition: opacity .7s ease, transform .7s ease; }
 .lp-reveal.in { opacity: 1; transform: none; }
-.lp-mascot-eyes { animation: lp-blink 5s infinite; transform-origin: 70px 86px; }
+.lp-mascot-eyes { animation: lp-blink 5s infinite; transform-origin: 80px 90px; }
+.lp-berry-wave { animation: lp-wave 1.8s ease-in-out infinite; transform-origin: 131px 92px; }
 @keyframes lp-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
 @keyframes lp-bob { 0%, 100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-8px) rotate(2deg); } }
 @keyframes lp-flow { to { background-position: -200% 0; } }
 @keyframes lp-twinkle { 0%, 100% { opacity: .9; } 50% { opacity: .25; } }
 @keyframes lp-blink { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(.1); } }
+@keyframes lp-wave { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(16deg); } }
 @keyframes lp-jitter { 0%, 100% { transform: translate(0, 0) rotate(0); } 25% { transform: translate(1px, -2px) rotate(-1deg); } 75% { transform: translate(-1px, 2px) rotate(1deg); } }
 
 @media (prefers-reduced-motion: reduce) {
@@ -352,13 +367,15 @@ html:has(.lp) { scroll-behavior: smooth; scroll-padding-top: 90px; }
   .lp-split { padding: 36px 18px; border-radius: 22px; }
   .lp-paper { padding: 20px; }
   .lp-chaos, .lp-calm { flex-direction: column; }
+  .lp-chaos-link { width: 60px; height: 50px; justify-content: center; transform: rotate(90deg); }
   .lp-mini { width: 100%; max-width: 240px; height: 90px; }
+  .lp-chaos-link { width: 60px; }
   .lp-pit { width: 100%; }
   .lp-calm-line { width: 4px; height: 90px; flex: none; margin: 10px 0; }
   .lp-calm-line::before { left: 50%; top: -2px; transform: translateX(-50%) rotate(135deg); }
   .lp-calm-line::after { left: 50%; right: auto; top: auto; bottom: -2px; transform: translateX(-50%) rotate(-45deg); }
   .lp-calm-line span { left: 18px; bottom: 50%; transform: translateY(50%); }
-  .lp-calm-mascot { right: -10px; }
+  .lp-calm-mascot { right: -16px; }
   .lp-feature-grid { grid-template-columns: 1fr; max-width: 360px; gap: 22px; }
   .lp-features-land { height: 200px; }
   .lp-features-mascot { bottom: 24px; width: 72px; height: 72px; }

@@ -3,6 +3,7 @@ import {
   IconCashRegister, IconChefHat, IconLayoutGrid, IconPackage, IconUsers, IconChartBar,
 } from '@tabler/icons-react';
 import { MageWordmark } from '../layout/AppSvgs';
+import { appZoom } from '@/lib/zoom';
 import { FoodLineArt } from './FoodLineArt';
 import { MarkReveal } from './MarkReveal';
 
@@ -42,13 +43,14 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children }) => {
     const el = panelRef.current;
     if (!el) return;
     const r = el.getBoundingClientRect();
-    const x = e.clientX - r.left, y = e.clientY - r.top;
+    const z = appZoom();
+    const x = (e.clientX - r.left) / z, y = (e.clientY - r.top) / z;
     cancelAnimationFrame(frame.current);
     frame.current = requestAnimationFrame(() => {
       el.style.setProperty('--px', `${x}px`);
       el.style.setProperty('--py', `${y}px`);
-      el.style.setProperty('--mx', ((x / r.width) * 2 - 1).toFixed(3));
-      el.style.setProperty('--my', ((y / r.height) * 2 - 1).toFixed(3));
+      el.style.setProperty('--mx', (((x * z) / r.width) * 2 - 1).toFixed(3));
+      el.style.setProperty('--my', (((y * z) / r.height) * 2 - 1).toFixed(3));
     });
   };
 

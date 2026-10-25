@@ -23,7 +23,8 @@ const VARIANTS: { key: SidebarVariant; label: string; desc: string; bg: string; 
 
 // Single-color system — swatches: [sidebar, brand color, background dark, background light]
 const PALETTES: { key: Palette; label: string; desc: string; swatches: string[] }[] = [
-  { key: 'default', label: 'MaGe Brand', desc: 'Brand blue & mint on midnight navy · default', swatches: ['#0b0e17', '#5e84ff', '#67ffcc', '#ffffff'] },
+  { key: 'default', label: 'GMOS Brand', desc: 'Brand blue & mint on midnight navy · default', swatches: ['#0b0e17', '#5e84ff', '#67ffcc', '#ffffff'] },
+  { key: 'bistro', label: 'Bistro Fresh', desc: 'Sunny yellow & deep teal on warm cream · best in Light', swatches: ['#ffffff', '#ffc940', '#0b6b66', '#f3f2ec'] },
   { key: 'fintech', label: 'Modern Fintech', desc: 'Sky blue on navy · SaaS & cafe chains', swatches: ['#0f172a', '#0ea5e9', '#1e293b', '#f8fafc'] },
   { key: 'hospitality', label: 'Hospitality Warmth', desc: 'Sage green on charcoal · upscale & bakeries', swatches: ['#1c1917', '#059669', '#292524', '#fafaf9'] },
   { key: 'minimal', label: 'Ultra-Minimalist', desc: 'Indigo on OLED black · bars & nightclubs', swatches: ['#000000', '#6366f1', '#09090b', '#ffffff'] },

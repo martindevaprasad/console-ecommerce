@@ -1,0 +1,319 @@
+/* ============================================================
+   BISTRO FRESH palette  (data-palette="bistro")
+   Sunny yellow for primary actions and the active nav item, deep
+   teal for selections and links, white cards on a warm cream page.
+   Best with the Light theme; a dark variant is included.
+   Loaded after index.css / enterprise.css and fully scoped to the
+   palette, so every other palette is untouched.
+   ============================================================ */
+
+/* ---- Tokens: light ---- */
+[data-palette='bistro'] {
+  --bistro-yellow: #ffc940;
+  --bistro-teal: #0b6b66;
+  --bistro-teal-dark: #08504c;
+  --bistro-teal-text: #0b6b66;
+  --bistro-teal-soft: #e4f0ee;
+  --bistro-soft: #f6f5ef;
+  --bistro-line: #ecebe4;
+  --on-primary: #1d1d1b;
+
+  --color-primary-rgb: 255, 201, 64;
+  --color-primary: #ffc940;
+  --color-primary-light: #0b6b66; /* used as text colour: yellow is unreadable on white */
+  --color-primary-dark: #e8ac00;
+  --color-primary-glow: rgba(255, 201, 64, 0.22);
+
+  --color-accent: #0b6b66;
+  --color-accent-light: #0b6b66;
+  --color-accent-glow: rgba(11, 107, 102, 0.12);
+
+  --color-success: #16a34a;
+  --color-success-light: #15803d;
+  --color-success-glow: #dcf5e4;
+  --color-warning: #f2a900;
+  --color-warning-light: #8a5a00;
+  --color-warning-glow: #fff3cc;
+  --color-danger: #dc2626;
+  --color-danger-light: #b91c1c;
+  --color-danger-glow: #fde4e4;
+  --color-info: #2563eb;
+  --color-info-glow: #e4ecff;
+  --color-info-text: #1d4ed8;
+
+  --color-bg-primary: #f3f2ec;
+  --color-bg-secondary: #ffffff;
+  --color-bg-tertiary: #f7f6f1;
+  --color-surface: #ffffff;
+  --color-surface-hover: #f3f2ec;
+  --color-border: #e8e6dd;
+  --color-border-hover: rgba(11, 107, 102, 0.35);
+
+  --text-primary: #1d1d1b;
+  --text-secondary: #5b5b55;
+  --text-muted: #96958c;
+  --text-inverse: #ffffff;
+
+  --gradient-primary: linear-gradient(135deg, #ffd35c 0%, #ffc940 100%);
+  --gradient-card: none;
+  --gradient-sidebar: #ffffff;
+  --sidebar-aurora-bg: #ffffff;
+  --gradient-hero: radial-gradient(ellipse at 0% 0%, rgba(255, 201, 64, 0.12) 0%, transparent 45%),
+                   radial-gradient(ellipse at 100% 100%, rgba(11, 107, 102, 0.07) 0%, transparent 50%);
+
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --radius-2xl: 24px;
+
+  --shadow-sm: 0 1px 2px rgba(29, 29, 27, 0.05);
+  --shadow-md: 0 8px 24px rgba(29, 29, 27, 0.07);
+  --shadow-lg: 0 24px 60px rgba(29, 29, 27, 0.14);
+  --shadow-primary: 0 8px 20px -6px rgba(232, 172, 0, 0.55);
+  --shadow-card: 0 1px 2px rgba(29, 29, 27, 0.04), 0 4px 16px rgba(29, 29, 27, 0.04);
+
+  /* Logo: yellow tile with a teal fold, like the reference brand mark */
+  --logo-tile: #ffc940;
+  --logo-line: #0b6b66;
+  --logo-fold: #0b6b66;
+}
+
+/* ---- Tokens: dark (warm teal-charcoal, same accents) ---- */
+[data-palette='bistro'][data-theme='dark'] {
+  --bistro-teal: #12857e;
+  --bistro-teal-text: #5fd3c9;
+  --bistro-teal-soft: rgba(95, 211, 201, 0.14);
+  --bistro-soft: rgba(255, 255, 255, 0.05);
+  --bistro-line: rgba(255, 255, 255, 0.07);
+
+  --color-primary-light: #ffd66b;
+  --color-accent: #5fd3c9;
+  --color-accent-light: #5fd3c9;
+  --color-accent-glow: rgba(95, 211, 201, 0.14);
+
+  --color-success-light: #4ade80;
+  --color-success-glow: rgba(74, 222, 128, 0.14);
+  --color-warning-light: #fcd34d;
+  --color-warning-glow: rgba(252, 211, 77, 0.14);
+  --color-danger-light: #f87171;
+  --color-danger-glow: rgba(248, 113, 113, 0.14);
+  --color-info-glow: rgba(96, 165, 250, 0.14);
+  --color-info-text: #93c5fd;
+
+  --color-bg-primary: #101c1b;
+  --color-bg-secondary: #172625;
+  --color-bg-tertiary: #1c2d2b;
+  --color-surface: #172625;
+  --color-surface-hover: #1f3230;
+  --color-border: rgba(255, 255, 255, 0.08);
+
+  --text-primary: #f4f3ee;
+  --text-secondary: #b5b8b2;
+  --text-muted: #7f8781;
+
+  --gradient-sidebar: #142221;
+  --sidebar-aurora-bg: #142221;
+  --gradient-hero: radial-gradient(ellipse at 0% 0%, rgba(255, 201, 64, 0.06) 0%, transparent 45%);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 24px 60px rgba(0, 0, 0, 0.5);
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.25);
+  --logo-fold: #0b3f3c;
+}
+
+/* ---- Base ---- */
+[data-palette='bistro'] a { color: var(--bistro-teal-text); }
+[data-palette='bistro'] a:hover { color: var(--bistro-teal-dark); }
+[data-palette='bistro'] ::-webkit-scrollbar-track { background: transparent; }
+[data-palette='bistro'] ::-webkit-scrollbar-thumb { background: rgba(120, 118, 105, 0.3); }
+[data-palette='bistro'] .page-title,
+[data-palette='bistro'] .gradient-text {
+  background: none;
+  -webkit-text-fill-color: currentColor;
+  color: var(--text-primary);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+[data-palette='bistro'] .spinner { border-color: var(--bistro-teal-soft); border-top-color: var(--bistro-teal); }
+
+/* ---- Sidebar: white rail, yellow pill for the active screen ---- */
+[data-palette='bistro'] .sidebar { background: var(--color-bg-secondary); border-right: 1px solid var(--bistro-line); }
+[data-palette='bistro'] .sidebar-logo,
+[data-palette='bistro'] .sidebar-footer { border-color: transparent; }
+[data-palette='bistro'] .sidebar .brand-wordmark { color: var(--bistro-teal-text); }
+[data-palette='bistro'] .sidebar-logo-sub,
+[data-palette='bistro'] .sidebar-section-label { color: var(--text-muted); }
+[data-palette='bistro'] .sidebar-item { color: var(--text-secondary); border: 0; border-radius: 12px; font-weight: 500; }
+[data-palette='bistro'] .sidebar-item:hover { background: var(--bistro-soft); color: var(--text-primary); }
+[data-palette='bistro'] .sidebar-item.active { background: var(--color-primary); color: var(--on-primary); font-weight: 600; box-shadow: var(--shadow-primary); }
+[data-palette='bistro'] .sidebar-avatar { background: var(--bistro-teal); color: #fff; }
+[data-palette='bistro'] .sidebar-user-name { color: var(--text-primary); }
+[data-palette='bistro'] .sidebar-user-role { color: var(--text-muted); }
+[data-palette='bistro'] .sidebar-toggle { background: var(--bistro-soft); border-color: transparent; color: var(--text-secondary); border-radius: 8px; }
+[data-palette='bistro'] .sidebar-toggle:hover { background: var(--bistro-teal-soft); color: var(--bistro-teal-text); border-color: transparent; }
+
+/* ---- Top bar: blends into the page like the reference header ---- */
+[data-palette='bistro'] .topbar { background: color-mix(in srgb, var(--color-bg-primary) 90%, transparent); border-bottom-color: transparent; }
+[data-palette='bistro'] .topbar-location { background: var(--color-bg-secondary); border-color: var(--bistro-line); border-radius: 10px; color: var(--text-secondary); }
+[data-palette='bistro'] .user-menu { border-radius: 14px; border-color: var(--bistro-line); padding: 6px; }
+[data-palette='bistro'] .user-menu button { border-radius: 10px; }
+
+/* ---- Cards & surfaces ---- */
+[data-palette='bistro'] .card,
+[data-palette='bistro'] .chart-card,
+[data-palette='bistro'] .metric-card,
+[data-palette='bistro'] .glass-card,
+[data-palette='bistro'] .glass-card-static,
+[data-palette='bistro'] .settings-section,
+[data-palette='bistro'] .settings-nav,
+[data-palette='bistro'] .settings-placeholder,
+[data-palette='bistro'] .kds-ticket {
+  background: var(--color-bg-secondary);
+  border-color: var(--bistro-line);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
+  backdrop-filter: none;
+}
+
+/* KPI tiles: the first tile on a page is the teal hero tile, the rest are white */
+[data-palette='bistro'] .kpi { background: var(--color-bg-secondary); border-color: var(--bistro-line); border-radius: var(--radius-xl); padding: 14px 16px; box-shadow: var(--shadow-card); }
+[data-palette='bistro'] .kpi::before { display: none; }
+[data-palette='bistro'] .kpi-label { text-transform: none; letter-spacing: 0; font-size: 12.5px; font-weight: 500; color: var(--text-secondary); }
+[data-palette='bistro'] .kpi-label svg { width: 24px; height: 24px; padding: 5px; margin-right: 2px; border-radius: 8px; background: var(--bistro-teal-soft); color: var(--bistro-teal-text); }
+[data-palette='bistro'] .kpi.warning .kpi-label svg { background: var(--color-warning-glow); color: var(--color-warning-light); }
+[data-palette='bistro'] .kpi.danger .kpi-label svg { background: var(--color-danger-glow); color: var(--color-danger-light); }
+[data-palette='bistro'] .kpi.success .kpi-label svg { background: var(--color-success-glow); color: var(--color-success-light); }
+[data-palette='bistro'] .kpi.info .kpi-label svg { background: var(--color-info-glow); color: var(--color-info-text); }
+[data-palette='bistro'] .kpi-value { font-size: 24px; font-weight: 700; margin-top: 6px; }
+[data-palette='bistro'] .page-header + .kpi-grid > .kpi:first-child { background: var(--bistro-teal); border-color: var(--bistro-teal); }
+[data-palette='bistro'] .page-header + .kpi-grid > .kpi:first-child :is(.kpi-label, .kpi-value, .kpi-sub) { color: #fff; }
+[data-palette='bistro'] .page-header + .kpi-grid > .kpi:first-child .kpi-label svg { background: #fff; color: var(--bistro-teal); }
+[data-palette='bistro'] .bar-track { background: var(--bistro-soft); }
+[data-palette='bistro'] .bar-fill { background: var(--bistro-teal); }
+
+/* ---- Buttons ---- */
+[data-palette='bistro'] .btn::before { display: none; }
+[data-palette='bistro'] .btn-primary,
+[data-palette='bistro'] .cta-primary { background: var(--color-primary); color: var(--on-primary); box-shadow: var(--shadow-primary); }
+[data-palette='bistro'] .btn-primary:hover:not(:disabled),
+[data-palette='bistro'] .cta-primary:hover:not(:disabled) { filter: brightness(1.04); }
+[data-palette='bistro'] .cta-primary .kbd { background: rgba(29, 29, 27, 0.08); border-color: rgba(29, 29, 27, 0.18); }
+[data-palette='bistro'] .btn-secondary { background: var(--bistro-teal-soft); color: var(--bistro-teal-text); border-color: transparent; }
+[data-palette='bistro'] .btn-secondary:hover { background: color-mix(in srgb, var(--bistro-teal) 18%, transparent); border-color: transparent; }
+[data-palette='bistro'] .btn-ghost:hover { background: var(--bistro-soft); border-color: transparent; }
+[data-palette='bistro'] .btn-success { background: var(--color-success-glow); color: var(--color-success-light); border-color: transparent; }
+[data-palette='bistro'] .btn-danger { background: var(--color-danger-glow); color: var(--color-danger-light); border-color: transparent; }
+
+/* ---- Forms ---- */
+[data-palette='bistro'] .form-input,
+[data-palette='bistro'] .form-select { background-color: var(--color-bg-secondary); border-color: var(--color-border); }
+[data-palette='bistro'] .form-input:focus,
+[data-palette='bistro'] .form-select:focus { border-color: var(--bistro-teal); background-color: var(--color-bg-secondary); box-shadow: 0 0 0 3px var(--bistro-teal-soft); }
+[data-palette='bistro'] .check input { accent-color: var(--bistro-teal); }
+[data-palette='bistro'] .toggle-switch.on { background: var(--bistro-teal); }
+[data-palette='bistro'] .density-btn.active { background: var(--color-primary); color: var(--on-primary); }
+
+/* ---- Tabs / segmented / chips: teal pills like the order filters ---- */
+[data-palette='bistro'] .tabs { border-bottom: 0; gap: 8px; padding-bottom: 2px; scrollbar-width: none; }
+[data-palette='bistro'] .tab { margin: 0; border: 1px solid var(--bistro-line); border-radius: 10px; background: var(--color-bg-secondary); color: var(--text-secondary); font-weight: 500; }
+[data-palette='bistro'] .tab.active { background: var(--bistro-teal); border-color: var(--bistro-teal); color: #fff; font-weight: 600; }
+[data-palette='bistro'] .tab.active .tab-count { background: rgba(255, 255, 255, 0.22); color: #fff; }
+[data-palette='bistro'] .segmented { background: var(--bistro-soft); border-color: transparent; border-radius: 10px; }
+[data-palette='bistro'] .segmented button.active { background: var(--bistro-teal); color: #fff; }
+[data-palette='bistro'] .chip { background: var(--color-bg-secondary); border-color: var(--color-border); }
+[data-palette='bistro'] .chip.active { background: var(--bistro-teal); border-color: var(--bistro-teal); color: #fff; }
+
+/* ---- Status badges: soft pastel pills ---- */
+[data-palette='bistro'] .badge { border: 0; border-radius: 8px; font-weight: 600; }
+[data-palette='bistro'] .badge-primary { background: var(--bistro-teal-soft); color: var(--bistro-teal-text); }
+[data-palette='bistro'] .badge-info { background: var(--color-info-glow); color: var(--color-info-text); }
+[data-palette='bistro'] .badge-neutral { background: var(--bistro-soft); color: var(--text-secondary); }
+
+/* ---- Tables ---- */
+[data-palette='bistro'] .table-container { border-color: var(--bistro-line); background: var(--color-bg-secondary); }
+[data-palette='bistro'] .data-table { background: var(--color-bg-secondary); }
+[data-palette='bistro'] .data-table th { background: var(--color-bg-tertiary); color: var(--text-muted); border-bottom-color: var(--bistro-line); font-weight: 500; text-transform: none; letter-spacing: 0; }
+[data-palette='bistro'] .data-table td { border-bottom-color: var(--bistro-line); }
+[data-palette='bistro'] .data-table tbody tr:hover { background: var(--bistro-soft); }
+
+/* ---- Modals & drawers ---- */
+[data-palette='bistro'] .modal-overlay,
+[data-palette='bistro'] .drawer-overlay { background: rgba(29, 29, 27, 0.45); backdrop-filter: blur(3px); }
+[data-palette='bistro'] .modal { border: 0; border-radius: var(--radius-2xl); box-shadow: var(--shadow-lg); }
+[data-palette='bistro'] .modal-close { border-radius: 50%; background: var(--bistro-soft); }
+[data-palette='bistro'] .modal-footer { border-top-color: var(--bistro-line); }
+[data-palette='bistro'] .drawer { border-left-color: var(--bistro-line); }
+[data-palette='bistro'] .drawer-head,
+[data-palette='bistro'] .drawer-foot { border-color: var(--bistro-line); }
+
+/* ---- Selection tiles (tenders, options, onboarding picks, settings) ---- */
+[data-palette='bistro'] :is(.tender-btn, .option-btn, .pick-card, .payment-method-btn, .theme-card) { background: var(--color-bg-secondary); border-color: var(--color-border); border-radius: 12px; }
+[data-palette='bistro'] :is(.tender-btn, .option-btn, .pick-card, .payment-method-btn, .theme-card, .variant-card).selected {
+  border-color: var(--bistro-teal);
+  background: var(--bistro-teal-soft);
+  color: var(--bistro-teal-text);
+  box-shadow: none;
+}
+[data-palette='bistro'] .theme-card.selected .theme-card-icon { color: var(--bistro-teal-text); }
+[data-palette='bistro'] .theme-card-check,
+[data-palette='bistro'] .variant-badge { background: var(--bistro-teal); color: #fff; }
+[data-palette='bistro'] .settings-nav-item { border-left-width: 0; margin: 2px 6px; border-radius: 12px; }
+[data-palette='bistro'] .settings-nav-item.active { background: var(--color-primary); color: var(--on-primary); }
+[data-palette='bistro'] .settings-nav-item.active .settings-nav-sub { color: rgba(29, 29, 27, 0.65); }
+
+/* ---- Payment: big amount + keypad feel from the reference ---- */
+[data-palette='bistro'] .amount-due { background: var(--color-bg-tertiary); border-color: var(--bistro-line); border-radius: 16px; }
+[data-palette='bistro'] .amount-due-value { color: var(--text-primary); }
+[data-palette='bistro'] .quick-cash .btn-secondary { font-weight: 700; }
+[data-palette='bistro'] .pin-pad button { background: transparent; border-color: transparent; font-size: 22px; font-weight: 400; border-radius: 14px; }
+[data-palette='bistro'] .pin-pad button:hover { background: var(--bistro-soft); border-color: transparent; }
+[data-palette='bistro'] .pin-display span.filled { background: var(--bistro-teal); border-color: var(--bistro-teal); }
+
+/* ---- POS terminal ---- */
+[data-palette='bistro'] :is(.pos-search, .pos-head-btn, .pos-seg, .pos-sort, .pos-cat) { background-color: var(--color-bg-secondary); border-color: var(--bistro-line); }
+[data-palette='bistro'] .pos-search:focus-within { border-color: var(--bistro-teal); box-shadow: 0 0 0 3px var(--bistro-teal-soft); }
+[data-palette='bistro'] .pos-head-btn:hover { border-color: var(--bistro-line); background: var(--bistro-soft); }
+[data-palette='bistro'] .pos-head-btn.on { border-color: var(--bistro-teal); background: var(--bistro-teal-soft); color: var(--bistro-teal-text); }
+[data-palette='bistro'] .pos-seg button.active { background: var(--bistro-teal); color: #fff; }
+[data-palette='bistro'] .pos-cat.active { background: var(--color-primary); border-color: var(--color-primary); color: var(--on-primary); box-shadow: var(--shadow-primary); }
+[data-palette='bistro'] .pos-cat.active .pos-cat-dot { background: var(--on-primary); }
+[data-palette='bistro'] .pos-cat.active .pos-cat-count { background: rgba(29, 29, 27, 0.1); color: var(--on-primary); }
+[data-palette='bistro'] .pos-results-reset { color: var(--bistro-teal-text); }
+[data-palette='bistro'] .pc { background: var(--color-bg-secondary); border-color: transparent; box-shadow: var(--shadow-card); }
+[data-palette='bistro'] .pc:hover { border-color: transparent; box-shadow: var(--shadow-md); }
+[data-palette='bistro'] .pc.in-ticket { border-color: var(--bistro-teal); box-shadow: 0 0 0 1px var(--bistro-teal), var(--shadow-md); }
+[data-palette='bistro'] .pc.kb-active { border-color: var(--bistro-teal); box-shadow: 0 0 0 3px var(--bistro-teal-soft), var(--shadow-md); }
+[data-palette='bistro'] .pc-name mark { background: var(--color-primary-glow); }
+[data-palette='bistro'] .pc-qty { background: var(--bistro-teal); }
+[data-palette='bistro'] .pc-price { color: var(--text-primary); }
+[data-palette='bistro'] .pc-opts { color: var(--bistro-teal-text); }
+[data-palette='bistro'] .pc-add { background: var(--bistro-teal-soft); color: var(--bistro-teal-text); }
+[data-palette='bistro'] .pc:hover .pc-add,
+[data-palette='bistro'] .pc.in-ticket .pc-add { background: var(--color-primary); color: var(--on-primary); }
+[data-palette='bistro'] .ticket { background: var(--color-bg-secondary); border-color: var(--bistro-line); box-shadow: var(--shadow-card); }
+[data-palette='bistro'] .pos-types { background: var(--bistro-soft); border-color: transparent; }
+[data-palette='bistro'] .pos-types button.active { background: var(--bistro-teal); color: #fff; box-shadow: none; }
+[data-palette='bistro'] .ticket-count { background: var(--bistro-teal-soft); color: var(--bistro-teal-text); }
+[data-palette='bistro'] .ticket-items-head { border-top-color: var(--bistro-line); }
+[data-palette='bistro'] .tl { background: var(--color-bg-tertiary); border-color: transparent; }
+[data-palette='bistro'] .tl.active,
+[data-palette='bistro'] .tl.selected { border-color: var(--bistro-teal); background: var(--bistro-teal-soft); }
+[data-palette='bistro'] .tl-edit { color: var(--bistro-teal-text); }
+[data-palette='bistro'] .stepper { background: var(--color-bg-secondary); border-color: var(--bistro-line); }
+[data-palette='bistro'] .stepper button.plus { background: var(--bistro-teal); color: #fff; }
+[data-palette='bistro'] .ticket-foot { background: var(--color-bg-secondary); border-top-color: var(--bistro-line); }
+[data-palette='bistro'] .tact { background: var(--bistro-soft); border-color: transparent; }
+[data-palette='bistro'] .tact:hover:not(:disabled) { border-color: var(--bistro-teal); color: var(--bistro-teal-text); }
+[data-palette='bistro'] .cta-secondary { background: var(--bistro-teal-soft); border-color: transparent; color: var(--bistro-teal-text); }
+[data-palette='bistro'] .cta-secondary:hover:not(:disabled) { border-color: var(--bistro-teal); }
+
+/* ---- Kitchen display & floor plan (pastel tables like the reference) ---- */
+[data-palette='bistro'] .kds-head { background: var(--color-bg-tertiary); border-bottom-color: var(--bistro-line); }
+[data-palette='bistro'] .kds-item { border-bottom-color: var(--bistro-line); }
+[data-palette='bistro'] .kds-item-qty { color: var(--bistro-teal-text); }
+[data-palette='bistro'] .floor-canvas { background-color: var(--color-bg-tertiary); }
+
+/* ---- Onboarding ---- */
+[data-palette='bistro'] .onb-steps { background: var(--color-bg-secondary); border-right-color: var(--bistro-line); }
+[data-palette='bistro'] .onb-step { border-radius: 12px; }
+[data-palette='bistro'] .onb-step.active { background: var(--color-primary); color: var(--on-primary); }

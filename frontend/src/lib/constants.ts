@@ -70,7 +70,7 @@ export const DIETARY = ['VEGAN', 'VEGETARIAN', 'GLUTEN_FREE', 'DAIRY_FREE', 'NUT
 // `accent` is the solid colour used for occupied chairs and guest counts on the floor plan.
 export const TABLE_STATUS_STYLE: Record<string, { color: string; bg: string; accent: string; label: string }> = {
   AVAILABLE: { color: 'var(--color-success-light)', bg: 'var(--color-success-glow)', accent: 'var(--color-success)', label: 'Available' },
-  SEATED: { color: '#93c5fd', bg: 'var(--color-info-glow)', accent: 'var(--color-info)', label: 'Seated' },
+  SEATED: { color: 'var(--color-info-text, #93c5fd)', bg: 'var(--color-info-glow)', accent: 'var(--color-info)', label: 'Seated' },
   ORDERING: { color: 'var(--color-primary-light)', bg: 'var(--color-primary-glow)', accent: 'var(--color-primary)', label: 'Ordering' },
   WAITING_FOR_FOOD: { color: 'var(--color-warning-light)', bg: 'var(--color-warning-glow)', accent: 'var(--color-warning)', label: 'Waiting food' },
   READY_FOR_PAYMENT: { color: 'var(--color-danger-light)', bg: 'var(--color-danger-glow)', accent: 'var(--color-danger)', label: 'Bill requested' },

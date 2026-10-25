@@ -6,7 +6,7 @@
 
 /* ---- CSS Variables ---- */
 :root {
-  /* MaGe brand system (matches the login hero): brand blue as the primary
+  /* GMOS brand system (matches the login hero): brand blue as the primary
      hue, mint as the accent, on midnight-navy surfaces. Semantic status
      colors (success/warning/danger/info) are the only other hues. Palettes
      override only the brand tokens and backgrounds (see COLOR PALETTES below). */
@@ -16,6 +16,11 @@
   --brand-mint: #67ffcc;
   --brand-ink: #0b0e17;
   --gradient-brand: linear-gradient(100deg, var(--brand-blue) 0%, var(--brand-mint) 100%);
+
+  /* Logo mark colours (AppSvgs + favicon) follow the active palette; a palette may override them */
+  --logo-tile: var(--color-primary);
+  --logo-line: var(--color-accent);
+  --logo-fold: #000000;
 
   /* Neutrals */
   --color-bg-primary: #0b0e17;
@@ -139,7 +144,7 @@ body {
 }
 
 #root {
-  min-height: 100vh;
+  min-height: calc(var(--vh) * 100);
 }
 
 /* ---- Scrollbar ---- */
@@ -182,13 +187,13 @@ a:hover { color: var(--color-accent); }
 /* ---- Layout ---- */
 .app-layout {
   display: flex;
-  min-height: 100vh;
+  min-height: calc(var(--vh) * 100);
 }
 
 .main-content {
   flex: 1;
   margin-left: var(--sidebar-current-width, var(--sidebar-width));
-  min-height: 100vh;
+  min-height: calc(var(--vh) * 100);
   background: var(--gradient-hero);
   background-color: var(--color-bg-primary);
   transition: margin-left var(--transition-base);
@@ -421,7 +426,7 @@ a:hover { color: var(--color-accent); }
   top: 0;
   left: 0;
   width: var(--sidebar-width);
-  height: 100vh;
+  height: calc(var(--vh) * 100);
   background: var(--gradient-sidebar);
   border-right: 1px solid var(--color-border);
   display: flex;
@@ -459,7 +464,7 @@ a:hover { color: var(--color-accent); }
   background-clip: text;
 }
 
-/* MaGe wordmark lettering (currentColor) follows the surface it sits on */
+/* GMOS wordmark lettering (currentColor) follows the surface it sits on */
 .brand-wordmark { display: block; color: var(--text-primary); }
 .sidebar .brand-wordmark,
 .auth-left-panel .brand-wordmark { color: #ffffff; }
@@ -810,7 +815,7 @@ a:hover { color: var(--color-accent); }
   padding: var(--space-8);
   width: 100%;
   max-width: 520px;
-  max-height: 90vh;
+  max-height: calc(var(--vh) * 90);
   overflow-y: auto;
   box-shadow: var(--shadow-lg), 0 0 60px rgba(var(--color-primary-rgb), 0.1);
   animation: slideUp var(--transition-base) ease;
@@ -865,7 +870,7 @@ a:hover { color: var(--color-accent); }
 /* ---- Auth Split Layout ---- */
 .auth-split-layout {
   display: flex;
-  min-height: 100vh;
+  min-height: calc(var(--vh) * 100);
   background-color: var(--brand-ink);
 }
 
@@ -1310,7 +1315,7 @@ a:hover { color: var(--color-accent); }
   display: grid;
   grid-template-columns: 1fr 380px;
   gap: 0;
-  height: calc(100vh - var(--topbar-height));
+  height: calc(var(--vh) * 100 - var(--topbar-height));
   overflow: hidden;
 }
 
@@ -1752,15 +1757,26 @@ a:hover { color: var(--color-accent); }
   width: var(--sidebar-collapsed-width) !important;
 }
 
+/* The rail is too narrow for mark + toggle side by side: stack them so the mark keeps its size */
 .sidebar-collapsed .sidebar-logo {
+  flex-direction: column;
   justify-content: center;
-  padding: var(--space-5) var(--space-3);
+  gap: var(--space-2);
+  padding: var(--space-4) 0 var(--space-3);
 }
+
+.sidebar-logo > svg { flex-shrink: 0; }
+.sidebar-collapsed .sidebar-toggle { margin-left: 0; }
 
 .sidebar-collapsed .sidebar-nav {
   padding: var(--space-3) var(--space-2);
   align-items: center;
 }
+
+/* Never scroll sideways; the icon rail scrolls vertically without a visible bar */
+.sidebar-nav { overflow-x: hidden; }
+.sidebar-collapsed .sidebar-nav { scrollbar-width: none; }
+.sidebar-collapsed .sidebar-nav::-webkit-scrollbar { display: none; }
 
 .sidebar-collapsed .sidebar-item {
   justify-content: center;

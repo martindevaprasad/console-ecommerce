@@ -13,7 +13,7 @@ const TableManagementPage: React.FC = () => {
   if (!location) return <div className="page-container"><Empty title="No location selected" hint="Pick a location from the top bar." /></div>;
 
   return (
-    <div className="page-container" style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+    <div className="page-container" style={{ display: 'flex', flexDirection: 'column', height: 'calc(var(--vh) * 100)' }}>
       <PageHeader
         title="Floor & Tables"
         subtitle={`${location.name} · live status refreshes every 10s`}

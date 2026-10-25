@@ -5,6 +5,7 @@ import { store } from './store';
 import App from './App';
 import './index.css';
 import './enterprise.css';
+import './theme-bistro.css';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

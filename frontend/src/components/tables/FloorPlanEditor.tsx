@@ -5,6 +5,7 @@ import { api, TABLE_MANAGEMENT } from '../../services/api';
 import { useAuth } from '@/hooks';
 import { Field } from '../shared/ui';
 import { FloorTable } from './FloorTable';
+import { appZoom } from '@/lib/zoom';
 
 interface FloorPlanEditorProps {
   locationId: string;
@@ -90,16 +91,18 @@ export const FloorPlanEditor: React.FC<FloorPlanEditorProps> = ({ locationId }) 
   const onPointerDown = (e: React.PointerEvent, t: any) => {
     e.preventDefault();
     const rect = canvasRef.current!.getBoundingClientRect();
+    const z = appZoom();
     setSelectedId(t.id);
-    setDrag({ id: t.id, dx: e.clientX - rect.left + canvasRef.current!.scrollLeft - t.x, dy: e.clientY - rect.top + canvasRef.current!.scrollTop - t.y });
+    setDrag({ id: t.id, dx: (e.clientX - rect.left) / z + canvasRef.current!.scrollLeft - t.x, dy: (e.clientY - rect.top) / z + canvasRef.current!.scrollTop - t.y });
   };
 
   const onPointerMove = (e: React.PointerEvent) => {
     if (!drag || !canvasRef.current) return;
     const rect = canvasRef.current.getBoundingClientRect();
+    const z = appZoom();
     patchLocal(drag.id, {
-      x: snap(e.clientX - rect.left + canvasRef.current.scrollLeft - drag.dx),
-      y: snap(e.clientY - rect.top + canvasRef.current.scrollTop - drag.dy),
+      x: snap((e.clientX - rect.left) / z + canvasRef.current.scrollLeft - drag.dx),
+      y: snap((e.clientY - rect.top) / z + canvasRef.current.scrollTop - drag.dy),
     });
   };
 

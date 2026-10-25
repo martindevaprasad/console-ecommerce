@@ -10,7 +10,7 @@ const PARTS: { key: Part; name: string; note: string }[] = [
 ];
 
 /**
- * The MaGe mark at hero size. Its cloche and toque outlines ship at 14% opacity
+ * The GMOS mark at hero size. Its cloche and toque outlines ship at 14% opacity
  * in the real logo; hovering (or the intro) draws them in at full strength.
  */
 export const MarkReveal: React.FC = () => {
@@ -28,7 +28,7 @@ export const MarkReveal: React.FC = () => {
 
   return (
     <div className={`mark-reveal${revealed ? ' revealed' : ''}`}>
-      <button type="button" className="mark-reveal-logo" aria-label="Reveal the shapes hidden in the MaGe mark"
+      <button type="button" className="mark-reveal-logo" aria-label="Reveal the shapes hidden in the GMOS mark"
         onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
         onFocus={() => setHover(true)} onBlur={() => setHover(false)}>
         <svg viewBox="0 8 36 36" width="112" height="112" aria-hidden>
@@ -41,7 +41,7 @@ export const MarkReveal: React.FC = () => {
 
       <div className="mark-reveal-copy">
         <div className="mark-reveal-eyebrow">Look closer at the mark</div>
-        <p className="mark-reveal-lede">Two outlines hide in every MaGe logo, drawn at 14% opacity so you only find them when you look.</p>
+        <p className="mark-reveal-lede">Two outlines hide in every GMOS logo, drawn at 14% opacity so you only find them when you look.</p>
         <ul className="mark-reveal-parts">
           {PARTS.map((p) => (
             <li key={p.key} className={part === p.key ? 'active' : undefined}

@@ -11,7 +11,7 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ size = 'md', tex
 
   if (fullPage) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', flexDirection: 'column', gap: '16px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(var(--vh) * 100)', flexDirection: 'column', gap: '16px' }}>
         <div className={spinnerClass} />
         {text && <p className="text-secondary">{text}</p>}
       </div>

@@ -9,7 +9,7 @@ import {
   IconBuildingSkyscraper, IconSoup, IconBed, IconToolsKitchen, IconHeadset, IconStar,
 } from '@tabler/icons-react';
 import { MageWordmark } from '../layout/AppSvgs';
-import { Clouds, Landscape, MarkGlow, Mascot } from './LandingArt';
+import { Berry, Clouds, JamPit, Landscape, MarkGlow } from './LandingArt';
 import './landing.css';
 
 const NAV_LINKS = [
@@ -118,7 +118,7 @@ export const LandingPage: React.FC = () => {
 
   useEffect(() => {
     const prev = document.title;
-    document.title = 'MaGe · The restaurant operating system';
+    document.title = 'GMOS · The restaurant operating system';
     return () => { document.title = prev; };
   }, []);
 
@@ -129,7 +129,7 @@ export const LandingPage: React.FC = () => {
       {/* ── Nav ── */}
       <header className={`lp-nav${scrolled ? ' scrolled' : ''}${menuOpen ? ' open' : ''}`}>
         <div className="lp-nav-inner">
-          <a href="#top" className="lp-logo" aria-label="MaGe home" onClick={() => setMenuOpen(false)}>
+          <a href="#top" className="lp-logo" aria-label="GMOS home" onClick={() => setMenuOpen(false)}>
             <MageWordmark height={34} />
           </a>
           <nav className="lp-nav-links" aria-label="Primary">
@@ -153,7 +153,7 @@ export const LandingPage: React.FC = () => {
           <span className="lp-eyebrow lp-eyebrow-mint">The restaurant operating system</span>
           <h1 className="lp-hero-title">Escape the dinner-rush scramble</h1>
           <p className="lp-hero-sub">
-            MaGe keeps your counter, floor and kitchen in sync on every screen.
+            GMOS keeps your counter, floor and kitchen in sync on every screen.
             <br className="lp-br" /> Stop shouting orders across the pass and start running service.
           </p>
         </div>
@@ -184,7 +184,7 @@ export const LandingPage: React.FC = () => {
 
         <div className="lp-hero-ground">
           <Landscape className="lp-hero-land" />
-          <Mascot className="lp-hero-mascot" size={150} />
+          <Berry className="lp-hero-mascot" size={150} hat wave />
           <div className="lp-hero-ctas">
             <Link to="/register" className="lp-btn lp-btn-mint lp-btn-lg"><IconCloud size={20} /> Start free in the cloud</Link>
             <a href="#pricing" className="lp-btn lp-btn-outline-amber lp-btn-lg"><IconHeadset size={20} /> See plans</a>
@@ -220,12 +220,12 @@ export const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* ── What is MaGe ── */}
+      {/* ── What is GMOS ── */}
       <section className="lp-section" id="product">
-        <div className="lp-container">
-          <h2 className="lp-h2 lp-center lp-reveal">What is MaGe?</h2>
+        <div className="lp-container lp-container-wide">
+          <h2 className="lp-h2 lp-center lp-reveal">What is GMOS?</h2>
           <p className="lp-lede lp-center lp-reveal">
-            MaGe is one platform with two halves: a <strong>console</strong> where you configure menus, stations, staff and
+            GMOS is one platform with two halves: a <strong>console</strong> where you configure menus, stations, staff and
             locations, and the <strong>service screens</strong> your team uses on shift — POS, floor plan and kitchen display — all
             reading from the same live data.
           </p>
@@ -245,7 +245,7 @@ export const LandingPage: React.FC = () => {
             </div>
             <div className="lp-arch-arrow" aria-hidden><IconArrowRight size={36} stroke={2.5} /></div>
             <div className="lp-arch-box lp-arch-core">
-              <h4>MaGe Cloud</h4>
+              <h4>GMOS Cloud</h4>
               <MarkGlow size={70} />
             </div>
             <div className="lp-arch-arrow" aria-hidden><IconArrowRight size={36} stroke={2.5} /></div>
@@ -269,21 +269,21 @@ export const LandingPage: React.FC = () => {
 
       {/* ── Bring your own format ── */}
       <section className="lp-section">
-        <div className="lp-container">
+        <div className="lp-container lp-container-wide">
           <div className="lp-split lp-reveal">
             <div className="lp-split-copy">
-              <span className="lp-eyebrow lp-eyebrow-lime">Bring your own format, run it on MaGe</span>
+              <span className="lp-eyebrow lp-eyebrow-lime">Bring your own format, run it on GMOS</span>
               <h2 className="lp-display">One console built for real service</h2>
-              <p>Food truck at lunch, fine dining at night, a hotel with four outlets. Pick a format and MaGe presets the
+              <p>Food truck at lunch, fine dining at night, a hotel with four outlets. Pick a format and GMOS presets the
                 service flow, kitchen stations, order types and modules for you.</p>
               <p className="lp-muted-link">Everything stays editable later — <a href="#features">see what is included</a>.</p>
-              <Mascot size={110} className="lp-split-mascot" />
+              <Berry size={110} wave className="lp-split-mascot" />
             </div>
             <div className="lp-split-art">
               <h3 className="lp-split-art-title">The power of one source of truth</h3>
               <div className="lp-split-cards">
                 <div className="lp-paper">
-                  <div className="lp-paper-head"><IconAdjustmentsHorizontal size={44} stroke={1.3} /><span>The MaGe console</span></div>
+                  <div className="lp-paper-head"><IconAdjustmentsHorizontal size={44} stroke={1.3} /><span>The GMOS console</span></div>
                   {PILLARS.map((p) => (
                     <div key={p.k} className="lp-paper-row"><b>{p.k}</b><span>{p.v}</span></div>
                   ))}
@@ -302,24 +302,31 @@ export const LandingPage: React.FC = () => {
 
       {/* ── Chaos vs calm ── */}
       <section className="lp-section">
-        <div className="lp-container">
+        <div className="lp-container lp-container-wide">
           <div className="lp-split lp-reveal">
             <div className="lp-split-copy">
               <span className="lp-eyebrow lp-eyebrow-amber">Avoid getting buried in tickets</span>
               <h2 className="lp-display">Make service feel calm again</h2>
               <p>When front and back of house share one live system, nobody chases paper tickets or recounts the
                 drawer at midnight.</p>
-              <p>Stop micromanaging the rush and let MaGe carry orders, stock and cash from the counter to the close.</p>
+              <p>Stop micromanaging the rush and let GMOS carry orders, stock and cash from the counter to the close.</p>
             </div>
             <div className="lp-compare">
               <div className="lp-compare-block">
                 <h4 className="lp-compare-title">Service chaos</h4>
                 <div className="lp-chaos">
                   <div className="lp-mini lp-mini-blue"><IconCashRegister size={30} /><small>Counter</small></div>
+                  <div className="lp-chaos-link" aria-hidden><i /><i /></div>
                   <div className="lp-pit">
-                    {CHAOS.map((c, i) => <span key={c} className={`lp-chip lp-chip-${i}`}>{c}</span>)}
-                    <div className="lp-pit-hole" />
+                    <div className="lp-pit-chips">
+                      {CHAOS.slice(0, 2).map((c, i) => <span key={c} className={`lp-chip lp-chip-${i}`}>{c}</span>)}
+                    </div>
+                    <JamPit className="lp-pit-art" />
+                    <div className="lp-pit-chips">
+                      {CHAOS.slice(2).map((c, i) => <span key={c} className={`lp-chip lp-chip-${i + 2}`}>{c}</span>)}
+                    </div>
                   </div>
+                  <div className="lp-chaos-link" aria-hidden><i /><i /></div>
                   <div className="lp-mini lp-mini-white"><IconChefHat size={30} /><small>Kitchen</small></div>
                 </div>
               </div>
@@ -328,7 +335,7 @@ export const LandingPage: React.FC = () => {
                 <div className="lp-calm">
                   <div className="lp-mini lp-mini-dashed"><IconCashRegister size={30} /><small>Counter</small></div>
                   <div className="lp-calm-line"><span>Synced in real time</span></div>
-                  <div className="lp-mini lp-mini-dashed lp-mini-relax"><IconChefHat size={30} /><small>Kitchen</small><Mascot size={64} shades className="lp-calm-mascot" /></div>
+                  <div className="lp-mini lp-mini-dashed lp-mini-relax"><IconChefHat size={30} /><small>Kitchen</small><Berry size={100} mood="cool" drink className="lp-calm-mascot" /></div>
                 </div>
               </div>
             </div>
@@ -347,13 +354,13 @@ export const LandingPage: React.FC = () => {
           </div>
         </div>
         <Landscape className="lp-features-land" river />
-        <Mascot size={110} shades className="lp-features-mascot" />
+        <Berry size={120} mood="cool" drink className="lp-features-mascot" />
       </section>
 
       {/* ── Pricing ── */}
       <section className="lp-section lp-pricing" id="pricing">
         <div className="lp-container">
-          <h2 className="lp-h1 lp-center lp-reveal">MaGe pricing</h2>
+          <h2 className="lp-h1 lp-center lp-reveal">GMOS pricing</h2>
           <p className="lp-lede lp-center lp-reveal">Start taking orders for free today. No card required.</p>
           <p className="lp-caps lp-center">Choose your billing</p>
           <div className="lp-toggle" role="tablist" aria-label="Billing period">
@@ -393,14 +400,14 @@ export const LandingPage: React.FC = () => {
 
       {/* ── Start today ── */}
       <section className="lp-section">
-        <div className="lp-container">
-          <h2 className="lp-h2 lp-center lp-reveal">Open your doors on MaGe today</h2>
+        <div className="lp-container lp-container-wide">
+          <h2 className="lp-h2 lp-center lp-reveal">Open your doors on GMOS today</h2>
           <div className="lp-start lp-reveal">
             <div className="lp-start-card">
               <h3>Start on your own</h3>
               <div className="lp-start-art lp-start-sky">
                 <Clouds className="lp-start-clouds" />
-                <Mascot size={170} className="lp-start-mascot" />
+                <Berry size={170} wave className="lp-start-mascot" />
               </div>
               <Link to="/register" className="lp-btn lp-btn-mint lp-btn-lg lp-btn-block"><IconCloud size={20} /> Create a free account</Link>
             </div>
@@ -408,7 +415,7 @@ export const LandingPage: React.FC = () => {
               <h3>Set up with our team</h3>
               <div className="lp-start-art lp-start-night">
                 <div className="lp-laptop"><MarkGlow size={56} /></div>
-                <Mascot size={150} className="lp-start-mascot right" />
+                <Berry size={150} mood="cool" hat className="lp-start-mascot right" />
               </div>
               <a href="#pricing" className="lp-btn lp-btn-amber lp-btn-lg lp-btn-block"><IconHeadset size={20} /> Book a guided setup</a>
             </div>
@@ -459,7 +466,7 @@ export const LandingPage: React.FC = () => {
           </div>
         </div>
         <div className="lp-container lp-footer-base">
-          <span>© {new Date().getFullYear()} MaGe. All rights reserved.</span>
+          <span>© {new Date().getFullYear()} GMOS. All rights reserved.</span>
           <span className="lp-stars"><IconStar size={14} /> Made for the people who run the pass.</span>
         </div>
       </footer>

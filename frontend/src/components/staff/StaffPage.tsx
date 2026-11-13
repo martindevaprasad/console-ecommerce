@@ -84,7 +84,7 @@ const TeamTab: React.FC = () => {
             <Field label={form.id ? 'New POS PIN (optional)' : 'POS PIN'} hint="4–6 digits, unique"><input className="form-input" inputMode="numeric" maxLength={6} value={form.pin} onChange={(e) => setForm({ ...form, pin: e.target.value.replace(/\D/g, '') })} /></Field>
             <Field label="Base role">
               <select className="form-select" value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}>
-                {(me?.role === 'OWNER' ? ['OWNER', 'MANAGER', 'SHIFT_LEAD', 'STAFF'] : ['MANAGER', 'SHIFT_LEAD', 'STAFF']).map((r) => <option key={r} value={r}>{ROLE_LABELS[r]}</option>)}
+                {(me?.role === 'OWNER' ? ['OWNER', 'MANAGER', 'SHIFT_LEAD', 'WAITER', 'STAFF'] : ['MANAGER', 'SHIFT_LEAD', 'WAITER', 'STAFF']).map((r) => <option key={r} value={r}>{ROLE_LABELS[r]}</option>)}
               </select>
             </Field>
             <Field label="Custom role (overrides permissions)">

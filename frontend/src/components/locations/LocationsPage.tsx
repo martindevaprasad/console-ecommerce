@@ -9,7 +9,7 @@ import { PageHeader, Drawer, Field, Empty, Toggle, SettingRow, Tabs } from '../s
 import Modal from '../shared/Modal';
 import LoadingSpinner from '../shared/LoadingSpinner';
 
-const DEVICE_TYPES = ['POS', 'KDS', 'KIOSK', 'PRINTER', 'PAYMENT_TERMINAL', 'CUSTOMER_DISPLAY'];
+const DEVICE_TYPES = ['POS', 'KDS', 'KIOSK', 'PRINTER', 'PAYMENT_TERMINAL', 'CUSTOMER_DISPLAY', 'HANDHELD'];
 const COLORS = ['#5e84ff', '#67ffcc', '#10b981', '#f59e0b', '#ef4444', '#3b82f6'];
 
 export const LocationsPage: React.FC = () => {

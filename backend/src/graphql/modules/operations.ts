@@ -1,6 +1,6 @@
 import { gql } from 'graphql-tag';
 import { prisma } from '../../lib/prisma';
-import { Ctx, AuthInfo, requireAuth, requirePerm, fail, audit, resolveLocationId, assertLocation } from '../../lib/context';
+import { Ctx, AuthInfo, requireAuth, requirePerm, fail, audit, resolveLocationId, assertLocation, can, ownChecksOnly } from '../../lib/context';
 import { round2 } from '../../lib/pricing';
 
 export const typeDefs = gql`
@@ -142,7 +142,23 @@ async function ownShift(auth: AuthInfo, id: string) {
   return s!;
 }
 
+/** Own-checks-only users (waiters) may not change a table another server is working. */
+export async function assertServesTable(auth: AuthInfo, tableId: string) {
+  if (!ownChecksOnly(auth)) return;
+  const session = await prisma.tableSession.findFirst({ where: { tableId, endTime: null } });
+  if (session && session.serverUserId !== auth.userId) fail('This table is served by someone else. Ask a shift lead to transfer it.', 'FORBIDDEN');
+}
+
+/** Validates a server assignment: assigning anyone but yourself needs `tables.assign`. */
+export async function assertAssignableServer(auth: AuthInfo, serverUserId: string) {
+  if (serverUserId === auth.userId) return;
+  if (!can(auth, 'tables.assign')) fail('You can only seat tables for yourself (tables.assign)', 'FORBIDDEN');
+  const u = await prisma.user.findFirst({ where: { id: serverUserId, organizationId: auth.orgId, isActive: true } });
+  if (!u) fail('Server not found', 'NOT_FOUND');
+}
+
 async function seat(auth: AuthInfo, tableId: string, guestCount: number, serverUserId?: string | null) {
+  if (serverUserId) await assertAssignableServer(auth, serverUserId);
   const table = await ownTable(auth, tableId);
   if (!['AVAILABLE', 'NEEDS_CLEANING'].includes(table.status)) fail(`${table.name} is currently occupied`);
   await prisma.tableSession.updateMany({ where: { tableId, endTime: null }, data: { endTime: new Date() } });
@@ -292,6 +308,7 @@ export const resolvers = {
     updateTableStatus: async (_: any, { id, status }: any, ctx: Ctx) => {
       const auth = await requirePerm(ctx, 'tables.manage');
       await ownTable(auth, id);
+      await assertServesTable(auth, id);
       if (status === 'AVAILABLE') await prisma.tableSession.updateMany({ where: { tableId: id, endTime: null }, data: { endTime: new Date() } });
       return prisma.table.update({ where: { id }, data: { status } });
     },
@@ -305,6 +322,7 @@ export const resolvers = {
     checkoutTable: async (_: any, { id }: any, ctx: Ctx) => {
       const auth = await requirePerm(ctx, 'tables.manage');
       await ownTable(auth, id);
+      await assertServesTable(auth, id);
       const open = await prisma.order.count({ where: { tableId: id, status: { in: OPEN_STATES as any } } });
       if (open) fail('Table has an unpaid check. Settle it from the POS first.');
       await prisma.tableSession.updateMany({ where: { tableId: id, endTime: null }, data: { endTime: new Date() } });

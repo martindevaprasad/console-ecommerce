@@ -295,7 +295,7 @@ export const OnboardingWizard: React.FC = () => {
                   <Field label="Temp password"><input className="form-input" type="password" value={t.password} onChange={(e) => setTeam(team.map((x, j) => (j === i ? { ...x, password: e.target.value } : x)))} /></Field>
                   <Field label="Role">
                     <select className="form-select" value={t.role} onChange={(e) => setTeam(team.map((x, j) => (j === i ? { ...x, role: e.target.value } : x)))}>
-                      <option value="MANAGER">Manager</option><option value="SHIFT_LEAD">Shift lead</option><option value="STAFF">Staff</option>
+                      <option value="MANAGER">Manager</option><option value="SHIFT_LEAD">Shift lead</option><option value="WAITER">Waiter</option><option value="STAFF">Staff</option>
                     </select>
                   </Field>
                   <Field label="PIN"><input className="form-input" style={{ width: 80 }} value={t.pin} maxLength={6} onChange={(e) => setTeam(team.map((x, j) => (j === i ? { ...x, pin: e.target.value.replace(/\D/g, '') } : x)))} /></Field>

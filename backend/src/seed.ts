@@ -109,6 +109,22 @@ async function main() {
 
   console.log(`- Staff created: ${staff.name} (${staff.email})`);
 
+  const waiter = await prisma.user.upsert({
+    where: { email: 'waiter@nexuscafe.com' },
+    update: {},
+    create: {
+      email: 'waiter@nexuscafe.com',
+      name: 'Sam Rivera',
+      password: await bcrypt.hash('waiter123', 12),
+      role: 'WAITER',
+      organizationId: org.id,
+      locationId: loc1.id,
+      departmentId: dept1.id,
+    },
+  });
+
+  console.log(`- Waiter created: ${waiter.name} (${waiter.email})`);
+
   // 6. Categories
   const catCoffee = await prisma.category.upsert({
     where: { organizationId_name: { organizationId: org.id, name: 'Coffee & Drinks' } },
@@ -215,6 +231,7 @@ async function main() {
 
   await prisma.user.update({ where: { id: owner.id }, data: { pinHash: await bcrypt.hash('1111', 10) } });
   await prisma.user.update({ where: { id: staff.id }, data: { pinHash: await bcrypt.hash('2222', 10) } });
+  await prisma.user.update({ where: { id: waiter.id }, data: { pinHash: await bcrypt.hash('3333', 10) } });
 
   if (!(await prisma.modifierGroup.findFirst({ where: { organizationId: org.id, name: 'Milk' } }))) {
     const milk = await prisma.modifierGroup.create({

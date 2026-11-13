@@ -1614,6 +1614,182 @@
         }
       }
     },
+    "/graphql#query.myShiftSummary": {
+      "post": {
+        "tags": [
+          "Other"
+        ],
+        "operationId": "query_myShiftSummary",
+        "summary": "Query: myShiftSummary",
+        "description": "Sales, tips and covers for the caller's checks.\n\n**GraphQL signature**\n\n```graphql\nmyShiftSummary(locationId: ID, from: DateTime): ServerSummary!\n```\n\nThe example selects scalar fields and one level of nested objects — edit the `query` to pick exactly the fields you need.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "query"
+                ],
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "description": "GraphQL document"
+                  },
+                  "operationName": {
+                    "type": "string"
+                  },
+                  "variables": {
+                    "type": "object",
+                    "properties": {
+                      "locationId": {
+                        "type": "string",
+                        "nullable": true
+                      },
+                      "from": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                      }
+                    }
+                  }
+                }
+              },
+              "example": {
+                "query": "query MyShiftSummary($locationId: ID, $from: DateTime) { myShiftSummary(locationId: $locationId, from: $from) { userId from openTables openChecks openBalance closedChecks covers sales tips averageCheck } }",
+                "variables": {}
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "GraphQL response. Business errors (validation, permissions, not found) come back with HTTP 200 in `errors`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "nullable": true,
+                      "properties": {
+                        "myShiftSummary": {
+                          "$ref": "#/components/schemas/ServerSummary"
+                        }
+                      }
+                    },
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/GraphQLError"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed GraphQL document or variables",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GraphQLErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/graphql#query.myTables": {
+      "post": {
+        "tags": [
+          "Other"
+        ],
+        "operationId": "query_myTables",
+        "summary": "Query: myTables",
+        "description": "Open table seatings the caller is serving at a location.\n\n**GraphQL signature**\n\n```graphql\nmyTables(locationId: ID): [TableSession!]!\n```\n\nThe example selects scalar fields and one level of nested objects — edit the `query` to pick exactly the fields you need.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "query"
+                ],
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "description": "GraphQL document"
+                  },
+                  "operationName": {
+                    "type": "string"
+                  },
+                  "variables": {
+                    "type": "object",
+                    "properties": {
+                      "locationId": {
+                        "type": "string",
+                        "nullable": true
+                      }
+                    }
+                  }
+                }
+              },
+              "example": {
+                "query": "query MyTables($locationId: ID) { myTables(locationId: $locationId) { id guestCount startTime endTime tableId serverUserId server { id email name role roleId phone avatarUrl hourlyRate } table { id name capacity shape x y width height } orders { id orderNumber ticketNumber status paymentStatus paymentMethod channel orderType } readyItemCount } }",
+                "variables": {}
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "GraphQL response. Business errors (validation, permissions, not found) come back with HTTP 200 in `errors`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "nullable": true,
+                      "properties": {
+                        "myTables": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/TableSession"
+                          }
+                        }
+                      }
+                    },
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/GraphQLError"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed GraphQL document or variables",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GraphQLErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/graphql#query.myTimeEntry": {
       "post": {
         "tags": [
@@ -2791,6 +2967,97 @@
         }
       }
     },
+    "/graphql#query.servers": {
+      "post": {
+        "tags": [
+          "Other"
+        ],
+        "operationId": "query_servers",
+        "summary": "Query: servers",
+        "description": "Staff a table can be handed to. Clocked-in staff first; set onDutyOnly: false to include everyone at the location.\n\n**GraphQL signature**\n\n```graphql\nservers(locationId: ID, onDutyOnly: Boolean): [ServerOnDuty!]!\n```\n\nThe example selects scalar fields and one level of nested objects — edit the `query` to pick exactly the fields you need.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "query"
+                ],
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "description": "GraphQL document"
+                  },
+                  "operationName": {
+                    "type": "string"
+                  },
+                  "variables": {
+                    "type": "object",
+                    "properties": {
+                      "locationId": {
+                        "type": "string",
+                        "nullable": true
+                      },
+                      "onDutyOnly": {
+                        "type": "boolean",
+                        "nullable": true
+                      }
+                    }
+                  }
+                }
+              },
+              "example": {
+                "query": "query Servers($locationId: ID, $onDutyOnly: Boolean) { servers(locationId: $locationId, onDutyOnly: $onDutyOnly) { user { id email name role roleId phone avatarUrl hourlyRate } clockedInAt openTables } }",
+                "variables": {}
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "GraphQL response. Business errors (validation, permissions, not found) come back with HTTP 200 in `errors`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "nullable": true,
+                      "properties": {
+                        "servers": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/ServerOnDuty"
+                          }
+                        }
+                      }
+                    },
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/GraphQLError"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed GraphQL document or variables",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GraphQLErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/graphql#query.session": {
       "post": {
         "tags": [
@@ -3448,7 +3715,7 @@
                 }
               },
               "example": {
-                "query": "query SyncState($locationId: ID) { syncState(locationId: $locationId) { locationId revision serverTime } }",
+                "query": "query SyncState($locationId: ID) { syncState(locationId: $locationId) { locationId revision serverTime myReadyItems myOpenTables permissionsHash } }",
                 "variables": {}
               }
             }
@@ -4641,6 +4908,103 @@
         }
       }
     },
+    "/graphql#mutation.assignTable": {
+      "post": {
+        "tags": [
+          "Other"
+        ],
+        "operationId": "mutation_assignTable",
+        "summary": "Mutation: assignTable",
+        "description": "Hand a seated table (and its open checks) to another server. Needs tables.assign or a manager PIN.\n\n**GraphQL signature**\n\n```graphql\nassignTable(tableId: ID!, serverUserId: ID!, approverPin: String): TableSession!\n```\n\nThe example selects scalar fields and one level of nested objects — edit the `query` to pick exactly the fields you need.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "query"
+                ],
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "description": "GraphQL document"
+                  },
+                  "operationName": {
+                    "type": "string"
+                  },
+                  "variables": {
+                    "type": "object",
+                    "required": [
+                      "tableId",
+                      "serverUserId"
+                    ],
+                    "properties": {
+                      "tableId": {
+                        "type": "string"
+                      },
+                      "serverUserId": {
+                        "type": "string"
+                      },
+                      "approverPin": {
+                        "type": "string",
+                        "nullable": true
+                      }
+                    }
+                  }
+                }
+              },
+              "example": {
+                "query": "mutation AssignTable($tableId: ID!, $serverUserId: ID!, $approverPin: String) { assignTable(tableId: $tableId, serverUserId: $serverUserId, approverPin: $approverPin) { id guestCount startTime endTime tableId serverUserId server { id email name role roleId phone avatarUrl hourlyRate } table { id name capacity shape x y width height } orders { id orderNumber ticketNumber status paymentStatus paymentMethod channel orderType } readyItemCount } }",
+                "variables": {
+                  "tableId": "<id>",
+                  "serverUserId": "<id>"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "GraphQL response. Business errors (validation, permissions, not found) come back with HTTP 200 in `errors`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "nullable": true,
+                      "properties": {
+                        "assignTable": {
+                          "$ref": "#/components/schemas/TableSession"
+                        }
+                      }
+                    },
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/GraphQLError"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed GraphQL document or variables",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GraphQLErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/graphql#mutation.bumpOrder": {
       "post": {
         "tags": [
@@ -4962,7 +5326,7 @@
                 }
               },
               "example": {
-                "query": "mutation CheckoutTable($id: ID!) { checkoutTable(id: $id) { id name capacity shape x y width height status zoneId activeSession { id guestCount startTime endTime tableId serverUserId } currentOrder { id orderNumber ticketNumber status paymentStatus paymentMethod channel orderType } sessions { id guestCount startTime endTime tableId serverUserId } } }",
+                "query": "mutation CheckoutTable($id: ID!) { checkoutTable(id: $id) { id name capacity shape x y width height status zoneId activeSession { id guestCount startTime endTime tableId serverUserId readyItemCount } currentOrder { id orderNumber ticketNumber status paymentStatus paymentMethod channel orderType } sessions { id guestCount startTime endTime tableId serverUserId readyItemCount } } }",
                 "variables": {
                   "id": "<id>"
                 }
@@ -6798,7 +7162,7 @@
                 }
               },
               "example": {
-                "query": "mutation CreateTable($zoneId: ID!, $name: String!, $capacity: Int!, $shape: String!, $x: Int!, $y: Int!, $width: Int!, $height: Int!) { createTable(zoneId: $zoneId, name: $name, capacity: $capacity, shape: $shape, x: $x, y: $y, width: $width, height: $height) { id name capacity shape x y width height status zoneId activeSession { id guestCount startTime endTime tableId serverUserId } currentOrder { id orderNumber ticketNumber status paymentStatus paymentMethod channel orderType } sessions { id guestCount startTime endTime tableId serverUserId } } }",
+                "query": "mutation CreateTable($zoneId: ID!, $name: String!, $capacity: Int!, $shape: String!, $x: Int!, $y: Int!, $width: Int!, $height: Int!) { createTable(zoneId: $zoneId, name: $name, capacity: $capacity, shape: $shape, x: $x, y: $y, width: $width, height: $height) { id name capacity shape x y width height status zoneId activeSession { id guestCount startTime endTime tableId serverUserId readyItemCount } currentOrder { id orderNumber ticketNumber status paymentStatus paymentMethod channel orderType } sessions { id guestCount startTime endTime tableId serverUserId readyItemCount } } }",
                 "variables": {
                   "zoneId": "<id>",
                   "name": "string",
@@ -8454,6 +8818,102 @@
         }
       }
     },
+    "/graphql#mutation.markItemsServed": {
+      "post": {
+        "tags": [
+          "Other"
+        ],
+        "operationId": "mutation_markItemsServed",
+        "summary": "Mutation: markItemsServed",
+        "description": "Mark food/drinks as delivered to the guest.\n\n**GraphQL signature**\n\n```graphql\nmarkItemsServed(itemIds: [ID!]!): [OrderItem!]!\n```\n\nThe example selects scalar fields and one level of nested objects — edit the `query` to pick exactly the fields you need.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "query"
+                ],
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "description": "GraphQL document"
+                  },
+                  "operationName": {
+                    "type": "string"
+                  },
+                  "variables": {
+                    "type": "object",
+                    "required": [
+                      "itemIds"
+                    ],
+                    "properties": {
+                      "itemIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "example": {
+                "query": "mutation MarkItemsServed($itemIds: [ID!]!) { markItemsServed(itemIds: $itemIds) { id name quantity price subtotal taxRate taxAmount discount modifiers notes seat course status voidReason firedAt readyAt stationId orderId productId createdAt product { id name description sku barcode price cost imageUrl } station { id name color printerName isExpo isActive locationId } } }",
+                "variables": {
+                  "itemIds": [
+                    "<id>"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "GraphQL response. Business errors (validation, permissions, not found) come back with HTTP 200 in `errors`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "nullable": true,
+                      "properties": {
+                        "markItemsServed": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/OrderItem"
+                          }
+                        }
+                      }
+                    },
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/GraphQLError"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed GraphQL document or variables",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GraphQLErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/graphql#mutation.openShift": {
       "post": {
         "tags": [
@@ -9186,7 +9646,7 @@
                 }
               },
               "example": {
-                "query": "mutation SeatTable($id: ID!, $guestCount: Int!, $serverUserId: ID) { seatTable(id: $id, guestCount: $guestCount, serverUserId: $serverUserId) { id guestCount startTime endTime tableId serverUserId server { id email name role roleId phone avatarUrl hourlyRate } } }",
+                "query": "mutation SeatTable($id: ID!, $guestCount: Int!, $serverUserId: ID) { seatTable(id: $id, guestCount: $guestCount, serverUserId: $serverUserId) { id guestCount startTime endTime tableId serverUserId server { id email name role roleId phone avatarUrl hourlyRate } table { id name capacity shape x y width height } orders { id orderNumber ticketNumber status paymentStatus paymentMethod channel orderType } readyItemCount } }",
                 "variables": {
                   "id": "<id>",
                   "guestCount": 1
@@ -11619,7 +12079,7 @@
                 }
               },
               "example": {
-                "query": "mutation UpdateTable($id: ID!, $input: TableInput!) { updateTable(id: $id, input: $input) { id name capacity shape x y width height status zoneId activeSession { id guestCount startTime endTime tableId serverUserId } currentOrder { id orderNumber ticketNumber status paymentStatus paymentMethod channel orderType } sessions { id guestCount startTime endTime tableId serverUserId } } }",
+                "query": "mutation UpdateTable($id: ID!, $input: TableInput!) { updateTable(id: $id, input: $input) { id name capacity shape x y width height status zoneId activeSession { id guestCount startTime endTime tableId serverUserId readyItemCount } currentOrder { id orderNumber ticketNumber status paymentStatus paymentMethod channel orderType } sessions { id guestCount startTime endTime tableId serverUserId readyItemCount } } }",
                 "variables": {
                   "id": "<id>",
                   "input": {}
@@ -11712,7 +12172,7 @@
                 }
               },
               "example": {
-                "query": "mutation UpdateTableStatus($id: ID!, $status: TableStatus!) { updateTableStatus(id: $id, status: $status) { id name capacity shape x y width height status zoneId activeSession { id guestCount startTime endTime tableId serverUserId } currentOrder { id orderNumber ticketNumber status paymentStatus paymentMethod channel orderType } sessions { id guestCount startTime endTime tableId serverUserId } } }",
+                "query": "mutation UpdateTableStatus($id: ID!, $status: TableStatus!) { updateTableStatus(id: $id, status: $status) { id name capacity shape x y width height status zoneId activeSession { id guestCount startTime endTime tableId serverUserId readyItemCount } currentOrder { id orderNumber ticketNumber status paymentStatus paymentMethod channel orderType } sessions { id guestCount startTime endTime tableId serverUserId readyItemCount } } }",
                 "variables": {
                   "id": "<id>",
                   "status": "AVAILABLE"
@@ -12702,7 +13162,8 @@
           "KIOSK",
           "PRINTER",
           "PAYMENT_TERMINAL",
-          "CUSTOMER_DISPLAY"
+          "CUSTOMER_DISPLAY",
+          "HANDHELD"
         ]
       },
       "Discount": {
@@ -15022,6 +15483,82 @@
           }
         }
       },
+      "ServerOnDuty": {
+        "type": "object",
+        "required": [
+          "user",
+          "openTables"
+        ],
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/User"
+          },
+          "clockedInAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "openTables": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "ServerSummary": {
+        "type": "object",
+        "required": [
+          "userId",
+          "from",
+          "openTables",
+          "openChecks",
+          "openBalance",
+          "closedChecks",
+          "covers",
+          "sales",
+          "tips",
+          "averageCheck"
+        ],
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "from": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Start of the window: the explicit 'from', else the open clock-in, else midnight (server time)."
+          },
+          "openTables": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "openChecks": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "openBalance": {
+            "type": "number",
+            "description": "Balance still due on open checks."
+          },
+          "closedChecks": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "covers": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sales": {
+            "type": "number",
+            "description": "Completed sales excluding tips."
+          },
+          "tips": {
+            "type": "number"
+          },
+          "averageCheck": {
+            "type": "number"
+          }
+        }
+      },
       "Session": {
         "type": "object",
         "required": [
@@ -15485,7 +16022,10 @@
         "required": [
           "locationId",
           "revision",
-          "serverTime"
+          "serverTime",
+          "myReadyItems",
+          "myOpenTables",
+          "permissionsHash"
         ],
         "properties": {
           "locationId": {
@@ -15497,6 +16037,20 @@
           "serverTime": {
             "type": "string",
             "format": "date-time"
+          },
+          "myReadyItems": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Items READY at the pass on the caller's own checks. Handhelds buzz when this goes up."
+          },
+          "myOpenTables": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Open table seatings the caller is serving."
+          },
+          "permissionsHash": {
+            "type": "string",
+            "description": "Changes when the caller's role or permissions change. Refetch session and rebuild the UI when it does."
           }
         }
       },
@@ -15623,7 +16177,9 @@
           "id",
           "guestCount",
           "startTime",
-          "tableId"
+          "tableId",
+          "orders",
+          "readyItemCount"
         ],
         "properties": {
           "id": {
@@ -15656,6 +16212,26 @@
               }
             ],
             "nullable": true
+          },
+          "table": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Table"
+              }
+            ],
+            "nullable": true
+          },
+          "orders": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Order"
+            },
+            "description": "Open checks on this seating. Empty for tables the caller may not access."
+          },
+          "readyItemCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Items waiting at the pass for this seating."
           }
         }
       },
@@ -15916,6 +16492,7 @@
           "OWNER",
           "MANAGER",
           "SHIFT_LEAD",
+          "WAITER",
           "STAFF",
           "CUSTOMER"
         ]

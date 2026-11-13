@@ -3,7 +3,7 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '../../lib/prisma';
 import {
   Ctx, AuthInfo, requireAuth, requirePerm, requirePermOrApproval, fail, audit, can,
-  resolveLocationId, orgSettings,
+  resolveLocationId, orgSettings, orderScope, assertOrderAccess, ownChecksOnly,
 } from '../../lib/context';
 import { calculate, round2, roundCash } from '../../lib/pricing';
 import { OrgSettings, resolveSettings } from '../../lib/templates';
@@ -194,9 +194,14 @@ async function nextSeq(tx: Tx, key: string) {
   return s.value;
 }
 
-async function getOwnedOrder(auth: AuthInfo, id: string, client: Tx | typeof prisma = prisma) {
-  const order = await client.order.findFirst({ where: { id, organizationId: auth.orgId } });
+/** Loads an order in the caller's org. Unless `scoped` is false, also enforces own-checks-only access (waiters). */
+async function getOwnedOrder(auth: AuthInfo, id: string, { scoped = true }: { scoped?: boolean } = {}) {
+  const order = await prisma.order.findFirst({
+    where: { id, organizationId: auth.orgId },
+    include: { tableSession: { select: { serverUserId: true } } },
+  });
   if (!order) fail('Order not found', 'NOT_FOUND');
+  if (scoped) assertOrderAccess(auth, order!);
   return order!;
 }
 
@@ -517,6 +522,9 @@ async function attachTable(tx: Tx, auth: AuthInfo, locationId: string, tableId: 
   const table = await tx.table.findFirst({ where: { id: tableId, zone: { locationId, location: { organizationId: auth.orgId } } } });
   if (!table) fail('Table not found at this location', 'NOT_FOUND');
   let session = await tx.tableSession.findFirst({ where: { tableId, endTime: null } });
+  if (session && ownChecksOnly(auth) && session.serverUserId !== auth.userId) {
+    fail(`${table!.name} is served by someone else. Ask a shift lead to transfer the table.`, 'FORBIDDEN');
+  }
   if (!session) session = await tx.tableSession.create({ data: { tableId, guestCount: guestCount || 1, serverUserId: auth.userId } });
   if (['AVAILABLE', 'SEATED', 'NEEDS_CLEANING'].includes(table!.status)) {
     await tx.table.updateMany({ where: { id: tableId }, data: { status: 'ORDERING' } });
@@ -537,6 +545,7 @@ export const resolvers = {
       const f = filter || {};
       const where: Prisma.OrderWhereInput = {
         organizationId: auth.orgId,
+        AND: [orderScope(auth)],
         ...(f.locationId ? { locationId: f.locationId } : {}),
         ...(f.status ? { status: f.status } : {}),
         ...(f.paymentStatus ? { paymentStatus: f.paymentStatus } : {}),
@@ -561,14 +570,14 @@ export const resolvers = {
 
     order: async (_: any, { id }: any, ctx: Ctx) => {
       const auth = await requirePerm(ctx, 'orders.view', 'pos.access');
-      return prisma.order.findFirst({ where: { id, organizationId: auth.orgId } });
+      return prisma.order.findFirst({ where: { id, organizationId: auth.orgId, AND: [orderScope(auth)] } });
     },
 
     openOrders: async (_: any, { locationId }: any, ctx: Ctx) => {
       const auth = await requirePerm(ctx, 'pos.access');
       const loc = await resolveLocationId(auth, locationId);
       return prisma.order.findMany({
-        where: { organizationId: auth.orgId, locationId: loc, status: { in: OPEN_STATES as any }, paymentStatus: { in: ['UNPAID', 'PARTIAL'] } },
+        where: { organizationId: auth.orgId, locationId: loc, status: { in: OPEN_STATES as any }, paymentStatus: { in: ['UNPAID', 'PARTIAL'] }, AND: [orderScope(auth)] },
         orderBy: { createdAt: 'desc' },
         take: 100,
       });
@@ -576,10 +585,14 @@ export const resolvers = {
 
     tableOrder: async (_: any, { tableId }: any, ctx: Ctx) => {
       const auth = await requirePerm(ctx, 'pos.access');
-      return prisma.order.findFirst({
+      const order = await prisma.order.findFirst({
         where: { organizationId: auth.orgId, tableId, status: { in: OPEN_STATES as any } },
+        include: { tableSession: { select: { serverUserId: true } } },
         orderBy: { createdAt: 'desc' },
       });
+      // Fail rather than return null: null would let the POS open a second check on a busy table.
+      if (order) assertOrderAccess(auth, order);
+      return order;
     },
 
     kitchenTickets: async (_: any, { locationId, stationId }: any, ctx: Ctx) => {
@@ -729,8 +742,12 @@ export const resolvers = {
 
     voidOrderItem: async (_: any, { itemId, reason, approverPin }: any, ctx: Ctx) => {
       const auth = await requirePerm(ctx, 'pos.access');
-      const item = await prisma.orderItem.findFirst({ where: { id: itemId, order: { organizationId: auth.orgId } }, include: { order: true } });
+      const item = await prisma.orderItem.findFirst({
+        where: { id: itemId, order: { organizationId: auth.orgId } },
+        include: { order: { include: { tableSession: { select: { serverUserId: true } } } } },
+      });
       if (!item) fail('Item not found', 'NOT_FOUND');
+      assertOrderAccess(auth, item!.order);
       assertOpen(item!.order);
       if (item!.order.paidAmount > 0) fail('Refund the payment before voiding items');
       const { settings } = await orgSettings(auth.orgId);
@@ -900,7 +917,7 @@ export const resolvers = {
 
     bumpOrder: async (_: any, { orderId, stationId }: any, ctx: Ctx) => {
       const auth = await requirePerm(ctx, 'kds.access');
-      await getOwnedOrder(auth, orderId);
+      await getOwnedOrder(auth, orderId, { scoped: false }); // kitchen works every ticket
       const ready = await prisma.orderItem.count({ where: { orderId, status: 'READY', ...(stationId ? { stationId } : {}) } });
       const cooking = await prisma.orderItem.count({ where: { orderId, status: { in: ['FIRED', 'PREPARING'] }, ...(stationId ? { stationId } : {}) } });
       // First bump marks ready; bumping an all-ready ticket marks it served (clears the screen).

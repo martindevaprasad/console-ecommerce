@@ -42,6 +42,7 @@ enum UserRole {
   OWNER
   MANAGER
   SHIFT_LEAD
+  WAITER
   STAFF
   CUSTOMER
 }
@@ -166,6 +167,7 @@ enum DeviceType {
   PRINTER
   PAYMENT_TERMINAL
   CUSTOMER_DISPLAY
+  HANDHELD // waiter phone / tablet running the mobile app
 }
 
 // ---------------- Tenant ----------------

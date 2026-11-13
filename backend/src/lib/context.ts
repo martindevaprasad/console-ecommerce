@@ -67,6 +67,32 @@ export async function requirePerm(ctx: Ctx, ...perms: string[]): Promise<AuthInf
 
 export const can = (auth: AuthInfo, perm: string) => auth.permissions.has(perm);
 
+// ---------------------------------------------------------------- order ownership
+//
+// Users without `orders.view_all` (e.g. WAITER) only reach their own checks.
+// A dine-in check belongs to whoever serves the table session, so a table
+// transfer hands the check over too. Anything else belongs to its creator.
+
+export const ownChecksOnly = (auth: AuthInfo) => !auth.permissions.has('orders.view_all');
+
+/** Prisma `where` fragment for orders served by `userId`. */
+export const servedBy = (userId: string) => ({
+  OR: [
+    { tableSession: { serverUserId: userId } },
+    { tableSessionId: null, userId },
+  ],
+});
+
+/** Prisma `where` fragment that limits order queries to what the caller may see. */
+export const orderScope = (auth: AuthInfo) => (ownChecksOnly(auth) ? servedBy(auth.userId) : {});
+
+/** Throws unless the caller may act on this order. `order.tableSession` must be loaded for dine-in checks. */
+export function assertOrderAccess(auth: AuthInfo, order: { userId: string | null; tableSessionId: string | null; tableSession?: { serverUserId: string | null } | null }) {
+  if (!ownChecksOnly(auth)) return;
+  const owner = order.tableSessionId ? order.tableSession?.serverUserId : order.userId;
+  if (owner !== auth.userId) fail('This check belongs to another server. Ask a shift lead to transfer the table.', 'FORBIDDEN');
+}
+
 /**
  * Manager override: when the current user lacks `perm`, a manager can approve
  * by entering their PIN on the terminal.

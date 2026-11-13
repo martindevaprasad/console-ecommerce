@@ -15,8 +15,10 @@ export const PERMISSION_GROUPS: { group: string; items: { key: string; label: st
     group: 'Front of House',
     items: [
       { key: 'orders.view', label: 'View orders' },
+      { key: 'orders.view_all', label: 'Access every check (without it: only own tables & orders)' },
       { key: 'orders.manage', label: 'Edit / transfer orders' },
       { key: 'tables.manage', label: 'Manage tables & seating' },
+      { key: 'tables.assign', label: 'Assign / reassign tables to servers' },
       { key: 'tables.layout', label: 'Edit floor plan layout' },
       { key: 'reservations.manage', label: 'Manage reservations & waitlist' },
       { key: 'kds.access', label: 'Use kitchen display' },
@@ -69,12 +71,18 @@ export const SYSTEM_ROLE_PERMISSIONS: Record<string, string[]> = {
   MANAGER: ALL_PERMISSIONS.filter((p) => !['roles.manage'].includes(p)),
   SHIFT_LEAD: [
     'pos.access', 'pos.discount', 'pos.void', 'pos.refund',
-    'orders.view', 'orders.manage', 'tables.manage', 'reservations.manage', 'kds.access',
+    'orders.view', 'orders.view_all', 'orders.manage', 'tables.manage', 'tables.assign', 'reservations.manage', 'kds.access',
     'menu.view', 'inventory.view', 'customers.view', 'customers.manage',
     'staff.view', 'timeclock.manage', 'cash.manage', 'reports.view',
   ],
+  // Table-service server. Works only their own tables; voids, refunds, big
+  // discounts and table hand-offs go through a manager PIN (requirePermOrApproval).
+  WAITER: [
+    'pos.access', 'orders.view', 'tables.manage', 'reservations.manage',
+    'menu.view', 'customers.view',
+  ],
   STAFF: [
-    'pos.access', 'orders.view', 'tables.manage', 'reservations.manage', 'kds.access',
+    'pos.access', 'orders.view', 'orders.view_all', 'tables.manage', 'reservations.manage', 'kds.access',
     'menu.view', 'customers.view',
   ],
   CUSTOMER: [],

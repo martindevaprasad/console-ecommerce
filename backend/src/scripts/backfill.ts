@@ -53,6 +53,16 @@ async function main() {
     }
   }
   console.log(`- Configured ${orgs.length} organizations`);
+
+  // 5. `orders.view_all` was introduced with the WAITER role. Custom roles created before it
+  //    could see every check, so grant it to keep their behaviour unchanged.
+  const legacyRoles = await prisma.role.findMany({
+    where: { permissions: { hasSome: ['pos.access', 'orders.view'] }, NOT: { permissions: { has: 'orders.view_all' } } },
+  });
+  for (const r of legacyRoles) {
+    await prisma.role.update({ where: { id: r.id }, data: { permissions: { push: 'orders.view_all' } } });
+  }
+  console.log(`- Granted orders.view_all to ${legacyRoles.length} existing custom roles`);
   console.log('Backfill complete.');
 }
 

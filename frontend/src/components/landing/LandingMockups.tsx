@@ -35,7 +35,7 @@ export const Scaled: React.FC<{ width: number; className?: string; children: Rea
   }, [width]);
 
   return (
-    <div ref={outer} className={`lp-scaled ${className ?? ''}`} style={{ height }} aria-hidden>
+    <div ref={outer} className={`lp-scaled${className ? ` ${className}` : ''}`} style={{ height }} aria-hidden>
       <div ref={inner} style={{ width, transform: `scale(${scale})`, transformOrigin: 'top left', margin: scale === 1 ? '0 auto' : 0 }}>
         {children}
       </div>
@@ -98,6 +98,11 @@ export const DashboardMock: React.FC = () => {
       </aside>
 
       <div className="mk-main">
+        {/* Shown only in the phone layout, where the sidebar is hidden */}
+        <div className="mk-mobilebar">
+          <MageWordmark height={20} />
+          <span><IconBell size={16} /><span className="mk-avatar">GS</span></span>
+        </div>
         <header className="mk-head">
           <h4>Service is busy tonight <IconFlame size={18} className="mk-flame" /></h4>
           <span>{today}</span>

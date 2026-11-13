@@ -144,6 +144,19 @@ function useActiveSection(ids: string[]) {
 
 const SECTION_IDS = NAV_LINKS.map((l) => l.id);
 
+/** Live result of a CSS media query. */
+function useMedia(query: string) {
+  const [match, setMatch] = useState(() => typeof window !== 'undefined' && window.matchMedia(query).matches);
+  useEffect(() => {
+    const mq = window.matchMedia(query);
+    const onChange = () => setMatch(mq.matches);
+    onChange();
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, [query]);
+  return match;
+}
+
 export const LandingPage: React.FC = () => {
   const rootRef = useRef<HTMLDivElement>(null);
   const railRef = useRef<HTMLDivElement>(null);
@@ -154,6 +167,10 @@ export const LandingPage: React.FC = () => {
   const [faq, setFaq] = useState<number | null>(0);
   const [slide, setSlide] = useState(0);
   const active = useActiveSection(SECTION_IDS);
+  // Mockups switch to a phone / tablet layout (narrower design width, fewer panels) so they stay legible.
+  const phone = useMedia('(max-width: 640px)');
+  const tablet = useMedia('(max-width: 900px)') && !phone;
+  const mockTier = phone ? 'compact' : tablet ? 'mid' : undefined;
   useReveal(rootRef);
 
   useEffect(() => {
@@ -204,6 +221,7 @@ export const LandingPage: React.FC = () => {
             <Link to="/login" className="lp-btn lp-btn-text">Sign in</Link>
             <Link to="/register" className="lp-btn lp-btn-mint">Try for free</Link>
           </div>
+          <Link to="/register" className="lp-btn lp-btn-mint lp-nav-mobile-cta">Try free</Link>
           <button type="button" className="lp-burger" aria-label={menuOpen ? 'Close menu' : 'Open menu'} aria-expanded={menuOpen}
             onClick={() => setMenuOpen((o) => !o)}>
             {menuOpen ? <IconX size={24} /> : <IconMenu2 size={24} />}
@@ -234,7 +252,7 @@ export const LandingPage: React.FC = () => {
 
         <div className="lp-container lp-hero-device lp-reveal">
           <div className="lp-device">
-            <Scaled width={1180}><DashboardMock /></Scaled>
+            <Scaled width={phone ? 440 : tablet ? 900 : 1180} className={mockTier}><DashboardMock /></Scaled>
           </div>
         </div>
       </section>
@@ -315,8 +333,9 @@ export const LandingPage: React.FC = () => {
               ))}
             </div>
             <div className="lp-step-panel" role="tabpanel" id="step-panel" aria-labelledby={`step-${step}`}>
+              <p className="lp-step-desc">{STEPS[step].text}</p>
               <div className="lp-device lp-device-sm" key={step}>
-                <Scaled width={680}><ActiveMock /></Scaled>
+                <Scaled width={phone ? 480 : 680} className={mockTier}><ActiveMock /></Scaled>
               </div>
             </div>
           </div>
@@ -449,7 +468,7 @@ export const LandingPage: React.FC = () => {
             </div>
           </div>
           <div className="lp-device lp-cta-device lp-reveal">
-            <Scaled width={1040}><MenuMock withOrder /></Scaled>
+            <Scaled width={phone ? 440 : tablet ? 860 : 1040} className={mockTier}><MenuMock withOrder /></Scaled>
           </div>
         </div>
       </section>

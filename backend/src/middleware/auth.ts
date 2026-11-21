@@ -17,6 +17,8 @@ export interface JWTPayload {
   role: string;
   locationId?: string;
   departmentId?: string;
+  /** Set on tokens issued to a paired waiter handheld (Device.id). */
+  deviceId?: string;
 }
 
 export const generateToken = (payload: JWTPayload): string => {

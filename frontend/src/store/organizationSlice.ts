@@ -22,6 +22,23 @@ export interface OrgSettings {
     pinSwitchUser: boolean;
   };
   loyalty: { pointsPerUnit: number; pointValue: number; minRedeemPoints: number };
+  waiterApp: {
+    enabled: boolean;
+    allowTables: boolean;
+    allowMenu: boolean;
+    allowTakeaway: boolean;
+    allowPayments: boolean;
+    paymentMethods: string[];
+    allowDiscounts: boolean;
+    allowSplit: boolean;
+    allowVoids: boolean;
+    allowTableTransfer: boolean;
+    allowReservations: boolean;
+    fireOnSubmit: boolean;
+    requireClockIn: boolean;
+    showImages: boolean;
+    autoLockMinutes: number;
+  };
   receipt: { header: string; footer: string; showTaxBreakdown: boolean };
   taxLabel: string;
 }

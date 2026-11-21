@@ -4,6 +4,7 @@ import { prisma } from '../../lib/prisma';
 import {
   Ctx, AuthInfo, requireAuth, requirePerm, requirePermOrApproval, fail, audit, can,
   resolveLocationId, orgSettings, orderScope, assertOrderAccess, ownChecksOnly,
+  assertHandheldAllows, assertHandheldClockedIn,
 } from '../../lib/context';
 import { calculate, round2, roundCash } from '../../lib/pricing';
 import { OrgSettings, resolveSettings } from '../../lib/templates';
@@ -303,6 +304,7 @@ async function buildLines(tx: Tx, auth: AuthInfo, locationId: string, items: any
 /** Resolves a discount request into a stored spec, enforcing approvals. */
 async function resolveDiscount(ctx: Ctx, auth: AuthInfo, settings: OrgSettings, timezone: string, input: any) {
   if (!input) return null;
+  assertHandheldAllows(auth, settings, 'allowDiscounts');
   if (input.discountId) {
     const d = await prisma.discount.findFirst({ where: { id: input.discountId, organizationId: auth.orgId } });
     if (!d || !discountValidNow(d, timezone)) fail('This promotion is not currently valid');
@@ -460,6 +462,11 @@ async function completeOrder(tx: Tx, orderId: string, settings: OrgSettings, aut
 }
 
 async function applyPayment(tx: Tx, auth: AuthInfo, orderId: string, payment: any, settings: OrgSettings) {
+  if (auth.deviceId) {
+    assertHandheldAllows(auth, settings, 'allowPayments');
+    if (!auth.permissions.has('handheld.payments')) fail('You are not allowed to collect payments on the waiter app', 'FORBIDDEN');
+    if (!settings.waiterApp.paymentMethods.includes(payment.method)) fail(`${payment.method} payments are not enabled on the waiter app`, 'FORBIDDEN');
+  }
   const order = await tx.order.findUnique({ where: { id: orderId } });
   assertOpen(order);
   const due = round2(order!.total - order!.tipAmount);
@@ -624,6 +631,8 @@ export const resolvers = {
       const orderType = input.orderType || settings.orderTypes[0] || 'TAKEAWAY';
       if (!settings.orderTypes.includes(orderType)) fail(`${orderType.replace('_', ' ')} orders are not enabled`);
       if (input.tableId && !settings.modules.tables) fail('Table service is disabled');
+      assertHandheldAllows(auth, settings, 'allowMenu', input.tableId ? 'allowTables' : 'allowTakeaway');
+      await assertHandheldClockedIn(auth, settings);
       if (input.customerId) {
         const c = await prisma.customer.findFirst({ where: { id: input.customerId, organizationId: auth.orgId } });
         if (!c) fail('Customer not found', 'NOT_FOUND');
@@ -688,6 +697,11 @@ export const resolvers = {
       const order = await getOwnedOrder(auth, orderId);
       assertOpen(order);
       if (order.paidAmount > 0) fail('Order has partial payment; start a new check for extra items');
+      if (auth.deviceId) {
+        const { settings } = await orgSettings(auth.orgId);
+        assertHandheldAllows(auth, settings, 'allowMenu');
+        await assertHandheldClockedIn(auth, settings);
+      }
       await prisma.$transaction(async (tx) => {
         const lines = await buildLines(tx, auth, order.locationId, items, !!fire);
         await tx.orderItem.createMany({ data: lines.map((l) => ({ ...l, orderId })) as any });
@@ -751,6 +765,8 @@ export const resolvers = {
       assertOpen(item!.order);
       if (item!.order.paidAmount > 0) fail('Refund the payment before voiding items');
       const { settings } = await orgSettings(auth.orgId);
+      // Removing a not-yet-sent line is just editing the order; voiding sent food is gated.
+      if (item!.status !== 'PENDING') assertHandheldAllows(auth, settings, 'allowVoids');
       let approvedBy: string | undefined;
       // Unsent items can be removed freely; sent items cost food and need authority.
       if (item!.status !== 'PENDING' && settings.security.voidRequiresManager) {
@@ -840,6 +856,7 @@ export const resolvers = {
       assertOpen(order);
       if (order.paidAmount > 0) fail('Refund payments before cancelling');
       const { settings } = await orgSettings(auth.orgId);
+      assertHandheldAllows(auth, settings, 'allowVoids');
       const sent = await prisma.orderItem.count({ where: { orderId, status: { not: 'PENDING' } } });
       let approvedBy: string | undefined;
       if (sent && settings.security.voidRequiresManager) approvedBy = (await requirePermOrApproval(ctx, 'pos.void', approverPin)).approvedBy;
@@ -860,6 +877,7 @@ export const resolvers = {
       const order = await getOwnedOrder(auth, orderId);
       assertOpen(order);
       if (order.paidAmount > 0) fail('Split before taking payments, or split the payment instead');
+      if (auth.deviceId) assertHandheldAllows(auth, (await orgSettings(auth.orgId)).settings, 'allowSplit');
       const items = await prisma.orderItem.findMany({ where: { orderId, id: { in: itemIds }, status: { not: 'VOIDED' } } });
       const remaining = await prisma.orderItem.count({ where: { orderId, id: { notIn: itemIds }, status: { not: 'VOIDED' } } });
       if (!items.length) fail('Select items to move');
@@ -890,6 +908,7 @@ export const resolvers = {
       const auth = await requirePerm(ctx, 'tables.manage');
       const order = await getOwnedOrder(auth, orderId);
       assertOpen(order);
+      if (auth.deviceId) assertHandheldAllows(auth, (await orgSettings(auth.orgId)).settings, 'allowTables', 'allowTableTransfer');
       await prisma.$transaction(async (tx) => {
         const session = await attachTable(tx, auth, order.locationId, tableId, order.guestCount);
         await tx.order.update({ where: { id: orderId }, data: { tableId, tableSessionId: session.id } });

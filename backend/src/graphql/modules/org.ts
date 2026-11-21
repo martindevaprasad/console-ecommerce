@@ -415,6 +415,7 @@ export const resolvers = {
         pos: { ...settings.pos, ...(patch.pos || {}) },
         security: { ...settings.security, ...(patch.security || {}) },
         loyalty: { ...settings.loyalty, ...(patch.loyalty || {}) },
+        waiterApp: { ...settings.waiterApp, ...(patch.waiterApp || {}) },
         receipt: { ...settings.receipt, ...(patch.receipt || {}) },
       });
       const updated = await prisma.organization.update({ where: { id: org.id }, data: { settings: merged as any } });

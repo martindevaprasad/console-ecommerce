@@ -29,9 +29,54 @@ export interface OrgSettings {
     pinSwitchUser: boolean;
   };
   loyalty: { pointsPerUnit: number; pointValue: number; minRedeemPoints: number };
+  /** Waiter handheld app. Org-wide switches; per-person access comes from the handheld.* permissions. */
+  waiterApp: WaiterAppSettings;
   receipt: { header: string; footer: string; showTaxBreakdown: boolean };
   taxLabel: string;
 }
+
+export interface WaiterAppSettings {
+  enabled: boolean;
+  /** Floor plan, seating and table checks. Also needs the Tables module. */
+  allowTables: boolean;
+  /** Browse the menu and add items to checks. */
+  allowMenu: boolean;
+  /** Start takeaway / pickup checks from the handheld. */
+  allowTakeaway: boolean;
+  /** Collect payments at the table. The person also needs handheld.payments. */
+  allowPayments: boolean;
+  paymentMethods: string[];
+  allowDiscounts: boolean;
+  allowSplit: boolean;
+  allowVoids: boolean;
+  allowTableTransfer: boolean;
+  allowReservations: boolean;
+  /** Send items to the kitchen as soon as the waiter submits them. Off: items wait until "Send". */
+  fireOnSubmit: boolean;
+  /** Waiters must be clocked in before they can take orders. */
+  requireClockIn: boolean;
+  showImages: boolean;
+  /** Lock back to the PIN screen after this many idle minutes (0 = never). */
+  autoLockMinutes: number;
+}
+
+export const DEFAULT_WAITER_APP: WaiterAppSettings = {
+  enabled: true,
+  allowTables: true,
+  allowMenu: true,
+  allowTakeaway: true,
+  allowPayments: false,
+  paymentMethods: ['CASH', 'CARD', 'DIGITAL'],
+  allowDiscounts: false,
+  allowSplit: true,
+  allowVoids: true,
+  allowTableTransfer: true,
+  allowReservations: true,
+  fireOnSubmit: true,
+  requireClockIn: false,
+  showImages: true,
+  autoLockMinutes: 5,
+};
 
 export const DEFAULT_SETTINGS: OrgSettings = {
   serviceModel: 'HYBRID',
@@ -47,6 +92,7 @@ export const DEFAULT_SETTINGS: OrgSettings = {
   },
   security: { voidRequiresManager: true, refundRequiresManager: true, maxDiscountPctWithoutApproval: 10, pinSwitchUser: true },
   loyalty: { pointsPerUnit: 1, pointValue: 0.01, minRedeemPoints: 100 },
+  waiterApp: DEFAULT_WAITER_APP,
   receipt: { header: '', footer: 'Thank you for dining with us!', showTaxBreakdown: true },
   taxLabel: 'Tax',
 };
@@ -61,6 +107,7 @@ export function resolveSettings(stored: any): OrgSettings {
     pos: { ...DEFAULT_SETTINGS.pos, ...(s.pos || {}) },
     security: { ...DEFAULT_SETTINGS.security, ...(s.security || {}) },
     loyalty: { ...DEFAULT_SETTINGS.loyalty, ...(s.loyalty || {}) },
+    waiterApp: { ...DEFAULT_SETTINGS.waiterApp, ...(s.waiterApp || {}) },
     receipt: { ...DEFAULT_SETTINGS.receipt, ...(s.receipt || {}) },
   };
 }

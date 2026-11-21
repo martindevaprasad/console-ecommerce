@@ -12,6 +12,8 @@ export interface AuthInfo {
   name: string;
   locationId?: string | null;
   permissions: Set<string>;
+  /** Paired waiter handheld the request comes from, if any. */
+  deviceId?: string | null;
 }
 
 export interface Ctx {
@@ -40,13 +42,24 @@ async function loadAuth(ctx: Ctx): Promise<AuthInfo | null> {
   const perms = user.role === 'OWNER'
     ? ALL_PERMISSIONS
     : permissionsFor(user.role, user.customRole?.permissions);
+  let locationId = user.locationId;
+  if (payload.deviceId) {
+    // Handheld tokens die the moment the device is revoked from the POS, or
+    // the person loses waiter-app access. They work at the device's location.
+    const device = await prisma.device.findFirst({
+      where: { id: payload.deviceId, type: 'HANDHELD', isActive: true, location: { organizationId: user.organizationId } },
+    });
+    if (!device || !perms.includes('handheld.access')) return null;
+    locationId = device.locationId;
+  }
   return {
     userId: user.id,
     orgId: user.organizationId,
     role: user.role,
     name: user.name,
-    locationId: user.locationId,
+    locationId,
     permissions: new Set(perms),
+    deviceId: payload.deviceId || null,
   };
 }
 
@@ -142,6 +155,34 @@ export async function orgSettings(orgId: string): Promise<{ org: any; settings: 
   const org = await prisma.organization.findUnique({ where: { id: orgId } });
   if (!org) fail('Organization not found', 'NOT_FOUND');
   return { org, settings: resolveSettings(org!.settings) };
+}
+
+type WaiterSwitch = 'allowTables' | 'allowMenu' | 'allowTakeaway' | 'allowPayments' | 'allowDiscounts' | 'allowSplit' | 'allowVoids' | 'allowTableTransfer' | 'allowReservations';
+
+const WAITER_SWITCH_LABEL: Record<WaiterSwitch, string> = {
+  allowTables: 'Table service', allowMenu: 'Ordering', allowTakeaway: 'Takeaway orders', allowPayments: 'Payments',
+  allowDiscounts: 'Discounts', allowSplit: 'Splitting checks', allowVoids: 'Voids', allowTableTransfer: 'Table transfers',
+  allowReservations: 'Reservations',
+};
+
+/**
+ * Enforces the POS "Waiter app" switches for requests from a paired handheld.
+ * Terminal / back-office requests (no deviceId) are never affected.
+ */
+export function assertHandheldAllows(auth: AuthInfo, settings: OrgSettings, ...switches: WaiterSwitch[]) {
+  if (!auth.deviceId) return;
+  const w = settings.waiterApp;
+  if (!w.enabled) fail('The waiter app is turned off for this business', 'FORBIDDEN');
+  for (const s of switches) {
+    if (!w[s]) fail(`${WAITER_SWITCH_LABEL[s]} is turned off for the waiter app. Use the POS terminal.`, 'FORBIDDEN');
+  }
+}
+
+/** Waiter-app clock-in rule: enforced before a handheld takes orders. */
+export async function assertHandheldClockedIn(auth: AuthInfo, settings: OrgSettings) {
+  if (!auth.deviceId || !settings.waiterApp.requireClockIn) return;
+  const open = await prisma.timeEntry.findFirst({ where: { userId: auth.userId, clockOut: null } });
+  if (!open) fail('Clock in before taking orders', 'CLOCK_IN_REQUIRED');
 }
 
 export async function audit(auth: AuthInfo, action: string, entity: string, entityId?: string | null, meta?: any) {

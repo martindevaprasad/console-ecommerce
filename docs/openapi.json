@@ -998,6 +998,258 @@
         }
       }
     },
+    "/graphql#query.handheldConfig": {
+      "post": {
+        "tags": [
+          "Other"
+        ],
+        "operationId": "query_handheldConfig",
+        "summary": "Query: handheldConfig",
+        "description": "Everything the waiter app needs to shape itself: business, location, switches and the caller's capabilities.\n\n**GraphQL signature**\n\n```graphql\nhandheldConfig: JSON!\n```\n\nThe example selects scalar fields and one level of nested objects — edit the `query` to pick exactly the fields you need.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "query"
+                ],
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "description": "GraphQL document"
+                  },
+                  "operationName": {
+                    "type": "string"
+                  },
+                  "variables": {
+                    "type": "object",
+                    "properties": {}
+                  }
+                }
+              },
+              "example": {
+                "query": "query HandheldConfig { handheldConfig }",
+                "variables": {}
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "GraphQL response. Business errors (validation, permissions, not found) come back with HTTP 200 in `errors`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "nullable": true,
+                      "properties": {
+                        "handheldConfig": {
+                          "description": "Arbitrary JSON value"
+                        }
+                      }
+                    },
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/GraphQLError"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed GraphQL document or variables",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GraphQLErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/graphql#query.handheldDevices": {
+      "post": {
+        "tags": [
+          "Other"
+        ],
+        "operationId": "query_handheldDevices",
+        "summary": "Query: handheldDevices",
+        "description": "Paired handhelds, for POS settings.\n\n**GraphQL signature**\n\n```graphql\nhandheldDevices: [Device!]!\n```\n\nThe example selects scalar fields and one level of nested objects — edit the `query` to pick exactly the fields you need.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "query"
+                ],
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "description": "GraphQL document"
+                  },
+                  "operationName": {
+                    "type": "string"
+                  },
+                  "variables": {
+                    "type": "object",
+                    "properties": {}
+                  }
+                }
+              },
+              "example": {
+                "query": "query HandheldDevices { handheldDevices { id name type identifier ipAddress lastSeenAt isActive locationId } }",
+                "variables": {}
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "GraphQL response. Business errors (validation, permissions, not found) come back with HTTP 200 in `errors`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "nullable": true,
+                      "properties": {
+                        "handheldDevices": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Device"
+                          }
+                        }
+                      }
+                    },
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/GraphQLError"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed GraphQL document or variables",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GraphQLErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/graphql#query.handheldStaff": {
+      "post": {
+        "tags": [
+          "Other"
+        ],
+        "operationId": "query_handheldStaff",
+        "summary": "Query: handheldStaff",
+        "description": "Staff who can sign in on this handheld (active, have a PIN and waiter-app access). Public: needs only the device key.\n\n**GraphQL signature**\n\n```graphql\nhandheldStaff(deviceKey: String!): [HandheldStaff!]!\n```\n\nThe example selects scalar fields and one level of nested objects — edit the `query` to pick exactly the fields you need.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "query"
+                ],
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "description": "GraphQL document"
+                  },
+                  "operationName": {
+                    "type": "string"
+                  },
+                  "variables": {
+                    "type": "object",
+                    "required": [
+                      "deviceKey"
+                    ],
+                    "properties": {
+                      "deviceKey": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              },
+              "example": {
+                "query": "query HandheldStaff($deviceKey: String!) { handheldStaff(deviceKey: $deviceKey) { id name role avatarUrl } }",
+                "variables": {
+                  "deviceKey": "string"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "GraphQL response. Business errors (validation, permissions, not found) come back with HTTP 200 in `errors`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "nullable": true,
+                      "properties": {
+                        "handheldStaff": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/HandheldStaff"
+                          }
+                        }
+                      }
+                    },
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/GraphQLError"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed GraphQL document or variables",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GraphQLErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/graphql#query.inventories": {
       "post": {
         "tags": [
@@ -8724,6 +8976,103 @@
         }
       }
     },
+    "/graphql#mutation.handheldLogin": {
+      "post": {
+        "tags": [
+          "Other"
+        ],
+        "operationId": "mutation_handheldLogin",
+        "summary": "Mutation: handheldLogin",
+        "description": "PIN sign-in on a paired handheld. Pass userId (from handheldStaff) to check only that person's PIN.\n\n**GraphQL signature**\n\n```graphql\nhandheldLogin(deviceKey: String!, pin: String!, userId: ID): AuthPayload!\n```\n\nThe example selects scalar fields and one level of nested objects — edit the `query` to pick exactly the fields you need.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "query"
+                ],
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "description": "GraphQL document"
+                  },
+                  "operationName": {
+                    "type": "string"
+                  },
+                  "variables": {
+                    "type": "object",
+                    "required": [
+                      "deviceKey",
+                      "pin"
+                    ],
+                    "properties": {
+                      "deviceKey": {
+                        "type": "string"
+                      },
+                      "pin": {
+                        "type": "string"
+                      },
+                      "userId": {
+                        "type": "string",
+                        "nullable": true
+                      }
+                    }
+                  }
+                }
+              },
+              "example": {
+                "query": "mutation HandheldLogin($deviceKey: String!, $pin: String!, $userId: ID) { handheldLogin(deviceKey: $deviceKey, pin: $pin, userId: $userId) { token user { id email name role roleId phone avatarUrl hourlyRate } } }",
+                "variables": {
+                  "deviceKey": "string",
+                  "pin": "string"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "GraphQL response. Business errors (validation, permissions, not found) come back with HTTP 200 in `errors`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "nullable": true,
+                      "properties": {
+                        "handheldLogin": {
+                          "$ref": "#/components/schemas/AuthPayload"
+                        }
+                      }
+                    },
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/GraphQLError"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed GraphQL document or variables",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GraphQLErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/graphql#mutation.login": {
       "post": {
         "tags": [
@@ -8979,6 +9328,108 @@
                       "properties": {
                         "openShift": {
                           "$ref": "#/components/schemas/Shift"
+                        }
+                      }
+                    },
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/GraphQLError"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed GraphQL document or variables",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GraphQLErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/graphql#mutation.pairHandheld": {
+      "post": {
+        "tags": [
+          "Other"
+        ],
+        "operationId": "mutation_pairHandheld",
+        "summary": "Mutation: pairHandheld",
+        "description": "Pair this phone/tablet as a waiter handheld. A manager signs in once; staff then use PINs.\n\n**GraphQL signature**\n\n```graphql\npairHandheld(email: String!, password: String!, deviceName: String!, locationId: ID): HandheldPairing!\n```\n\nThe example selects scalar fields and one level of nested objects — edit the `query` to pick exactly the fields you need.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "query"
+                ],
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "description": "GraphQL document"
+                  },
+                  "operationName": {
+                    "type": "string"
+                  },
+                  "variables": {
+                    "type": "object",
+                    "required": [
+                      "email",
+                      "password",
+                      "deviceName"
+                    ],
+                    "properties": {
+                      "email": {
+                        "type": "string"
+                      },
+                      "password": {
+                        "type": "string"
+                      },
+                      "deviceName": {
+                        "type": "string"
+                      },
+                      "locationId": {
+                        "type": "string",
+                        "nullable": true
+                      }
+                    }
+                  }
+                }
+              },
+              "example": {
+                "query": "mutation PairHandheld($email: String!, $password: String!, $deviceName: String!, $locationId: ID) { pairHandheld(email: $email, password: $password, deviceName: $deviceName, locationId: $locationId) { deviceKey device { id name type identifier ipAddress lastSeenAt isActive locationId } organizationName location { id code name address city country phone email } } }",
+                "variables": {
+                  "email": "owner@nexuscafe.com",
+                  "password": "admin123",
+                  "deviceName": "string"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "GraphQL response. Business errors (validation, permissions, not found) come back with HTTP 200 in `errors`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "nullable": true,
+                      "properties": {
+                        "pairHandheld": {
+                          "$ref": "#/components/schemas/HandheldPairing"
                         }
                       }
                     },
@@ -10228,6 +10679,94 @@
                       "properties": {
                         "transferOrder": {
                           "$ref": "#/components/schemas/Order"
+                        }
+                      }
+                    },
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/GraphQLError"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed GraphQL document or variables",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GraphQLErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/graphql#mutation.unpairHandheld": {
+      "post": {
+        "tags": [
+          "Other"
+        ],
+        "operationId": "mutation_unpairHandheld",
+        "summary": "Mutation: unpairHandheld",
+        "description": "Remove this handheld's pairing (from the device itself).\n\n**GraphQL signature**\n\n```graphql\nunpairHandheld(deviceKey: String!): Boolean!\n```\n\nThe example selects scalar fields and one level of nested objects — edit the `query` to pick exactly the fields you need.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "query"
+                ],
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "description": "GraphQL document"
+                  },
+                  "operationName": {
+                    "type": "string"
+                  },
+                  "variables": {
+                    "type": "object",
+                    "required": [
+                      "deviceKey"
+                    ],
+                    "properties": {
+                      "deviceKey": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              },
+              "example": {
+                "query": "mutation UnpairHandheld($deviceKey: String!) { unpairHandheld(deviceKey: $deviceKey) }",
+                "variables": {
+                  "deviceKey": "string"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "GraphQL response. Business errors (validation, permissions, not found) come back with HTTP 200 in `errors`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "nullable": true,
+                      "properties": {
+                        "unpairHandheld": {
+                          "type": "boolean"
                         }
                       }
                     },
@@ -13406,6 +13945,52 @@
             "items": {
               "$ref": "#/components/schemas/Table"
             }
+          }
+        }
+      },
+      "HandheldPairing": {
+        "type": "object",
+        "required": [
+          "deviceKey",
+          "device",
+          "organizationName",
+          "location"
+        ],
+        "properties": {
+          "deviceKey": {
+            "type": "string"
+          },
+          "device": {
+            "$ref": "#/components/schemas/Device"
+          },
+          "organizationName": {
+            "type": "string"
+          },
+          "location": {
+            "$ref": "#/components/schemas/Location"
+          }
+        }
+      },
+      "HandheldStaff": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "role"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "$ref": "#/components/schemas/UserRole"
+          },
+          "avatarUrl": {
+            "type": "string",
+            "nullable": true
           }
         }
       },

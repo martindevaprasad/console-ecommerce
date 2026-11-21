@@ -83,6 +83,9 @@ export const ORG_API = {
   UPDATE_SETTINGS: `mutation UpdateSettings($patch: JSON!) { updateSettings(patch: $patch) { ${ORG} } }`,
   ONBOARD: `mutation Onboard($input: OnboardingInput!) { completeOnboarding(input: $input) { ${ORG} } }`,
   AUDIT: `query Audit($entity: String, $limit: Int, $offset: Int) { auditLogs(entity: $entity, limit: $limit, offset: $offset) { id userName action entity entityId meta createdAt } }`,
+  HANDHELDS: `query Handhelds { handheldDevices { id name lastSeenAt isActive locationId } }`,
+  UPDATE_HANDHELD: `mutation UpdateHandheld($id: ID!, $input: DeviceInput!) { updateDevice(id: $id, input: $input) { id } }`,
+  DELETE_HANDHELD: `mutation DeleteHandheld($id: ID!) { deleteDevice(id: $id) }`,
 };
 
 export const LOCATION = {

@@ -3,6 +3,7 @@ import toast from 'react-hot-toast';
 import {
   IconPalette, IconLock, IconLanguage, IconSun, IconMoon, IconDeviceDesktop, IconCheck, IconBuildingStore,
   IconToolsKitchen2, IconPuzzle, IconShieldCheck, IconStar, IconUserCircle, IconHistory, IconWand,
+  IconDeviceMobile, IconTrash, IconBan, IconRefresh,
 } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 import { useApi, useAppearance, useCan, useMutate, useOrg } from '@/hooks';
@@ -13,7 +14,50 @@ import { MODULE_INFO, ORDER_TYPE_LABELS, ALL_ORDER_TYPES } from '@/lib/constants
 import { dateTime, label } from '@/lib/format';
 import { Field, Toggle, SettingRow, Segmented, Empty } from '../shared/ui';
 
-type Tab = 'business' | 'region' | 'service' | 'modules' | 'security' | 'loyalty' | 'account' | 'appearance' | 'audit';
+type Tab = 'business' | 'region' | 'service' | 'modules' | 'security' | 'waiter' | 'loyalty' | 'account' | 'appearance' | 'audit';
+
+const WAITER_PAYMENT_METHODS = ['CASH', 'CARD', 'DIGITAL', 'GIFT_CARD', 'LOYALTY', 'HOUSE_ACCOUNT', 'OTHER'];
+
+/** Paired waiter phones/tablets. Pairing happens on the device; here they can be revoked. */
+const HandheldDevices: React.FC = () => {
+  const mutate = useMutate();
+  const { data, loading, reload } = useApi<{ handheldDevices: any[] }>(ORG_API.HANDHELDS);
+  const devices = data?.handheldDevices || [];
+  const act = async (fn: () => Promise<any>, msg: string) => {
+    try { await fn(); toast.success(msg); reload(true); } catch (e: any) { toast.error(e.message); }
+  };
+  return (
+    <section className="settings-section">
+      <div className="row" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+        <h2 className="settings-section-title" style={{ margin: 0 }}>Paired devices</h2>
+        <button className="btn btn-ghost btn-sm" onClick={() => reload()}><IconRefresh size={13} /> Refresh</button>
+      </div>
+      <p className="small muted" style={{ margin: '6px 0 12px' }}>
+        To pair a phone, open the waiter app and sign in once with a manager account. Staff then sign in with their PIN.
+        Revoking a device signs everyone on it out right away.
+      </p>
+      {loading && !data ? <p className="small muted">Loading…</p> : !devices.length ? (
+        <Empty icon={<IconDeviceMobile size={28} />} title="No waiter devices yet" hint="Install the waiter app on a phone and pair it with a manager login." />
+      ) : (
+        <table className="data-table">
+          <thead><tr><th>Device</th><th>Last active</th><th>Status</th><th /></tr></thead>
+          <tbody>{devices.map((d) => (
+            <tr key={d.id}>
+              <td><IconDeviceMobile size={14} style={{ verticalAlign: -2, marginRight: 6 }} />{d.name}</td>
+              <td className="small">{d.lastSeenAt ? dateTime(d.lastSeenAt) : '—'}</td>
+              <td>{d.isActive ? <span className="badge badge-success">Active</span> : <span className="badge">Revoked</span>}</td>
+              <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                {d.isActive
+                  ? <button className="btn btn-ghost btn-sm" onClick={() => act(() => mutate(ORG_API.UPDATE_HANDHELD, { id: d.id, input: { isActive: false } }), `${d.name} revoked`)}><IconBan size={13} /> Revoke</button>
+                  : <button className="btn btn-ghost btn-sm" onClick={() => act(() => mutate(ORG_API.DELETE_HANDHELD, { id: d.id }), 'Device removed')}><IconTrash size={13} /> Remove</button>}
+              </td>
+            </tr>
+          ))}</tbody>
+        </table>
+      )}
+    </section>
+  );
+};
 
 const VARIANTS: { key: SidebarVariant; label: string; desc: string; bg: string; accent: string }[] = [
   { key: 'aurora', label: 'Aurora', desc: 'Midnight navy · brand-color highlights (default)', bg: 'linear-gradient(180deg, #0d1120 0%, #080a12 100%)', accent: 'var(--color-primary)' },
@@ -205,6 +249,7 @@ const SettingsPage: React.FC = () => {
 
   const setPos = (p: any) => setCfg({ ...cfg, pos: { ...cfg.pos, ...p } });
   const setSec = (p: any) => setCfg({ ...cfg, security: { ...cfg.security, ...p } });
+  const setWaiter = (p: any) => setCfg({ ...cfg, waiterApp: { ...cfg.waiterApp, ...p } });
 
   const TABS: { key: Tab; label: string; sub: string; icon: React.ReactNode; admin?: boolean }[] = [
     { key: 'business', label: 'Business profile', sub: 'Brand, legal entity, format', icon: <IconBuildingStore size={16} />, admin: true },
@@ -212,6 +257,7 @@ const SettingsPage: React.FC = () => {
     { key: 'service', label: 'Service & POS', sub: 'Order types, courses, tips, charges', icon: <IconToolsKitchen2 size={16} />, admin: true },
     { key: 'modules', label: 'Modules', sub: 'Turn features on or off', icon: <IconPuzzle size={16} />, admin: true },
     { key: 'security', label: 'Security & approvals', sub: 'Voids, refunds, discount limits', icon: <IconShieldCheck size={16} />, admin: true },
+    { key: 'waiter', label: 'Waiter app', sub: 'Handheld access, payments, devices', icon: <IconDeviceMobile size={16} />, admin: true },
     { key: 'loyalty', label: 'Loyalty & receipts', sub: 'Points, receipt text', icon: <IconStar size={16} />, admin: true },
     { key: 'audit', label: 'Audit log', sub: 'Who did what, when', icon: <IconHistory size={16} />, admin: true },
     { key: 'account', label: 'My account', sub: 'Password & PIN', icon: <IconUserCircle size={16} /> },
@@ -330,6 +376,66 @@ const SettingsPage: React.FC = () => {
               <div style={{ marginTop: 12 }}><button className="btn btn-primary btn-sm" disabled={saving} onClick={() => saveConfig({ security: cfg.security })}>Save security</button></div>
             </section>
           )}
+
+          {tab === 'waiter' && cfg && cfg.waiterApp && (() => {
+            const w = cfg.waiterApp;
+            const row = (key: string, label: string, hint?: string, disabled?: boolean) => (
+              <SettingRow label={label} hint={hint}><Toggle size="sm" disabled={disabled || !w.enabled} on={!!w[key]} onChange={(v) => setWaiter({ [key]: v })} /></SettingRow>
+            );
+            return (
+              <div className="settings-sections">
+                <section className="settings-section">
+                  <h2 className="settings-section-title">Waiter app</h2>
+                  <p className="small muted" style={{ marginBottom: 10 }}>
+                    Staff take orders, serve tables and settle bills from their phone. These switches apply to every waiter device.
+                    Who can sign in is set per role under Staff → Roles (<b>Waiter App</b> permissions); everyone also needs a PIN.
+                  </p>
+                  <SettingRow label="Enable waiter app" hint="Off: devices can't sign in and pairing is blocked"><Toggle size="sm" on={w.enabled} onChange={(v) => setWaiter({ enabled: v })} /></SettingRow>
+                </section>
+                <section className="settings-section">
+                  <h2 className="settings-section-title">What waiters can do</h2>
+                  {!cfg.modules.tables && <p className="small text-warning" style={{ marginBottom: 8 }}>The Tables module is off, so table service is hidden in the app.</p>}
+                  {row('allowTables', 'Tables & floor plan', 'Seat guests and run table checks', !cfg.modules.tables)}
+                  {row('allowMenu', 'Menu & ordering', 'Browse the menu and add items to checks')}
+                  {row('allowTakeaway', 'Takeaway orders', 'Start takeaway / pickup checks from the phone')}
+                  {row('allowSplit', 'Split checks')}
+                  {row('allowVoids', 'Void sent items / cancel checks', 'Manager PIN rules from Security still apply')}
+                  {row('allowTableTransfer', 'Transfer tables', 'Hand a table to another server (needs a manager PIN unless the role can assign tables)')}
+                  {row('allowDiscounts', 'Apply discounts', 'Discount limits from Security still apply')}
+                  {row('allowReservations', 'Reservations & waitlist', undefined, !cfg.modules.reservations)}
+                </section>
+                <section className="settings-section">
+                  <h2 className="settings-section-title">Payments at the table</h2>
+                  {row('allowPayments', 'Collect payments on the waiter app', 'People also need the "Collect payments on the waiter app" permission')}
+                  <div className="setting-row" style={{ alignItems: 'flex-start' }}>
+                    <div><div className="setting-row-label">Allowed payment methods</div><div className="setting-row-hint">Shown on the waiter's pay screen</div></div>
+                    <div className="row" style={{ flexWrap: 'wrap', gap: 6, justifyContent: 'flex-end', maxWidth: 360 }}>
+                      {WAITER_PAYMENT_METHODS.map((m) => {
+                        const on = w.paymentMethods.includes(m);
+                        return (
+                          <button key={m} type="button" disabled={!w.enabled || !w.allowPayments} className={`chip${on ? ' active' : ''}`}
+                            onClick={() => setWaiter({ paymentMethods: on ? w.paymentMethods.filter((x: string) => x !== m) : [...w.paymentMethods, m] })}>
+                            {label(m)}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </section>
+                <section className="settings-section">
+                  <h2 className="settings-section-title">Workflow</h2>
+                  {row('fireOnSubmit', 'Send to kitchen when the waiter submits', 'Off: items are held until the waiter taps Send')}
+                  {row('requireClockIn', 'Must be clocked in to take orders', undefined, !cfg.modules.timeclock)}
+                  {row('showImages', 'Show item photos on the menu')}
+                  <SettingRow label="Auto-lock after (minutes idle)" hint="Back to the PIN screen. 0 = never">
+                    <input className="form-input" style={{ width: 90 }} type="number" min={0} disabled={!w.enabled} value={w.autoLockMinutes} onChange={(e) => setWaiter({ autoLockMinutes: Math.max(0, parseInt(e.target.value) || 0) })} />
+                  </SettingRow>
+                </section>
+                <div className="row" style={{ justifyContent: 'flex-end' }}><button className="btn btn-primary btn-sm" disabled={saving} onClick={() => saveConfig({ waiterApp: cfg.waiterApp })}>Save waiter app</button></div>
+                <HandheldDevices />
+              </div>
+            );
+          })()}
 
           {tab === 'loyalty' && cfg && (
             <div className="settings-sections">

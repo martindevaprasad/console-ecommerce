@@ -2,7 +2,7 @@ import { gql } from 'graphql-tag';
 import { prisma } from '../../lib/prisma';
 import {
   Ctx, requireAuth, requirePerm, requirePermOrApproval, fail, audit, resolveLocationId,
-  servedBy, assertOrderAccess, ownChecksOnly,
+  servedBy, assertOrderAccess, ownChecksOnly, assertHandheldAllows, orgSettings,
 } from '../../lib/context';
 import { round2 } from '../../lib/pricing';
 
@@ -135,6 +135,7 @@ export const resolvers = {
   Mutation: {
     assignTable: async (_: any, { tableId, serverUserId, approverPin }: any, ctx: Ctx) => {
       const auth = await requirePerm(ctx, 'tables.manage', 'tables.assign');
+      if (auth.deviceId) assertHandheldAllows(auth, (await orgSettings(auth.orgId)).settings, 'allowTables', 'allowTableTransfer');
       const { approvedBy } = await requirePermOrApproval(ctx, 'tables.assign', approverPin);
       const table = await prisma.table.findFirst({ where: { id: tableId, zone: { location: { organizationId: auth.orgId } } } });
       if (!table) fail('Table not found', 'NOT_FOUND');

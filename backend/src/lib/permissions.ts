@@ -25,6 +25,13 @@ export const PERMISSION_GROUPS: { group: string; items: { key: string; label: st
     ],
   },
   {
+    group: 'Waiter App',
+    items: [
+      { key: 'handheld.access', label: 'Sign in to the waiter app with a PIN' },
+      { key: 'handheld.payments', label: 'Collect payments on the waiter app' },
+    ],
+  },
+  {
     group: 'Catalog & Stock',
     items: [
       { key: 'menu.view', label: 'View menu' },
@@ -74,16 +81,17 @@ export const SYSTEM_ROLE_PERMISSIONS: Record<string, string[]> = {
     'orders.view', 'orders.view_all', 'orders.manage', 'tables.manage', 'tables.assign', 'reservations.manage', 'kds.access',
     'menu.view', 'inventory.view', 'customers.view', 'customers.manage',
     'staff.view', 'timeclock.manage', 'cash.manage', 'reports.view',
+    'handheld.access', 'handheld.payments',
   ],
   // Table-service server. Works only their own tables; voids, refunds, big
   // discounts and table hand-offs go through a manager PIN (requirePermOrApproval).
   WAITER: [
     'pos.access', 'orders.view', 'tables.manage', 'reservations.manage',
-    'menu.view', 'customers.view',
+    'menu.view', 'customers.view', 'handheld.access', 'handheld.payments',
   ],
   STAFF: [
     'pos.access', 'orders.view', 'orders.view_all', 'tables.manage', 'reservations.manage', 'kds.access',
-    'menu.view', 'customers.view',
+    'menu.view', 'customers.view', 'handheld.access',
   ],
   CUSTOMER: [],
 };

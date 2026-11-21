@@ -1,6 +1,6 @@
 import { gql } from 'graphql-tag';
 import { prisma } from '../../lib/prisma';
-import { Ctx, AuthInfo, requireAuth, requirePerm, fail, audit, resolveLocationId, assertLocation, can, ownChecksOnly } from '../../lib/context';
+import { Ctx, AuthInfo, requireAuth, requirePerm, fail, audit, resolveLocationId, assertLocation, can, ownChecksOnly, assertHandheldAllows, orgSettings } from '../../lib/context';
 import { round2 } from '../../lib/pricing';
 
 export const typeDefs = gql`
@@ -316,6 +316,7 @@ export const resolvers = {
     seatTable: async (_: any, { id, guestCount, serverUserId }: any, ctx: Ctx) => {
       const auth = await requirePerm(ctx, 'tables.manage');
       if (guestCount < 1) fail('Guest count must be at least 1');
+      if (auth.deviceId) assertHandheldAllows(auth, (await orgSettings(auth.orgId)).settings, 'allowTables');
       return seat(auth, id, guestCount, serverUserId);
     },
 

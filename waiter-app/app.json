@@ -1,0 +1,37 @@
+{
+  "expo": {
+    "name": "NexusPOS Waiter",
+    "slug": "nexuspos-waiter",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.nexuspos.waiter"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#F95A10",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "package": "com.nexuspos.waiter"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-font"
+    ],
+    "scheme": "nexuswaiter",
+    "experiments": {
+      "typedRoutes": false
+    }
+  }
+}

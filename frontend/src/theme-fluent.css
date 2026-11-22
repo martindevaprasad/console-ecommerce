@@ -194,6 +194,71 @@ body { font-family: var(--font-family); }
 .sidebar-avatar { background: var(--color-primary); }
 .sidebar-toggle { border-radius: 5px; }
 
+/* ---- Navigation pane header (Windows 11 NavigationView / new Teams) ----
+   Row 1 matches the top bar height: hamburger + app name.
+   Row 2 is the workspace: initials tile, business name, format · plan. */
+.sidebar-head {
+  height: var(--topbar-height);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px;
+}
+.sidebar-hamburger {
+  flex: none;
+  width: 36px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+.sidebar-hamburger:hover { background: var(--fl-subtle); }
+.sidebar-hamburger:active { background: var(--color-surface-hover); }
+.sidebar-hamburger:focus-visible { outline: 2px solid var(--text-primary); outline-offset: -2px; }
+.sidebar .sidebar-brand { display: block; flex: none; color: var(--text-primary); }
+
+.sidebar-org {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 2px 8px 6px;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid var(--color-border);
+  background: var(--fl-card);
+  box-shadow: var(--fl-card-shadow);
+}
+.sidebar-org-tile {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #fff;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--color-primary) 70%, #ffffff) 0%, var(--color-primary) 55%, color-mix(in srgb, var(--color-primary) 80%, #000000) 100%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+}
+.sidebar-org-info { min-width: 0; flex: 1; line-height: 1.25; }
+.sidebar-org-name { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+.sidebar-org-sub { font-size: 11.5px; color: var(--text-secondary); margin-top: 1px; }
+
+/* Collapsed rail: hamburger and workspace tile centred, nothing else */
+.sidebar-collapsed .sidebar-head { justify-content: center; padding: 0; }
+.sidebar-collapsed .sidebar-org { justify-content: center; margin: 2px 0 6px; padding: 6px 0; border-color: transparent; background: transparent; box-shadow: none; }
+
 /* ============================================================
    Gradient icons (Windows 11 colourful icon style)
    Tabler icons are strokes; the gradients live in <FluentIconDefs />.

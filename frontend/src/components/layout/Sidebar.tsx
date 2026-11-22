@@ -1,8 +1,8 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth, useCan, useOrg } from '@/hooks';
-import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
-import { MageMark, MageWordmark } from './AppSvgs';
+import { IconMenu2 } from '@tabler/icons-react';
+import { MageWordmark } from './AppSvgs';
 import { visibleNav } from '@/lib/nav';
 import { ROLE_LABELS } from '@/lib/constants';
 
@@ -13,6 +13,13 @@ interface SidebarProps {
 
 const SECTIONS = ['Operate', 'Catalog', 'People', 'Insights', 'Admin'] as const;
 
+/** Business format shown under the workspace name. */
+const ORG_TYPE_LABEL: Record<string, string> = {
+  RESTAURANT: 'Restaurant', BAKERY: 'Bakery', CAFE: 'Cafe', QUICK_SERVICE: 'Quick service', FINE_DINING: 'Fine dining',
+  CASUAL_DINING: 'Casual dining', BAR_PUB: 'Bar & pub', FOOD_TRUCK: 'Food truck', CLOUD_KITCHEN: 'Cloud kitchen',
+  FOOD_COURT: 'Food court', CATERING: 'Catering', HOTEL_RESTAURANT: 'Hotel restaurant',
+};
+
 export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
   const { user } = useAuth();
   const { org, settings } = useOrg();
@@ -20,19 +27,26 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
   const items = visibleNav(can, settings?.modules);
 
   const initials = user?.name?.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2) || 'U';
+  const orgInitials = (org?.name || 'GMOS').split(/\s+/).filter(Boolean).slice(0, 2).map((w: string) => w[0]).join('').toUpperCase();
+  const orgSub = [org?.type ? (ORG_TYPE_LABEL[org.type] || org.type.toLowerCase().replace(/_/g, ' ')) : null, org?.plan ? `${org.plan.charAt(0)}${org.plan.slice(1).toLowerCase()} plan` : null].filter(Boolean).join(' · ');
 
   return (
     <aside className={`sidebar${collapsed ? ' sidebar-collapsed' : ''}`}>
-      <div className="sidebar-logo">
-        {collapsed ? <MageMark size={30} /> : (
-          <div className="sidebar-logo-texts">
-            <MageWordmark height={30} className="brand-wordmark" />
-            <div className="sidebar-logo-sub truncate">{org?.name || 'Enterprise POS'}</div>
+      {/* Windows 11 / Teams navigation pane header: hamburger + app name, then the workspace */}
+      <div className="sidebar-head">
+        <button className="sidebar-hamburger" onClick={onToggle} title={collapsed ? 'Expand navigation' : 'Collapse navigation'} aria-label={collapsed ? 'Expand navigation' : 'Collapse navigation'} aria-expanded={!collapsed}>
+          <IconMenu2 size={18} stroke={1.75} />
+        </button>
+        {!collapsed && <MageWordmark height={17} className="brand-wordmark sidebar-brand" />}
+      </div>
+      <div className="sidebar-org" title={collapsed ? org?.name : undefined}>
+        <div className="sidebar-org-tile" aria-hidden="true">{orgInitials}</div>
+        {!collapsed && (
+          <div className="sidebar-org-info">
+            <div className="sidebar-org-name truncate">{org?.name || 'Enterprise POS'}</div>
+            <div className="sidebar-org-sub truncate">{orgSub}</div>
           </div>
         )}
-        <button className="sidebar-toggle" onClick={onToggle} title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}>
-          {collapsed ? <IconChevronRight size={14} /> : <IconChevronLeft size={14} />}
-        </button>
       </div>
 
       <nav className="sidebar-nav">

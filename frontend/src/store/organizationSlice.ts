@@ -39,6 +39,8 @@ export interface OrgSettings {
     showImages: boolean;
     autoLockMinutes: number;
   };
+  /** Business accent colour (single-colour theme) for the POS and the waiter app. */
+  branding?: { accentColor: string };
   receipt: { header: string; footer: string; showTaxBreakdown: boolean };
   taxLabel: string;
 }

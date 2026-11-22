@@ -5,8 +5,10 @@ import { View } from 'react-native';
 import { Button, Loading, Screen } from '@/components/ui';
 import { useLive } from '@/lib/hooks';
 import { useSession } from '@/lib/store';
+import { useBrand } from '@/lib/theme';
 
 export default function MainTabs() {
+  const brand = useBrand();
   const config = useSession((s) => s.config);
   const refreshConfig = useSession((s) => s.refreshConfig);
   const lock = useSession((s) => s.lock);
@@ -34,7 +36,7 @@ export default function MainTabs() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#F95A10',
+        tabBarActiveTintColor: brand[500],
         tabBarInactiveTintColor: '#9CA3AF',
         tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
         tabBarStyle: { borderTopColor: '#ECE8E3', backgroundColor: '#FFFFFF' },

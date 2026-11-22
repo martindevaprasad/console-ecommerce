@@ -11,10 +11,12 @@ import { useAction, useQuery } from '@/lib/hooks';
 import { Q } from '@/lib/queries';
 import { lineUnitPrice, useCart, useSession } from '@/lib/store';
 import type { Category, Order, Product } from '@/lib/types';
+import { useBrand } from '@/lib/theme';
 
 const newKey = () => `wa-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 
 export default function MenuScreen() {
+  const brand = useBrand();
   const config = useSession((s) => s.config)!;
   const caps = config.capabilities;
   const locationId = config.location?.id ?? null;
@@ -168,7 +170,7 @@ export default function MenuScreen() {
             const qty = inCart.get(p.id) || 0;
             const out = soldOut(p);
             const cat = categories.find((c) => c.id === p.categoryId);
-            const tint = p.color || cat?.color || '#F95A10';
+            const tint = p.color || cat?.color || brand[500];
             const hasOptions = p.modifierGroups.some((g) => g.isActive && g.modifiers.some((m) => m.isActive));
             // Fixed heights everywhere: RN `flex-1` inside an auto-height card starts at
             // zero height, which made text vanish on cards without a photo.

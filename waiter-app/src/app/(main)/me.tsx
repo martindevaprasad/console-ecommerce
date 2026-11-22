@@ -7,10 +7,12 @@ import { clock, duration, label, useMoney } from '@/lib/format';
 import { useAction, useQuery } from '@/lib/hooks';
 import { Q } from '@/lib/queries';
 import { useSession } from '@/lib/store';
+import { useBrand } from '@/lib/theme';
 
 interface Summary { from: string; openTables: number; openChecks: number; openBalance: number; closedChecks: number; covers: number; sales: number; tips: number; averageCheck: number }
 
 export default function MeScreen() {
+  const brand = useBrand();
   const { config, pairing, lock, refreshConfig } = useSession();
   const money = useMoney();
   const summary = useQuery<{ myShiftSummary: Summary }>(Q.SUMMARY);
@@ -43,7 +45,7 @@ export default function MeScreen() {
       <Header large title="My shift" />
       <ScrollView
         contentContainerClassName="px-4 pb-10"
-        refreshControl={<RefreshControl refreshing={summary.refreshing} onRefresh={() => { summary.reload('pull'); refreshConfig(); }} tintColor="#F95A10" />}
+        refreshControl={<RefreshControl refreshing={summary.refreshing} onRefresh={() => { summary.reload('pull'); refreshConfig(); }} tintColor={brand[500]} />}
       >
         <Card className="flex-row items-center gap-4 p-4">
           <Avatar name={config.user.name} size={56} />
@@ -103,9 +105,10 @@ export default function MeScreen() {
 }
 
 function Stat({ icon, label: l, value, big, accent }: { icon: IconName; label: string; value: string; big?: boolean; accent?: boolean }) {
+  const brand = useBrand();
   return (
     <View className={`flex-1 rounded-2xl border p-3.5 ${accent ? 'border-brand-200 bg-brand-50' : 'border-line bg-surface'}`}>
-      <Ionicons name={icon} size={18} color={accent ? '#C22E07' : '#6B7280'} />
+      <Ionicons name={icon} size={18} color={accent ? brand[700] : '#6B7280'} />
       <Text numberOfLines={1} adjustsFontSizeToFit className={`mt-2 font-extrabold ${accent ? 'text-brand-700' : 'text-ink'} ${big ? 'text-[24px]' : 'text-[17px]'}`}>{value}</Text>
       <Text className="text-[12px] text-ink-muted">{l}</Text>
     </View>

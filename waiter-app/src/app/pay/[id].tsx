@@ -9,6 +9,7 @@ import { useAction, useQuery } from '@/lib/hooks';
 import { Q } from '@/lib/queries';
 import { useSession } from '@/lib/store';
 import type { Order } from '@/lib/types';
+import { useBrand } from '@/lib/theme';
 
 const METHOD_ICON: Record<string, IconName> = {
   CASH: 'cash-outline', CARD: 'card-outline', DIGITAL: 'qr-code-outline', GIFT_CARD: 'gift-outline',
@@ -31,6 +32,7 @@ function quickCash(amount: number) {
 }
 
 export default function PayScreen() {
+  const brand = useBrand();
   const { id } = useLocalSearchParams<{ id: string }>();
   const config = useSession((s) => s.config)!;
   const caps = config.capabilities;
@@ -148,7 +150,7 @@ export default function PayScreen() {
                 onPress={() => { tap(); setMethod(m); setTendered(''); }}
                 className={`w-[31.5%] items-center rounded-2xl border py-4 ${method === m ? 'border-brand-500 bg-brand-50' : 'border-line bg-surface'}`}
               >
-                <Ionicons name={METHOD_ICON[m] || 'card-outline'} size={26} color={method === m ? '#EA4006' : '#3A3F4B'} />
+                <Ionicons name={METHOD_ICON[m] || 'card-outline'} size={26} color={method === m ? brand[600] : '#3A3F4B'} />
                 <Text className={`mt-1.5 text-[13px] font-semibold ${method === m ? 'text-brand-700' : 'text-ink-soft'}`}>{METHOD_LABEL[m] || label(m)}</Text>
               </Pressable>
             ))}

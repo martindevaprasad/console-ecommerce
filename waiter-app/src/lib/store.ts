@@ -12,6 +12,8 @@ export interface Pairing {
   organizationName: string;
   locationId: string;
   locationName: string;
+  /** Business accent colour, remembered so the PIN screen is branded before anyone signs in. */
+  accentColor?: string;
 }
 
 const PAIRING_KEY = 'waiter.pairing.v1';
@@ -29,6 +31,8 @@ interface SessionState {
   forgetPairing: () => Promise<void>;
   signIn: (token: string, user: StaffUser) => Promise<void>;
   refreshConfig: () => Promise<HandheldConfig | null>;
+  /** Persists a new accent colour on the pairing when the POS changes it. */
+  rememberAccent: (accent?: string | null) => void;
   lock: (reason?: string | null) => void;
 }
 
@@ -71,10 +75,19 @@ export const useSession = create<SessionState>((set, get) => ({
     await get().refreshConfig();
   },
 
+  rememberAccent: (accent) => {
+    const { pairing } = get();
+    if (!pairing || !accent || pairing.accentColor === accent) return;
+    const next = { ...pairing, accentColor: accent };
+    set({ pairing: next });
+    SecureStore.setItemAsync(PAIRING_KEY, JSON.stringify(next)).catch(() => {});
+  },
+
   refreshConfig: async () => {
     try {
       const data = await gql<{ handheldConfig: HandheldConfig }>(Q.CONFIG);
       set({ config: data.handheldConfig });
+      get().rememberAccent(data.handheldConfig.accentColor);
       return data.handheldConfig;
     } catch {
       return get().config;

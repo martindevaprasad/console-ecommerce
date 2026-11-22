@@ -13,11 +13,13 @@ import { useAction, useQuery } from '@/lib/hooks';
 import { Q } from '@/lib/queries';
 import { useCart, useSession } from '@/lib/store';
 import type { Order, OrderItem, Zone } from '@/lib/types';
+import { useBrand } from '@/lib/theme';
 
 const VOID_REASONS = ['Customer changed mind', 'Wrong item', 'Kitchen error', 'Too long wait', 'Quality issue'];
 const COURSE_NAMES = ['', 'Starters', 'Mains', 'Desserts'];
 
 export default function CheckScreen() {
+  const brand = useBrand();
   const { id } = useLocalSearchParams<{ id: string }>();
   const config = useSession((s) => s.config)!;
   const caps = config.capabilities;
@@ -116,7 +118,7 @@ export default function CheckScreen() {
 
       <ScrollView
         contentContainerClassName="px-4 pb-48"
-        refreshControl={<RefreshControl refreshing={q.refreshing} onRefresh={() => q.reload('pull')} tintColor="#F95A10" />}
+        refreshControl={<RefreshControl refreshing={q.refreshing} onRefresh={() => q.reload('pull')} tintColor={brand[500]} />}
       >
         {closed ? (
           <View className={`mb-3 flex-row items-center gap-3 rounded-2xl p-4 ${order.status === 'COMPLETED' ? 'bg-emerald-600' : 'bg-ink'}`}>
@@ -163,7 +165,7 @@ export default function CheckScreen() {
                     }}
                     className={`flex-row items-start gap-3 border-b border-line py-3.5 ${voided ? 'opacity-40' : ''}`}
                   >
-                    {splitMode && !voided ? <Ionicons name={sel ? 'checkbox' : 'square-outline'} size={22} color={sel ? '#F95A10' : '#9CA3AF'} /> : null}
+                    {splitMode && !voided ? <Ionicons name={sel ? 'checkbox' : 'square-outline'} size={22} color={sel ? brand[500] : '#9CA3AF'} /> : null}
                     <Text className="w-7 text-[15px] font-bold text-ink">{i.quantity}×</Text>
                     <View className="flex-1">
                       <Text className={`text-[15px] font-semibold text-ink ${voided ? 'line-through' : ''}`}>{i.name}</Text>

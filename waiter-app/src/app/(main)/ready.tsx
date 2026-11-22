@@ -7,6 +7,7 @@ import { label } from '@/lib/format';
 import { useAction, useLive, useQuery } from '@/lib/hooks';
 import { Q } from '@/lib/queries';
 import type { OrderItem } from '@/lib/types';
+import { useBrand } from '@/lib/theme';
 
 interface PickupOrder {
   id: string; ticketNumber: number | null; orderType: string; guestCount: number | null;
@@ -16,6 +17,7 @@ interface PickupOrder {
 
 /** Food waiting at the pass for this waiter. The phone buzzes when this fills up. */
 export default function PickupScreen() {
+  const brand = useBrand();
   const { data, error, loading, refreshing, reload } = useQuery<{ openOrders: PickupOrder[] }>(Q.PICKUP);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const { busy, run } = useAction();
@@ -56,7 +58,7 @@ export default function PickupScreen() {
       ) : (
         <ScrollView
           contentContainerClassName="px-4 pb-32"
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => reload('pull')} tintColor="#F95A10" />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => reload('pull')} tintColor={brand[500]} />}
         >
           {groups.length === 0 ? (
             <Empty icon="notifications-outline" title="All caught up" hint="When the kitchen marks your food ready, it shows up here and your phone buzzes." />

@@ -31,6 +31,8 @@ export interface OrgSettings {
   loyalty: { pointsPerUnit: number; pointValue: number; minRedeemPoints: number };
   /** Waiter handheld app. Org-wide switches; per-person access comes from the handheld.* permissions. */
   waiterApp: WaiterAppSettings;
+  /** Business accent colour (Windows-style single colour theme), used by the POS and the waiter app. */
+  branding: { accentColor: string };
   receipt: { header: string; footer: string; showTaxBreakdown: boolean };
   taxLabel: string;
 }
@@ -78,6 +80,13 @@ export const DEFAULT_WAITER_APP: WaiterAppSettings = {
   autoLockMinutes: 5,
 };
 
+/** The original GMOS brand blue. */
+export const DEFAULT_ACCENT = '#5e84ff';
+
+/** Accepts only #rrggbb so a bad value can never break the apps' styling. */
+export const validAccent = (v: unknown) =>
+  typeof v === 'string' && /^#[0-9a-f]{6}$/i.test(v.trim()) ? v.trim().toLowerCase() : DEFAULT_ACCENT;
+
 export const DEFAULT_SETTINGS: OrgSettings = {
   serviceModel: 'HYBRID',
   orderTypes: ['DINE_IN', 'TAKEAWAY', 'DELIVERY'],
@@ -93,6 +102,7 @@ export const DEFAULT_SETTINGS: OrgSettings = {
   security: { voidRequiresManager: true, refundRequiresManager: true, maxDiscountPctWithoutApproval: 10, pinSwitchUser: true },
   loyalty: { pointsPerUnit: 1, pointValue: 0.01, minRedeemPoints: 100 },
   waiterApp: DEFAULT_WAITER_APP,
+  branding: { accentColor: DEFAULT_ACCENT },
   receipt: { header: '', footer: 'Thank you for dining with us!', showTaxBreakdown: true },
   taxLabel: 'Tax',
 };
@@ -108,6 +118,7 @@ export function resolveSettings(stored: any): OrgSettings {
     security: { ...DEFAULT_SETTINGS.security, ...(s.security || {}) },
     loyalty: { ...DEFAULT_SETTINGS.loyalty, ...(s.loyalty || {}) },
     waiterApp: { ...DEFAULT_SETTINGS.waiterApp, ...(s.waiterApp || {}) },
+    branding: { accentColor: validAccent(s.branding?.accentColor) },
     receipt: { ...DEFAULT_SETTINGS.receipt, ...(s.receipt || {}) },
   };
 }

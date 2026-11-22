@@ -28,11 +28,14 @@ export const typeDefs = gql`
     device: Device!
     organizationName: String!
     location: Location!
+    accentColor: String!
   }
 
   type Query {
     "Staff who can sign in on this handheld (active, have a PIN and waiter-app access). Public: needs only the device key."
     handheldStaff(deviceKey: String!): [HandheldStaff!]!
+    "Business accent colour for the sign-in screen. Public: needs only the device key."
+    handheldAccent(deviceKey: String!): String!
     "Everything the waiter app needs to shape itself: business, location, switches and the caller's capabilities."
     handheldConfig: JSON!
     "Paired handhelds, for POS settings."
@@ -88,6 +91,8 @@ export const resolvers = {
       return staff.map((u) => ({ id: u.id, name: u.name, role: u.role, avatarUrl: u.avatarUrl }));
     },
 
+    handheldAccent: async (_: any, { deviceKey }: any) => (await deviceByKey(deviceKey)).settings.branding.accentColor,
+
     handheldConfig: async (_: any, __: any, ctx: Ctx) => {
       const auth = await requireAuth(ctx);
       const [org, user, location, device, clock] = await Promise.all([
@@ -113,6 +118,7 @@ export const resolvers = {
         pos: settings.pos,
         security: settings.security,
         waiterApp: settings.waiterApp,
+        accentColor: settings.branding.accentColor,
         capabilities: capabilities(auth, settings),
         permissions: [...auth.permissions],
       };
@@ -159,7 +165,7 @@ export const resolvers = {
       });
       const actor: AuthInfo = { userId: user!.id, orgId: org!.id, name: user!.name, role: user!.role, permissions: new Set(perms) };
       await audit(actor, 'PAIR_HANDHELD', 'Device', device.id, { name: device.name, location: location!.name });
-      return { deviceKey, device, organizationName: org!.name, location };
+      return { deviceKey, device, organizationName: org!.name, location, accentColor: settings.branding.accentColor };
     },
 
     handheldLogin: async (_: any, { deviceKey, pin, userId }: any) => {

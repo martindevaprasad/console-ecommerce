@@ -9,6 +9,7 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { create } from 'zustand';
 import { initials } from '@/lib/format';
+import { useBrand } from '@/lib/theme';
 import type { ItemStatus, TableStatus } from '@/lib/types';
 
 export type IconName = React.ComponentProps<typeof Ionicons>['name'];
@@ -172,19 +173,21 @@ export function Avatar({ name, size = 44, tone = 'brand' }: { name: string; size
 // ------------------------------------------------------------------ feedback
 
 export function Loading({ label }: { label?: string }) {
+  const brand = useBrand();
   return (
     <View className="flex-1 items-center justify-center gap-3 p-8">
-      <ActivityIndicator size="large" color="#F95A10" />
+      <ActivityIndicator size="large" color={brand[500]} />
       {label ? <Text className="text-ink-muted">{label}</Text> : null}
     </View>
   );
 }
 
 export function Empty({ icon = 'restaurant-outline', title, hint, action }: { icon?: IconName; title: string; hint?: string; action?: React.ReactNode }) {
+  const brand = useBrand();
   return (
     <View className="items-center justify-center px-8 py-14">
       <View className="mb-4 h-16 w-16 items-center justify-center rounded-full bg-brand-50">
-        <Ionicons name={icon} size={30} color="#F95A10" />
+        <Ionicons name={icon} size={30} color={brand[500]} />
       </View>
       <Text className="text-center text-[17px] font-bold text-ink">{title}</Text>
       {hint ? <Text className="mt-1 text-center text-[14px] leading-5 text-ink-muted">{hint}</Text> : null}
@@ -205,7 +208,7 @@ export function ErrorBanner({ message, onRetry }: { message: string; onRetry?: (
 
 const TONES = {
   neutral: ['bg-canvas text-ink-soft', '#3A3F4B'],
-  brand: ['bg-brand-50 text-brand-700', '#C22E07'],
+  brand: ['bg-brand-50 text-brand-700', ''], // icon colour comes from the live accent (useBrand)
   green: ['bg-emerald-50 text-emerald-700', '#047857'],
   blue: ['bg-sky-50 text-sky-700', '#0369A1'],
   amber: ['bg-amber-50 text-amber-700', '#B45309'],
@@ -216,7 +219,9 @@ const TONES = {
 export type Tone = keyof typeof TONES;
 
 export function Badge({ label, tone = 'neutral', icon }: { label: string; tone?: Tone; icon?: IconName }) {
-  const [cls, iconColor] = TONES[tone];
+  const brand = useBrand();
+  const [cls, toneColor] = TONES[tone];
+  const iconColor = tone === 'brand' ? brand[700] : toneColor;
   const [bg, fg] = cls.split(' ');
   return (
     <View className={cx('flex-row items-center gap-1 self-start rounded-full px-2.5 py-1', bg)}>

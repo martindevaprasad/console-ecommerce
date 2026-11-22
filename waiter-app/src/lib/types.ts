@@ -40,6 +40,8 @@ export interface HandheldConfig {
   taxLabel: string;
   capabilities: Capabilities;
   permissions: string[];
+  /** Business accent colour (#rrggbb), chosen in POS → Settings → Appearance. */
+  accentColor: string;
 }
 
 export interface Modifier { id: string; name: string; price: number; isDefault: boolean; isActive: boolean }

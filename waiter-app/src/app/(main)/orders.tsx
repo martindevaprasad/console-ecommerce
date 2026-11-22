@@ -8,6 +8,7 @@ import { duration, label, useMoney } from '@/lib/format';
 import { useQuery } from '@/lib/hooks';
 import { Q } from '@/lib/queries';
 import { useCart, useSession } from '@/lib/store';
+import { useBrand } from '@/lib/theme';
 
 interface OpenOrder {
   id: string; ticketNumber: number | null; orderType: string; total: number; balanceDue: number; status: string; paymentStatus: string;
@@ -20,6 +21,7 @@ const TYPE_ICON: Record<string, keyof typeof Ionicons.glyphMap> = {
 };
 
 export default function OrdersScreen() {
+  const brand = useBrand();
   const config = useSession((s) => s.config)!;
   const caps = config.capabilities;
   const money = useMoney();
@@ -75,7 +77,7 @@ export default function OrdersScreen() {
       ) : (
         <ScrollView
           contentContainerClassName="px-4 pb-10"
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => reload('pull')} tintColor="#F95A10" />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => reload('pull')} tintColor={brand[500]} />}
         >
           {orders.length === 0 ? (
             <Empty
@@ -94,7 +96,7 @@ export default function OrdersScreen() {
                 <Pressable key={o.id} onPress={() => router.push(`/check/${o.id}`)} className="mb-3 rounded-2xl border border-line bg-surface p-4 active:bg-canvas">
                   <View className="flex-row items-center gap-3">
                     <View className="h-12 w-12 items-center justify-center rounded-xl bg-brand-50">
-                      {o.table ? <Text className="text-[16px] font-extrabold text-brand-700">{o.table.name}</Text> : <Ionicons name={TYPE_ICON[o.orderType] || 'bag-handle-outline'} size={22} color="#C22E07" />}
+                      {o.table ? <Text className="text-[16px] font-extrabold text-brand-700">{o.table.name}</Text> : <Ionicons name={TYPE_ICON[o.orderType] || 'bag-handle-outline'} size={22} color={brand[700]} />}
                     </View>
                     <View className="flex-1">
                       <Text className="text-[16px] font-bold text-ink">{o.table ? `Table ${o.table.name}` : label(o.orderType)} · #{o.ticketNumber ?? '—'}</Text>

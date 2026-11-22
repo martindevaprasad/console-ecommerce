@@ -6,9 +6,11 @@ import { Button, Card, Input, Screen, toast } from '@/components/ui';
 import { gql, resolveEndpoint } from '@/lib/api';
 import { Q } from '@/lib/queries';
 import { useSession } from '@/lib/store';
+import { useBrand } from '@/lib/theme';
 
 /** One-time device setup, done by a manager. */
 export default function PairScreen() {
+  const brand = useBrand();
   const savePairing = useSession((s) => s.savePairing);
   const [server, setServer] = useState(process.env.EXPO_PUBLIC_API_URL || '');
   const [email, setEmail] = useState('');
@@ -30,6 +32,7 @@ export default function PairScreen() {
         organizationName: p.organizationName,
         locationId: p.location.id,
         locationName: p.location.name,
+        accentColor: p.accentColor,
       });
       toast.ok(`Paired with ${p.organizationName}`);
     } catch (e: any) {
@@ -59,7 +62,7 @@ export default function PairScreen() {
               ].map(([icon, title, sub]) => (
                 <View key={title} className="flex-row items-center gap-4">
                   <View className="h-11 w-11 items-center justify-center rounded-xl bg-white/10">
-                    <Ionicons name={icon as any} size={22} color="#FF7B37" />
+                    <Ionicons name={icon as any} size={22} color={brand[400]} />
                   </View>
                   <View>
                     <Text className="text-[15px] font-semibold text-white">{title}</Text>

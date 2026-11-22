@@ -12,6 +12,7 @@ import { useSessionLoader } from '@/hooks/useSession';
 import { AUTH, ORG_API } from '@/services/api';
 import { MODULE_INFO, ORDER_TYPE_LABELS, ALL_ORDER_TYPES } from '@/lib/constants';
 import { dateTime, label } from '@/lib/format';
+import { ACCENT_SWATCHES, DEFAULT_ACCENT, applyAccent, whiteContrast } from '@/lib/accent';
 import { Field, Toggle, SettingRow, Segmented, Empty } from '../shared/ui';
 
 type Tab = 'business' | 'region' | 'service' | 'modules' | 'security' | 'waiter' | 'loyalty' | 'account' | 'appearance' | 'audit';
@@ -90,11 +91,78 @@ function SidebarPreview({ bg, accent }: { bg: string; accent: string }) {
   );
 }
 
+/** Windows-style accent picker. One colour for the whole business: POS screens and the waiter app. */
+const AccentSection: React.FC = () => {
+  const can = useCan();
+  const { settings } = useOrg();
+  const mutate = useMutate();
+  const loadSession = useSessionLoader();
+  const admin = can('settings.manage');
+  const saved = settings?.branding?.accentColor || DEFAULT_ACCENT;
+  const [value, setValue] = useState(saved);
+  const [saving, setSaving] = useState(false);
+  useEffect(() => { setValue(saved); }, [saved]);
+  // Live preview while choosing; leaving the tab without saving restores the saved colour.
+  useEffect(() => { applyAccent(value); }, [value]);
+  useEffect(() => () => applyAccent(saved), [saved]);
+
+  const dirty = value.toLowerCase() !== saved.toLowerCase();
+  const lowContrast = whiteContrast(value) < 3;
+  const save = async () => {
+    setSaving(true);
+    try {
+      await mutate(ORG_API.UPDATE_SETTINGS, { patch: { branding: { accentColor: value.toLowerCase() } } });
+      await loadSession();
+      toast.success('Accent colour saved for everyone, including the waiter app');
+    } catch (e: any) { toast.error(e.message); } finally { setSaving(false); }
+  };
+
+  return (
+    <section className="settings-section">
+      <h2 className="settings-section-title">Accent colour</h2>
+      <p className="settings-section-desc">
+        One colour for buttons, selections and highlights across the whole app and the waiter app, like the Windows accent colour.
+        {admin ? ' It applies to everyone in the business.' : ' Set by your manager for the whole business.'}
+      </p>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(44px, 1fr))', gap: 8, maxWidth: 560 }}>
+        {ACCENT_SWATCHES.map((s) => {
+          const on = value.toLowerCase() === s.hex;
+          return (
+            <button key={s.hex} type="button" title={s.name} aria-label={s.name} aria-pressed={on} disabled={!admin}
+              onClick={() => setValue(s.hex)}
+              style={{
+                width: 44, height: 44, borderRadius: 10, background: s.hex, border: 0, cursor: admin ? 'pointer' : 'default',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff',
+                boxShadow: on ? `0 0 0 2px var(--color-bg-secondary), 0 0 0 4px ${s.hex}` : 'none', opacity: admin || on ? 1 : 0.5,
+              }}>
+              {on && <IconCheck size={18} />}
+            </button>
+          );
+        })}
+      </div>
+      <div className="row" style={{ alignItems: 'center', gap: 10, marginTop: 14, flexWrap: 'wrap' }}>
+        <label className="row" style={{ alignItems: 'center', gap: 8, cursor: admin ? 'pointer' : 'default' }}>
+          <input type="color" value={value} disabled={!admin} onChange={(e) => setValue(e.target.value)}
+            style={{ width: 36, height: 36, padding: 0, border: '1px solid var(--color-border)', borderRadius: 8, background: 'transparent' }} />
+          <span className="small">Custom colour</span>
+        </label>
+        <code className="small muted">{value.toUpperCase()}</code>
+        {value.toLowerCase() !== DEFAULT_ACCENT && admin && <button className="btn btn-ghost btn-sm" onClick={() => setValue(DEFAULT_ACCENT)}>Reset to default blue</button>}
+        <div className="spacer" />
+        {admin && dirty && <button className="btn btn-secondary btn-sm" onClick={() => setValue(saved)}>Cancel</button>}
+        {admin && <button className="btn btn-primary btn-sm" disabled={!dirty || saving} onClick={save}>{saving ? 'Saving…' : 'Save accent colour'}</button>}
+      </div>
+      {lowContrast && <p className="small text-warning" style={{ marginTop: 8 }}>This colour is light, so white text on buttons may be hard to read. A darker shade works better.</p>}
+    </section>
+  );
+};
+
 const AppearanceTab: React.FC = () => {
   const { settings, update } = useAppearance();
   const [draft, setDraft] = useState({ ...settings });
   return (
     <div className="settings-sections">
+      <AccentSection />
       <section className="settings-section">
         <h2 className="settings-section-title">Theme</h2>
         <div className="theme-grid">
@@ -108,7 +176,7 @@ const AppearanceTab: React.FC = () => {
       </section>
       <section className="settings-section">
         <h2 className="settings-section-title">Color palette</h2>
-        <p className="settings-section-desc">Brand colors for buttons, selections and backgrounds. Works with light and dark themes.</p>
+        <p className="settings-section-desc">Background style for this device. When the business uses a custom accent colour, it replaces the palette’s brand colour.</p>
         <div className="palette-grid">
           {PALETTES.map((p) => (
             <button key={p.key} className={`variant-card${draft.palette === p.key ? ' selected' : ''}`} onClick={() => setDraft((d) => ({ ...d, palette: p.key }))}>

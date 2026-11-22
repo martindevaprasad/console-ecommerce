@@ -6,6 +6,8 @@ import { logout } from '@/store/authSlice';
 import { clearOrganization } from '@/store/organizationSlice';
 import { useSessionLoader } from '@/hooks/useSession';
 import { visibleNav } from '@/lib/nav';
+import { applyAccent } from '@/lib/accent';
+import { applyFavicon } from '@/hooks/useAppearance';
 
 import Layout from './components/layout/Layout';
 import Login from './components/auth/Login';
@@ -55,6 +57,17 @@ const AppRoutes: React.FC = () => {
   const allowed = visibleNav(can, settings?.modules);
   const home = allowed[0]?.path || '/settings';
   const needsOnboarding = isAuthenticated && org && !org.onboardingCompleted && can('settings.manage');
+
+  // Business accent colour: applied over the whole app and re-derived when
+  // light/dark or the palette changes (shades differ per theme).
+  const accent = settings?.branding?.accentColor;
+  useEffect(() => {
+    const run = () => { applyAccent(accent); applyFavicon(); };
+    run();
+    const observer = new MutationObserver(run);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'data-palette'] });
+    return () => observer.disconnect();
+  }, [accent]);
 
   return (
     <Routes>

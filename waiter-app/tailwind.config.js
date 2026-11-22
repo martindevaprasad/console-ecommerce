@@ -5,19 +5,9 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Warm saffron brand that reads well under bright restaurant lighting.
-        brand: {
-          50: '#FFF5ED',
-          100: '#FFE8D4',
-          200: '#FFCDA8',
-          300: '#FFAA70',
-          400: '#FF7B37',
-          500: '#F95A10',
-          600: '#EA4006',
-          700: '#C22E07',
-          800: '#9A260E',
-          900: '#7C230F',
-        },
+        // Business accent colour (set in the POS). Shades are CSS variables filled at runtime
+        // from the accent (src/lib/theme.ts); global.css holds the POS-blue defaults.
+        brand: Object.fromEntries([50, 100, 200, 300, 400, 500, 600, 700, 800, 900].map((k) => [k, `rgb(var(--brand-${k}) / <alpha-value>)`])),
         ink: {
           DEFAULT: '#14161C',
           soft: '#3A3F4B',

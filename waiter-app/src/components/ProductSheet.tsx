@@ -4,6 +4,7 @@ import { Image, Pressable, Text, TextInput, View } from 'react-native';
 import { useMoney } from '@/lib/format';
 import type { Capabilities, Modifier, Product } from '@/lib/types';
 import { Badge, Button, Chip, Sheet, Stepper, tap } from './ui';
+import { useBrand } from '@/lib/theme';
 
 const QUICK_NOTES = ['No onion', 'Less spicy', 'Extra spicy', 'No sugar', 'Less ice', 'No ice', 'Takeaway pack', 'Allergy'];
 const COURSES = [{ n: 1, label: 'Starter' }, { n: 2, label: 'Main' }, { n: 3, label: 'Dessert' }];
@@ -13,6 +14,7 @@ export interface ProductChoice { quantity: number; modifiers: Modifier[]; notes:
 export function ProductSheet({ product, unitPrice, caps, guestCount, onClose, onAdd }: {
   product: Product | null; unitPrice: number; caps: Capabilities; guestCount: number; onClose: () => void; onAdd: (c: ProductChoice) => void;
 }) {
+  const brand = useBrand();
   const money = useMoney();
   // The parent remounts this sheet per product (key={product.id}), so state starts fresh.
   const groups = useMemo(() => (product?.modifierGroups || []).filter((g) => g.isActive && g.modifiers.some((m) => m.isActive)), [product]);
@@ -106,7 +108,7 @@ export function ProductSheet({ product, unitPrice, caps, guestCount, onClose, on
               const on = sel.includes(m.id);
               return (
                 <Pressable key={m.id} onPress={() => toggle(g.id, m.id, g.maxSelect)} className={`mb-2 flex-row items-center gap-3 rounded-xl border px-4 py-3.5 ${on ? 'border-brand-500 bg-brand-50' : 'border-line bg-surface'}`}>
-                  <Ionicons name={g.maxSelect === 1 ? (on ? 'radio-button-on' : 'radio-button-off') : on ? 'checkbox' : 'square-outline'} size={22} color={on ? '#F95A10' : '#9CA3AF'} />
+                  <Ionicons name={g.maxSelect === 1 ? (on ? 'radio-button-on' : 'radio-button-off') : on ? 'checkbox' : 'square-outline'} size={22} color={on ? brand[500] : '#9CA3AF'} />
                   <Text className="flex-1 text-[15px] font-medium text-ink">{m.name}</Text>
                   {m.price ? <Text className="text-[14px] font-semibold text-ink-soft">+{money(m.price)}</Text> : null}
                 </Pressable>

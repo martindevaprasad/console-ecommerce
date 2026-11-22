@@ -62,7 +62,7 @@ export function applyToDOM(s: AppearanceSettings) {
 }
 
 /** Redraws the tab icon in the palette's logo colours (--logo-tile / --logo-fold). */
-function applyFavicon() {
+export function applyFavicon() {
   const cs = getComputedStyle(document.documentElement);
   const tile = cs.getPropertyValue('--logo-tile').trim() || '#5E84FF';
   const fold = cs.getPropertyValue('--logo-fold').trim() || '#000000';

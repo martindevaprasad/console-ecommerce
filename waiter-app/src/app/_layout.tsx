@@ -1,12 +1,13 @@
 import '../../global.css';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Loading, ToastHost } from '@/components/ui';
 import { touchActivity, useIdleLock, useSyncLoop } from '@/lib/hooks';
 import { useSession } from '@/lib/store';
+import { brandVars, useAccent } from '@/lib/theme';
 
 export default function RootLayout() {
   const { ready, pairing, token, hydrate } = useSession();
@@ -15,13 +16,16 @@ export default function RootLayout() {
     hydrate();
   }, [hydrate]);
 
+  const accent = useAccent();
+  const themeVars = useMemo(() => brandVars(accent), [accent]);
   useSyncLoop();
   useIdleLock();
 
   return (
     <SafeAreaProvider>
       <StatusBar style="dark" />
-      <View className="flex-1 bg-canvas" onTouchStart={touchActivity}>
+      {/* brand-* classes everywhere read these variables, so the whole app follows the POS accent */}
+      <View style={themeVars} className="flex-1 bg-canvas" onTouchStart={touchActivity}>
         {!ready ? (
           <Loading />
         ) : (

@@ -13,6 +13,7 @@ import { useAction, useQuery } from '@/lib/hooks';
 import { Q } from '@/lib/queries';
 import { useCart, useSession } from '@/lib/store';
 import type { FloorTable, TableStatus, Zone } from '@/lib/types';
+import { useBrand } from '@/lib/theme';
 
 type Filter = 'all' | 'mine' | 'free' | 'attention';
 
@@ -22,6 +23,7 @@ interface MySession {
 }
 
 export default function TablesScreen() {
+  const brand = useBrand();
   const config = useSession((s) => s.config)!;
   const caps = config.capabilities;
   const me = config.user.id;
@@ -144,7 +146,7 @@ export default function TablesScreen() {
       ) : (
         <ScrollView
           contentContainerClassName="flex-row flex-wrap justify-between px-4 pb-8"
-          refreshControl={<RefreshControl refreshing={floor.refreshing} onRefresh={() => { floor.reload('pull'); mine.reload('silent'); }} tintColor="#F95A10" />}
+          refreshControl={<RefreshControl refreshing={floor.refreshing} onRefresh={() => { floor.reload('pull'); mine.reload('silent'); }} tintColor={brand[500]} />}
         >
           {tables.length === 0 ? (
             <View className="w-full">
@@ -284,6 +286,7 @@ function TransferSheet({ table, me, onClose, onTakeOver, onDone, withApproval }:
   table: FloorTable | null; me: string; onClose: () => void; onTakeOver: (t: FloorTable) => void; onDone: () => void;
   withApproval: <T>(run: (pin?: string) => Promise<T>) => Promise<T | undefined>;
 }) {
+  const brand = useBrand();
   const servers = useQuery<{ servers: { user: { id: string; name: string; role: string }; clockedInAt: string | null; openTables: number }[] }>(Q.SERVERS, {}, { skip: !table, live: false });
   if (!table) return null;
   const mineTable = table.activeSession?.serverUserId === me;
@@ -315,7 +318,7 @@ function TransferSheet({ table, me, onClose, onTakeOver, onDone, withApproval }:
               <Text className="text-[15px] font-semibold text-ink">{s.user.name}</Text>
               <Text className="text-[12px] text-ink-muted">{s.clockedInAt ? 'On shift' : 'Not clocked in'} · {s.openTables} tables</Text>
             </View>
-            <Ionicons name="arrow-forward-circle-outline" size={24} color="#F95A10" />
+            <Ionicons name="arrow-forward-circle-outline" size={24} color={brand[500]} />
           </Pressable>
         ))
       )}

@@ -14,7 +14,7 @@ const PIN_LEN_KEY = 'waiter.pinLengths.v1';
 
 /** Shared-device sign-in: pick your name, enter your PIN. */
 export default function LockScreen() {
-  const { pairing, signIn, forgetPairing, lockReason } = useSession();
+  const { pairing, signIn, forgetPairing, lockReason, rememberAccent } = useSession();
   const [staff, setStaff] = useState<StaffUser[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -27,8 +27,9 @@ export default function LockScreen() {
   const load = useCallback(async () => {
     if (!pairing) return;
     try {
-      const { handheldStaff } = await gql<{ handheldStaff: StaffUser[] }>(Q.STAFF, { deviceKey: pairing.deviceKey }, { auth: false });
+      const { handheldStaff, handheldAccent } = await gql<{ handheldStaff: StaffUser[]; handheldAccent: string }>(Q.STAFF, { deviceKey: pairing.deviceKey }, { auth: false });
       setStaff(handheldStaff);
+      rememberAccent(handheldAccent);
       setLoadError(null);
     } catch (e: any) {
       setLoadError(e.message);
@@ -36,7 +37,7 @@ export default function LockScreen() {
     } finally {
       setRefreshing(false);
     }
-  }, [pairing, forgetPairing]);
+  }, [pairing, forgetPairing, rememberAccent]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch; state is set when it resolves

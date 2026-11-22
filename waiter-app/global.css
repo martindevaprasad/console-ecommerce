@@ -1,3 +1,17 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Default accent (POS blue). Replaced at runtime with the business accent, see src/lib/theme.ts. */
+:root {
+  --brand-50: 242 245 255;
+  --brand-100: 229 235 255;
+  --brand-200: 200 213 255;
+  --brand-300: 165 186 255;
+  --brand-400: 129 159 255;
+  --brand-500: 94 132 255;
+  --brand-600: 83 116 224;
+  --brand-700: 70 98 189;
+  --brand-800: 56 79 153;
+  --brand-900: 45 63 122;
+}

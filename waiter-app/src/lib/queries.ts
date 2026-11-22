@@ -17,10 +17,10 @@ export const Q = {
   // ---- pairing & sign-in
   PAIR: `mutation Pair($email: String!, $password: String!, $deviceName: String!, $locationId: ID) {
     pairHandheld(email: $email, password: $password, deviceName: $deviceName, locationId: $locationId) {
-      deviceKey organizationName device { id name } location { id name city }
+      deviceKey organizationName accentColor device { id name } location { id name city }
     }
   }`,
-  STAFF: `query Staff($deviceKey: String!) { handheldStaff(deviceKey: $deviceKey) { ${USER} } }`,
+  STAFF: `query Staff($deviceKey: String!) { handheldStaff(deviceKey: $deviceKey) { ${USER} } handheldAccent(deviceKey: $deviceKey) }`,
   LOGIN: `mutation Login($deviceKey: String!, $pin: String!, $userId: ID) {
     handheldLogin(deviceKey: $deviceKey, pin: $pin, userId: $userId) { token user { ${USER} } }
   }`,

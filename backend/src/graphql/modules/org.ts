@@ -207,6 +207,26 @@ const ownLocation = async (orgId: string, id: string) => {
   return loc!;
 };
 
+/** Rejects time zones the runtime doesn't know (e.g. "Mumbai/Kolkata"); IANA names like "Asia/Kolkata" pass. */
+const validateTimeZone = (tz?: string | null) => {
+  if (!tz) return;
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone: tz });
+  } catch {
+    fail(`"${tz}" is not a valid time zone. Use an IANA name such as Asia/Kolkata, Europe/London or America/New_York.`);
+  }
+};
+
+/** Rejects malformed locale tags (e.g. "en_IN"); BCP 47 tags like "en-IN" pass. */
+const validateLocale = (locale?: string | null) => {
+  if (!locale) return;
+  try {
+    if (!Intl.getCanonicalLocales(locale).length) throw new Error();
+  } catch {
+    fail(`"${locale}" is not a valid locale. Use a tag such as en-IN, en-US or ta-IN.`);
+  }
+};
+
 const validatePin = (pin?: string | null) => {
   if (pin && !/^\d{4,6}$/.test(pin)) fail('PIN must be 4–6 digits');
 };
@@ -400,6 +420,8 @@ export const resolvers = {
 
     updateOrganization: async (_: any, { input }: any, ctx: Ctx) => {
       const auth = await requirePerm(ctx, 'settings.manage');
+      validateTimeZone(input.timezone);
+      validateLocale(input.locale);
       const org = await prisma.organization.update({ where: { id: auth.orgId }, data: clean(input) });
       await audit(auth, 'UPDATE', 'Organization', org.id, clean(input));
       return org;
@@ -426,6 +448,8 @@ export const resolvers = {
 
     completeOnboarding: async (_: any, { input }: any, ctx: Ctx) => {
       const auth = await requirePerm(ctx, 'settings.manage');
+      validateTimeZone(input.timezone);
+      validateLocale(input.locale);
       const country = COUNTRY_PRESETS.find((c) => c.code === input.country);
       const template = BUSINESS_TEMPLATES[input.type] || BUSINESS_TEMPLATES.RESTAURANT;
       const settings: any = buildSettings(input.type, input.size, country);
@@ -565,6 +589,7 @@ export const resolvers = {
     createLocation: async (_: any, { input }: any, ctx: Ctx) => {
       const auth = await requirePerm(ctx, 'locations.manage');
       if (!input.name) fail('Location name is required');
+      validateTimeZone(input.timezone);
       const { org, settings } = await orgSettings(auth.orgId);
       const count = await prisma.location.count({ where: { organizationId: auth.orgId, isActive: true } });
       if (count >= 1 && !settings.modules.multiLocation) {
@@ -588,6 +613,7 @@ export const resolvers = {
     updateLocation: async (_: any, { id, input }: any, ctx: Ctx) => {
       const auth = await requirePerm(ctx, 'locations.manage');
       await ownLocation(auth.orgId, id);
+      validateTimeZone(input.timezone);
       if (input.isHeadOffice) {
         await prisma.location.updateMany({ where: { organizationId: auth.orgId }, data: { isHeadOffice: false } });
       }

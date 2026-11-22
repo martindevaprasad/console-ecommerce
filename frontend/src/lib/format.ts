@@ -3,8 +3,32 @@
 let ctx = { currency: 'USD', locale: 'en-US', timezone: undefined as string | undefined };
 const cache = new Map<string, Intl.NumberFormat>();
 
+/** True when the browser knows this IANA time zone (e.g. "Asia/Kolkata"). */
+export function isValidTimeZone(tz?: string | null): boolean {
+  if (!tz) return false;
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone: tz });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+const validLocale = (locale?: string | null) => {
+  try {
+    return locale && Intl.getCanonicalLocales(locale).length ? locale : null;
+  } catch {
+    return null;
+  }
+};
+
 export function configureFormat(currency?: string, locale?: string, timezone?: string) {
-  ctx = { currency: currency || 'USD', locale: locale || 'en-US', timezone: timezone || undefined };
+  // A bad value saved in settings must never take a page down: fall back to the device's own.
+  const tzOk = !timezone || isValidTimeZone(timezone);
+  const loc = validLocale(locale);
+  if (!tzOk) console.warn(`Ignoring invalid time zone "${timezone}". Fix it in Settings → Localization & tax.`);
+  if (locale && !loc) console.warn(`Ignoring invalid locale "${locale}". Fix it in Settings → Localization & tax.`);
+  ctx = { currency: currency || 'USD', locale: loc || 'en-US', timezone: tzOk ? timezone || undefined : undefined };
   cache.clear();
 }
 

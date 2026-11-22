@@ -11,9 +11,41 @@ import type { Theme, Palette, SidebarVariant, Density } from '@/hooks';
 import { useSessionLoader } from '@/hooks/useSession';
 import { AUTH, ORG_API } from '@/services/api';
 import { MODULE_INFO, ORDER_TYPE_LABELS, ALL_ORDER_TYPES } from '@/lib/constants';
-import { dateTime, label } from '@/lib/format';
+import { dateTime, isValidTimeZone, label } from '@/lib/format';
 import { ACCENT_SWATCHES, DEFAULT_ACCENT, applyAccent, whiteContrast } from '@/lib/accent';
 import { Field, Toggle, SettingRow, Segmented, Empty } from '../shared/ui';
+
+/**
+ * Cities that aren't zone names themselves, plus current names the browser lists under an old alias
+ * (it lists India as "Asia/Calcutta"; "Asia/Kolkata" is the current, valid name).
+ */
+const CITY_ZONES: Record<string, string> = {
+  kolkata: 'Asia/Kolkata', calcutta: 'Asia/Kolkata', mumbai: 'Asia/Kolkata', bombay: 'Asia/Kolkata', chennai: 'Asia/Kolkata',
+  madras: 'Asia/Kolkata', delhi: 'Asia/Kolkata', 'new delhi': 'Asia/Kolkata', bangalore: 'Asia/Kolkata', bengaluru: 'Asia/Kolkata',
+  hyderabad: 'Asia/Kolkata', pune: 'Asia/Kolkata', coimbatore: 'Asia/Kolkata', madurai: 'Asia/Kolkata', india: 'Asia/Kolkata',
+  saigon: 'Asia/Ho_Chi_Minh', 'ho chi minh': 'Asia/Ho_Chi_Minh', kiev: 'Europe/Kyiv', kyiv: 'Europe/Kyiv', rangoon: 'Asia/Yangon',
+  katmandu: 'Asia/Kathmandu', kathmandu: 'Asia/Kathmandu', dubai: 'Asia/Dubai', 'abu dhabi': 'Asia/Dubai',
+};
+
+/** Every IANA zone the browser knows (with current names added), for the timezone picker. */
+const TIME_ZONES: string[] = (() => {
+  let list: string[];
+  try { list = (Intl as any).supportedValuesOf('timeZone') as string[]; } catch { list = ['UTC', 'Europe/London', 'America/New_York']; }
+  return [...new Set([...Object.values(CITY_ZONES), ...list])].sort();
+})();
+
+/** Best guess for a mistyped zone, e.g. "Mumbai/Kolkata" → "Asia/Kolkata" (matches on the city part). */
+function suggestTimeZone(input: string): string | null {
+  const city = (z: string) => z.toLowerCase().split('/').pop()!.replace(/_/g, ' ');
+  const words = input.toLowerCase().split(/[\/,]+/).map((w) => w.trim().replace(/_/g, ' ')).filter((w) => w.length > 2);
+  // Last segment first: in "Mumbai/Kolkata" the city that exists as a zone is "kolkata".
+  for (const w of words.reverse()) {
+    if (CITY_ZONES[w]) return CITY_ZONES[w];
+    const hit = TIME_ZONES.find((z) => city(z) === w);
+    if (hit) return hit;
+  }
+  return null;
+}
 
 /** Gradient icon colour per settings section (Windows Settings style). */
 const SETTINGS_TONES: Record<string, string> = {
@@ -386,7 +418,16 @@ const SettingsPage: React.FC = () => {
                 <Field label="Country (ISO)"><input className="form-input" maxLength={2} value={profile.country} onChange={(e) => setProfile({ ...profile, country: e.target.value.toUpperCase() })} /></Field>
                 <Field label="Currency (ISO 4217)"><input className="form-input" maxLength={3} value={profile.currency} onChange={(e) => setProfile({ ...profile, currency: e.target.value.toUpperCase() })} /></Field>
                 <Field label="Locale" hint="e.g. en-GB, fr-FR, ar-AE, ja-JP"><input className="form-input" value={profile.locale} onChange={(e) => setProfile({ ...profile, locale: e.target.value })} /></Field>
-                <Field label="Timezone" hint="IANA name, e.g. Europe/London"><input className="form-input" value={profile.timezone} onChange={(e) => setProfile({ ...profile, timezone: e.target.value })} /></Field>
+                <Field label="Timezone" hint={isValidTimeZone(profile.timezone) ? 'IANA name, e.g. Asia/Kolkata, Europe/London' : undefined}>
+                  <input className="form-input" list="tz-options" value={profile.timezone} placeholder="Start typing, e.g. Kolkata"
+                    onChange={(e) => setProfile({ ...profile, timezone: e.target.value })} />
+                  <datalist id="tz-options">{TIME_ZONES.map((z) => <option key={z} value={z} />)}</datalist>
+                  {profile.timezone && !isValidTimeZone(profile.timezone) && (
+                    <span className="small text-danger">
+                      Not a valid time zone.{suggestTimeZone(profile.timezone) ? <> Did you mean <button type="button" className="btn btn-ghost btn-sm" style={{ padding: '0 4px', height: 'auto' }} onClick={() => setProfile({ ...profile, timezone: suggestTimeZone(profile.timezone)! })}>{suggestTimeZone(profile.timezone)}</button>?</> : ' Pick one from the list.'}
+                    </span>
+                  )}
+                </Field>
                 <Field label="Tax label on receipts"><input className="form-input" value={cfg.taxLabel} onChange={(e) => setCfg({ ...cfg, taxLabel: e.target.value })} /></Field>
                 <Field label="Fallback tax rate (%)" hint="Per-item rates live in Menu → Tax rates"><input className="form-input" type="number" step="0.001" value={profile.taxRate} onChange={(e) => setProfile({ ...profile, taxRate: e.target.value })} /></Field>
                 <div className="full">

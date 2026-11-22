@@ -1,0 +1,424 @@
+/* ============================================================
+   WINDOWS 11 (FLUENT) DESIGN LAYER
+   Loaded last. Light mode is plain white with hairline borders;
+   dark mode uses the Windows 11 dark surfaces. Brand colour comes
+   from the business accent (lib/accent.ts), default GMOS blue.
+   Neutral tokens apply to the default palette; component styles
+   apply everywhere and read tokens, so other palettes still work.
+   ============================================================ */
+
+/* ---- Native controls (select popups, scrollbars, date pickers) follow the theme ---- */
+[data-theme='dark'] { color-scheme: dark; }
+[data-theme='light'] { color-scheme: light; }
+
+/* ---- Tokens: dark (Windows 11 dark) ---- */
+:root:not([data-palette]) {
+  --font-family: 'Segoe UI Variable Text', 'Segoe UI Variable', 'Segoe UI', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+
+  --color-bg-primary: #202020;
+  --color-bg-secondary: #2b2b2b;
+  --color-bg-tertiary: #323232;
+  --color-surface: rgba(255, 255, 255, 0.05);
+  --color-surface-hover: rgba(255, 255, 255, 0.085);
+  --color-border: rgba(255, 255, 255, 0.083);
+  --color-border-hover: rgba(255, 255, 255, 0.16);
+
+  --text-primary: #ffffff;
+  --text-secondary: #c8c8c8;
+  --text-muted: #9d9d9d;
+  --text-inverse: #000000;
+
+  /* Single colour: highlights follow the accent like Windows */
+  --color-accent: var(--color-primary);
+  --color-accent-light: var(--color-primary-light);
+  --color-accent-glow: var(--color-primary-glow);
+
+  --color-success: #6ccb5f;
+  --color-success-light: #6ccb5f;
+  --color-success-glow: rgba(108, 203, 95, 0.16);
+  --color-warning: #fce100;
+  --color-warning-light: #fce100;
+  --color-warning-glow: rgba(252, 225, 0, 0.13);
+  --color-danger: #ff99a4;
+  --color-danger-light: #ff99a4;
+  --color-danger-glow: rgba(255, 153, 164, 0.15);
+  --color-info: #60cdff;
+  --color-info-glow: rgba(96, 205, 255, 0.15);
+
+  --gradient-primary: var(--color-primary);
+  --gradient-card: none;
+  --gradient-hero: none;
+  --gradient-sidebar: #1c1c1c;
+  --sidebar-aurora-bg: #1c1c1c;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.26);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.32);
+  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.42);
+  --shadow-primary: none;
+
+  --fl-card: #2b2b2b;
+  --fl-card-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
+  --fl-control: rgba(255, 255, 255, 0.061);
+  --fl-control-hover: rgba(255, 255, 255, 0.084);
+  --fl-control-border: rgba(255, 255, 255, 0.093);
+  --fl-control-bottom: rgba(255, 255, 255, 0.054);
+  --fl-input: rgba(255, 255, 255, 0.061);
+  --fl-input-focus: #1f1f1f;
+  --fl-input-bottom: rgba(255, 255, 255, 0.54);
+  --fl-row-line: rgba(255, 255, 255, 0.06);
+  --fl-row-hover: rgba(255, 255, 255, 0.045);
+  --fl-subtle: rgba(255, 255, 255, 0.06);
+  --fl-dialog-foot: #202020;
+
+  /* Status chips (Windows InfoBar colours) */
+  --fl-ok-bg: #393d1b;      --fl-ok-fg: #6ccb5f;
+  --fl-warn-bg: #433519;    --fl-warn-fg: #fce100;
+  --fl-err-bg: #442726;     --fl-err-fg: #ff99a4;
+  --fl-info-bg: rgba(var(--color-primary-rgb), 0.2); --fl-info-fg: var(--color-primary-light);
+  --fl-neutral-bg: rgba(255, 255, 255, 0.08); --fl-neutral-fg: #c8c8c8;
+}
+
+/* ---- Tokens: light (plain white, Windows 11 light) ---- */
+[data-theme='light']:not([data-palette]) {
+  --color-bg-primary: #ffffff;
+  --color-bg-secondary: #ffffff;
+  --color-bg-tertiary: #f9f9f9;
+  --color-surface: #ffffff;
+  --color-surface-hover: #f5f5f5;
+  --color-border: #e5e5e5;
+  --color-border-hover: #d1d1d1;
+
+  --text-primary: #1b1b1b;
+  --text-secondary: #5d5d5d;
+  --text-muted: #8a8a8a;
+  --text-inverse: #ffffff;
+
+  --color-success: #0f7b0f;
+  --color-success-light: #0f7b0f;
+  --color-success-glow: #dff6dd;
+  --color-warning: #9d5d00;
+  --color-warning-light: #9d5d00;
+  --color-warning-glow: #fff4ce;
+  --color-danger: #c42b1c;
+  --color-danger-light: #c42b1c;
+  --color-danger-glow: #fde7e9;
+  --color-info: #005fb8;
+  --color-info-glow: #e6f2fb;
+
+  --gradient-sidebar: #f7f7f7;
+  --sidebar-aurora-bg: #f7f7f7;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.14);
+
+  --fl-card: #ffffff;
+  --fl-card-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --fl-control: #fbfbfb;
+  --fl-control-hover: #f6f6f6;
+  --fl-control-border: rgba(0, 0, 0, 0.073);
+  --fl-control-bottom: rgba(0, 0, 0, 0.16);
+  --fl-input: #ffffff;
+  --fl-input-focus: #ffffff;
+  --fl-input-bottom: rgba(0, 0, 0, 0.45);
+  --fl-row-line: #efefef;
+  --fl-row-hover: #f7f7f7;
+  --fl-subtle: rgba(0, 0, 0, 0.037);
+  --fl-dialog-foot: #f7f7f7;
+
+  --fl-ok-bg: #dff6dd;      --fl-ok-fg: #0f7b0f;
+  --fl-warn-bg: #fff4ce;    --fl-warn-fg: #8a5300;
+  --fl-err-bg: #fde7e9;     --fl-err-fg: #c42b1c;
+  --fl-info-bg: rgba(var(--color-primary-rgb), 0.11); --fl-info-fg: var(--color-primary-dark);
+  --fl-neutral-bg: #f0f0f0; --fl-neutral-fg: #5d5d5d;
+}
+
+/* Gradient icon colours (light end, deep end). Dark mode uses brighter ends for contrast. */
+:root {
+  --fl-blue-a: #4cc2ff;   --fl-blue-b: #0067c0;
+  --fl-teal-a: #33d6c6;   --fl-teal-b: #00797c;
+  --fl-green-a: #74e06f;  --fl-green-b: #107c10;
+  --fl-orange-a: #ffb347; --fl-orange-b: #d9480f;
+  --fl-red-a: #ff8a98;    --fl-red-b: #c42b1c;
+  --fl-purple-a: #c5a3ff; --fl-purple-b: #6b2fd6;
+  --fl-pink-a: #ff8fd8;   --fl-pink-b: #bf1b8f;
+  --fl-gold-a: #ffd95a;   --fl-gold-b: #c77c00;
+  --fl-slate-a: #a9b4c4;  --fl-slate-b: #4b5563;
+}
+[data-theme='dark'] {
+  --fl-blue-b: #2b8cff;   --fl-teal-b: #11a8a3;   --fl-green-b: #36a836;  --fl-orange-b: #f26b2a;
+  --fl-red-b: #ef4f5f;    --fl-purple-b: #9061ff; --fl-pink-b: #e34bb5;   --fl-gold-b: #e9a400;
+  --fl-slate-b: #8592a6;
+}
+
+/* ============================================================
+   Layout & typography
+   ============================================================ */
+body { font-family: var(--font-family); }
+.main-content { background: var(--color-bg-primary); }
+.page-title {
+  background: none;
+  -webkit-text-fill-color: currentColor;
+  color: var(--text-primary);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.page-subtitle { color: var(--text-secondary); }
+.topbar-sub, .card-sub, .kpi-sub, .setting-row-hint, .form-hint { color: var(--text-muted); }
+.form-label { color: var(--text-primary); font-weight: 600; }
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(128, 128, 128, 0.38); border-radius: 8px; border: 2px solid transparent; background-clip: padding-box; }
+::-webkit-scrollbar-thumb:hover { background: rgba(128, 128, 128, 0.6); background-clip: padding-box; }
+
+/* ---- Top bar: acrylic strip ---- */
+.topbar { background: color-mix(in srgb, var(--color-bg-primary) 86%, transparent); border-bottom: 1px solid var(--color-border); }
+[data-theme='light'] .topbar { background: rgba(255, 255, 255, 0.88); }
+.topbar-title { font-weight: 600; }
+
+/* ---- Sidebar: Windows NavigationView ---- */
+[data-sidebar='aurora'] .sidebar { background: var(--sidebar-aurora-bg, var(--gradient-sidebar)); }
+.sidebar { border-right: 1px solid var(--color-border); }
+.sidebar-logo, .sidebar-footer { border-color: var(--color-border); }
+[data-sidebar='aurora'] .sidebar .brand-wordmark { color: var(--text-primary); }
+.sidebar-section-label { text-transform: none; letter-spacing: 0; font-size: 11.5px; font-weight: 600; color: var(--text-secondary); }
+.sidebar-item { position: relative; border: 0; border-radius: 5px; color: var(--text-primary); font-weight: 400; }
+[data-sidebar] .sidebar-item:hover { background: var(--fl-subtle); border-color: transparent; color: var(--text-primary); }
+[data-sidebar] .sidebar-item.active { background: var(--fl-subtle); border-color: transparent; color: var(--text-primary); font-weight: 600; }
+.sidebar-item.active::before {
+  content: ''; position: absolute; left: 0; top: 50%; width: 3px; height: 16px; margin-top: -8px;
+  border-radius: 3px; background: var(--color-primary);
+}
+.sidebar-item-icon { opacity: 1; }
+.sidebar-avatar { background: var(--color-primary); }
+.sidebar-toggle { border-radius: 5px; }
+
+/* ============================================================
+   Gradient icons (Windows 11 colourful icon style)
+   Tabler icons are strokes; the gradients live in <FluentIconDefs />.
+   ============================================================ */
+.fi svg { stroke-width: 1.75; }
+.fi-blue svg { stroke: url(#fl-g-blue); }
+.fi-teal svg { stroke: url(#fl-g-teal); }
+.fi-green svg { stroke: url(#fl-g-green); }
+.fi-orange svg { stroke: url(#fl-g-orange); }
+.fi-red svg { stroke: url(#fl-g-red); }
+.fi-purple svg { stroke: url(#fl-g-purple); }
+.fi-pink svg { stroke: url(#fl-g-pink); }
+.fi-gold svg { stroke: url(#fl-g-gold); }
+.fi-slate svg { stroke: url(#fl-g-slate); }
+.fi-accent svg { stroke: url(#fl-g-accent); }
+/* Solid (filled) icons: the gradient paints the fill instead of the stroke */
+.fi-solid svg { stroke: none; }
+.fi-solid.fi-blue svg { fill: url(#fl-g-blue); }
+.fi-solid.fi-teal svg { fill: url(#fl-g-teal); }
+.fi-solid.fi-green svg { fill: url(#fl-g-green); }
+.fi-solid.fi-orange svg { fill: url(#fl-g-orange); }
+.fi-solid.fi-red svg { fill: url(#fl-g-red); }
+.fi-solid.fi-purple svg { fill: url(#fl-g-purple); }
+.fi-solid.fi-pink svg { fill: url(#fl-g-pink); }
+.fi-solid.fi-gold svg { fill: url(#fl-g-gold); }
+.fi-solid.fi-slate svg { fill: url(#fl-g-slate); }
+.fi-solid.fi-accent svg { fill: url(#fl-g-accent); }
+/* Dashboard / KPI tiles: icon tone follows the tile's meaning */
+.kpi .kpi-label svg { stroke: url(#fl-g-accent); stroke-width: 1.75; }
+.kpi.success .kpi-label svg { stroke: url(#fl-g-green); }
+.kpi.warning .kpi-label svg { stroke: url(#fl-g-gold); }
+.kpi.danger .kpi-label svg { stroke: url(#fl-g-red); }
+.kpi.info .kpi-label svg { stroke: url(#fl-g-blue); }
+.kpi.accent .kpi-label svg { stroke: url(#fl-g-teal); }
+
+/* ============================================================
+   Cards, KPI tiles, chart cards: plain surfaces, hairline border
+   ============================================================ */
+.card, .kpi, .metric-card, .chart-card, .glass-card, .glass-card-static, .settings-section, .settings-placeholder {
+  background: var(--fl-card);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--fl-card-shadow);
+  border-radius: 8px;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.kpi::before, .metric-card::before { display: none; }
+.metric-card:hover { transform: none; box-shadow: var(--fl-card-shadow); border-color: var(--color-border); }
+.kpi-label { text-transform: none; letter-spacing: 0; font-size: 12px; font-weight: 400; color: var(--text-secondary); gap: 6px; }
+.kpi-value { font-weight: 600; font-size: 22px; }
+.card-title { font-weight: 600; }
+.settings-section-title { font-weight: 600; }
+.settings-section-desc { color: var(--text-secondary); }
+
+/* ============================================================
+   Buttons (Windows standard + accent)
+   ============================================================ */
+.btn { border-radius: 4px; font-weight: 500; }
+.btn::before { display: none; }
+.btn:active { transform: none; }
+.btn-primary {
+  background: var(--color-primary);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom-color: rgba(0, 0, 0, 0.32);
+  box-shadow: none;
+}
+.btn-primary:hover:not(:disabled) { background: color-mix(in srgb, var(--color-primary) 90%, #fff); }
+.btn-primary:active:not(:disabled) { background: color-mix(in srgb, var(--color-primary) 80%, #fff); color: rgba(255, 255, 255, 0.8); }
+.btn-secondary {
+  background: var(--fl-control);
+  color: var(--text-primary);
+  border: 1px solid var(--fl-control-border);
+  border-bottom-color: var(--fl-control-bottom);
+}
+.btn-secondary:hover:not(:disabled) { background: var(--fl-control-hover); border-color: var(--fl-control-border); border-bottom-color: var(--fl-control-bottom); }
+.btn-secondary:active:not(:disabled) { color: var(--text-secondary); }
+.btn-ghost { color: var(--text-primary); border: 1px solid transparent; }
+.btn-ghost:hover:not(:disabled) { background: var(--fl-subtle); border-color: transparent; }
+.btn-danger { background: var(--fl-err-bg); color: var(--fl-err-fg); border: 1px solid transparent; }
+.btn-danger:hover:not(:disabled) { background: var(--fl-err-bg); filter: brightness(0.97); border-color: transparent; }
+.btn-success { background: var(--fl-ok-bg); color: var(--fl-ok-fg); border: 1px solid transparent; }
+.btn-success:hover:not(:disabled) { background: var(--fl-ok-bg); filter: brightness(0.97); }
+.btn:disabled { opacity: 0.45; }
+.btn:focus-visible, .chip:focus-visible, .tab:focus-visible, .sidebar-item:focus-visible, .settings-nav-item:focus-visible {
+  outline: 2px solid var(--text-primary); outline-offset: 1px;
+}
+
+/* ============================================================
+   Text boxes & dropdowns (Windows TextBox / ComboBox)
+   ============================================================ */
+.form-input, .form-select, .topbar-select, .pos-sort, .pos-search, .search-input {
+  background-color: var(--fl-input);
+  border: 1px solid var(--fl-control-border);
+  border-radius: 4px;
+  box-shadow: inset 0 -1px 0 var(--fl-input-bottom);
+  color: var(--text-primary);
+}
+.form-input:hover, .form-select:hover, .topbar-select:hover { background-color: var(--fl-control-hover); }
+.form-input:focus, .form-select:focus, .topbar-select:focus, .search-input:focus, .pos-search:focus-within {
+  background-color: var(--fl-input-focus);
+  border-color: var(--fl-control-border);
+  box-shadow: inset 0 -2px 0 var(--color-primary);
+  outline: none;
+}
+.form-select option, .topbar-select option, .pos-sort option { background: var(--color-bg-secondary); color: var(--text-primary); }
+.form-input::placeholder { color: var(--text-muted); }
+/* Darker chevron in light mode */
+[data-theme='light'] .form-select, [data-theme='light'] .topbar-select, [data-theme='light'] .pos-sort {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%235d5d5d'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+}
+.check input { accent-color: var(--color-primary); }
+
+/* Toggle switch (Windows ToggleSwitch) */
+.toggle-switch { background: transparent; box-shadow: inset 0 0 0 1px var(--text-secondary); }
+.toggle-switch .toggle-knob { background: var(--text-secondary); transform: scale(0.8); }
+.toggle-switch.on { background: var(--color-primary); box-shadow: none; }
+.toggle-switch.on .toggle-knob { background: #fff; transform: translateX(20px) scale(0.85); }
+.toggle-switch.sm.on .toggle-knob { transform: translateX(14px) scale(0.85); }
+.toggle-switch:disabled { opacity: 0.45; }
+
+/* ============================================================
+   Tables (Windows 11 list / DataGrid)
+   ============================================================ */
+.table-container {
+  background: var(--fl-card);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  box-shadow: var(--fl-card-shadow);
+}
+.data-table { background: transparent; }
+.data-table th {
+  background: transparent;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--color-border);
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+.data-table td {
+  border-bottom: 1px solid var(--fl-row-line);
+  padding-top: 10px;
+  padding-bottom: 10px;
+  color: var(--text-primary);
+}
+.data-table tbody tr:hover { background: var(--fl-row-hover); }
+.data-table tbody tr.selected, .data-table tbody tr.active { background: rgba(var(--color-primary-rgb), 0.08); }
+
+/* ============================================================
+   Badges, chips, tabs, segmented
+   ============================================================ */
+.badge { border: 0; border-radius: 4px; font-weight: 600; padding: 2px 8px; }
+.badge-success { background: var(--fl-ok-bg); color: var(--fl-ok-fg); border: 0; }
+.badge-warning { background: var(--fl-warn-bg); color: var(--fl-warn-fg); border: 0; }
+.badge-danger { background: var(--fl-err-bg); color: var(--fl-err-fg); border: 0; }
+.badge-info, .badge-primary { background: var(--fl-info-bg); color: var(--fl-info-fg); border: 0; }
+.badge-neutral, .badge:not([class*='badge-']) { background: var(--fl-neutral-bg); color: var(--fl-neutral-fg); border: 0; }
+
+.chip { background: var(--fl-control); border: 1px solid var(--fl-control-border); color: var(--text-primary); font-weight: 500; }
+.chip:hover { background: var(--fl-control-hover); border-color: var(--fl-control-border); color: var(--text-primary); }
+.chip.active { background: var(--color-primary); border-color: var(--color-primary); color: #fff; }
+
+/* Tabs: Windows SelectorBar with a short accent pill */
+.tabs { border-bottom: 1px solid var(--color-border); }
+.tab { position: relative; color: var(--text-secondary); font-weight: 500; border-bottom: 0; }
+.tab:hover { color: var(--text-primary); }
+.tab.active { color: var(--text-primary); font-weight: 600; border-bottom: 0; }
+.tab.active::after {
+  content: ''; position: absolute; left: 50%; bottom: 0; width: 18px; height: 3px; margin-left: -9px;
+  border-radius: 3px; background: var(--color-primary);
+}
+.tab-count { background: var(--fl-neutral-bg); color: var(--fl-neutral-fg); }
+
+/* Segmented: selected option is a raised white (or lighter) pill */
+.segmented { background: var(--fl-subtle); border: 1px solid var(--color-border); border-radius: 6px; }
+.segmented button { color: var(--text-secondary); font-weight: 500; border-radius: 4px; }
+.segmented button.active { background: var(--fl-card); color: var(--text-primary); font-weight: 600; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12); }
+[data-theme='dark'] .segmented button.active { background: rgba(255, 255, 255, 0.1); }
+.segmented button:not(.active):hover { background: transparent; color: var(--text-primary); }
+
+/* ============================================================
+   Settings: Windows Settings app layout
+   ============================================================ */
+.settings-nav { background: transparent; border: 0; box-shadow: none; padding: 2px; gap: 2px; }
+.settings-nav-item { position: relative; border-left: 0; border-radius: 5px; color: var(--text-primary); padding: 9px 12px; }
+.settings-nav-item:hover { background: var(--fl-subtle); color: var(--text-primary); }
+.settings-nav-item.active { background: var(--fl-subtle); color: var(--text-primary); }
+.settings-nav-item.active::before {
+  content: ''; position: absolute; left: 0; top: 50%; width: 3px; height: 18px; margin-top: -9px;
+  border-radius: 3px; background: var(--color-primary);
+}
+.settings-nav-icon { opacity: 1; }
+.settings-nav-label { font-weight: 500; }
+.settings-nav-item.active .settings-nav-label { font-weight: 600; }
+.settings-nav-sub, .settings-nav-item.active .settings-nav-sub { color: var(--text-muted); }
+.setting-row { border-bottom-color: var(--fl-row-line); }
+.setting-row-label { font-weight: 500; }
+.theme-card, .variant-card, .pick-card, .option-btn, .tender-btn, .payment-method-btn {
+  background: var(--fl-control); border: 1px solid var(--fl-control-border); border-radius: 6px;
+}
+.theme-card.selected, .variant-card.selected, .pick-card.selected, .option-btn.selected, .tender-btn.selected {
+  border-color: var(--color-primary); background: rgba(var(--color-primary-rgb), 0.08); box-shadow: inset 0 0 0 1px var(--color-primary);
+}
+
+/* ============================================================
+   Dialogs, drawers, menus (Windows ContentDialog / flyouts)
+   ============================================================ */
+.modal-overlay, .drawer-overlay { background: rgba(0, 0, 0, 0.3); backdrop-filter: none; -webkit-backdrop-filter: none; }
+[data-theme='dark'] .modal-overlay, [data-theme='dark'] .drawer-overlay { background: rgba(0, 0, 0, 0.5); }
+.modal { background: var(--color-bg-secondary); border: 1px solid var(--color-border); border-radius: 8px; box-shadow: var(--shadow-lg); }
+.modal-footer { background: var(--fl-dialog-foot); border-top: 1px solid var(--color-border); margin: var(--space-5) calc(-1 * var(--space-6)) calc(-1 * var(--space-6)); padding: var(--space-4) var(--space-6); border-radius: 0 0 8px 8px; }
+.modal-title { font-weight: 600; }
+.modal-close { border-radius: 4px; }
+.drawer { background: var(--color-bg-secondary); border-left: 1px solid var(--color-border); box-shadow: var(--shadow-lg); }
+.drawer-foot { background: var(--fl-dialog-foot); }
+.user-menu { background: var(--color-bg-secondary); border: 1px solid var(--color-border); border-radius: 8px; box-shadow: var(--shadow-lg); }
+.user-menu button { border-radius: 4px; color: var(--text-primary); }
+.user-menu button:hover { background: var(--fl-subtle); }
+
+/* ---- Misc ---- */
+.empty-state-title { font-weight: 600; }
+.dot.success { box-shadow: none; }
+.divider { background: var(--color-border); }
+a { color: var(--color-primary-light); }
+a:hover { color: var(--color-primary); }

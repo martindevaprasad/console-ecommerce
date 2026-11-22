@@ -15,6 +15,12 @@ import { dateTime, label } from '@/lib/format';
 import { ACCENT_SWATCHES, DEFAULT_ACCENT, applyAccent, whiteContrast } from '@/lib/accent';
 import { Field, Toggle, SettingRow, Segmented, Empty } from '../shared/ui';
 
+/** Gradient icon colour per settings section (Windows Settings style). */
+const SETTINGS_TONES: Record<string, string> = {
+  business: 'blue', region: 'teal', service: 'orange', modules: 'purple', security: 'green',
+  waiter: 'accent', loyalty: 'gold', audit: 'slate', account: 'blue', appearance: 'pink',
+};
+
 type Tab = 'business' | 'region' | 'service' | 'modules' | 'security' | 'waiter' | 'loyalty' | 'account' | 'appearance' | 'audit';
 
 const WAITER_PAYMENT_METHODS = ['CASH', 'CARD', 'DIGITAL', 'GIFT_CARD', 'LOYALTY', 'HOUSE_ACCOUNT', 'OTHER'];
@@ -346,7 +352,7 @@ const SettingsPage: React.FC = () => {
         <aside className="settings-nav">
           {TABS.filter((t) => !t.admin || (t.key === 'audit' ? can('audit.view') : admin)).map((t) => (
             <button key={t.key} className={`settings-nav-item${tab === t.key ? ' active' : ''}`} onClick={() => setTab(t.key)}>
-              <span className="settings-nav-icon">{t.icon}</span>
+              <span className={`settings-nav-icon fi fi-${SETTINGS_TONES[t.key]}`}>{t.icon}</span>
               <span><div className="settings-nav-label">{t.label}</div><div className="settings-nav-sub">{t.sub}</div></span>
             </button>
           ))}

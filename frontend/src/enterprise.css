@@ -42,11 +42,11 @@
   --vh: 1vh;
 }
 
-/* Laptops & desktops render the whole app at 80% (what browser zoom 80% looks like).
+/* Laptops & desktops render the whole app at 90% (what browser zoom 90% looks like).
    Touch tablets/phones keep 100% so tap targets stay finger-sized. Inside a zoomed
    element vh shrinks with it, hence --vh = 1vh / zoom; pointer maths uses lib/zoom.ts. */
 @media screen and (min-width: 1024px) and (hover: hover) and (pointer: fine) {
-  :root { --app-zoom: 0.8; --vh: 1.25vh; }
+  :root { --app-zoom: 0.9; --vh: calc(1vh / 0.9); }
   #root { zoom: var(--app-zoom); }
 }
 

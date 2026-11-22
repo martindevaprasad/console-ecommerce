@@ -49,7 +49,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
                   className={({ isActive }) => `sidebar-item${isActive ? ' active' : ''}`}
                   title={collapsed ? item.label : undefined}
                 >
-                  <span className="sidebar-item-icon">{item.icon}</span>
+                  <span className={`sidebar-item-icon fi fi-solid fi-${item.tone}`}>{item.icon}</span>
                   {!collapsed && <span className="sidebar-item-label">{item.label}</span>}
                 </NavLink>
               ))}

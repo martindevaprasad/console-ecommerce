@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
+import { FluentIconDefs } from './FluentIconDefs';
 import { AppearanceContext, useAppearanceState } from '@/hooks/useAppearance';
 
 interface LayoutProps {
@@ -33,6 +34,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
     <AppearanceContext.Provider value={appearanceCtx}>
       <div className="app-layout">
+        <FluentIconDefs />
         <Sidebar collapsed={collapsed} onToggle={() => setCollapsed(c => !c)} />
         <div className={`main-content${collapsed ? ' main-content-collapsed' : ''}`}>
           <TopBar />

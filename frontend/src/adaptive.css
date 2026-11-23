@@ -536,6 +536,37 @@ button.list-row { width: 100%; border-left: 0; border-right: 0; border-bottom: 0
 .sticky-actions-spacer { height: 72px; }
 .sticky-actions-inline { justify-content: flex-end; gap: var(--space-3); margin-top: var(--space-5); }
 
+/* ==========================================================================
+   Forms on touch screens
+   ========================================================================== */
+/* MobileSelect trigger looks like the select it replaces */
+.m-select-trigger { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; text-align: left; cursor: pointer; background-image: none; }
+.m-select-trigger > span { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.m-select-search { margin-bottom: 12px; }
+
+/* Phones: one column, taller fields */
+html[data-device='mobile'] .app-layout :is(.form-input, .form-select, .form-textarea) { min-height: var(--tap); }
+html[data-device='mobile'] :is(.sheet-body, .fsm-body) :is(.form-input, .form-select, .form-textarea) { min-height: var(--tap); }
+html[data-device='mobile'] .form-label { font-size: 14px; }
+html[data-device='mobile'] .form-hint { font-size: 13px; }
+html:is([data-device='mobile'], [data-device='tablet']) input:is([type='checkbox'], [type='radio']) { width: 20px; height: 20px; }
+html:is([data-device='mobile'], [data-device='tablet']) label:has(> input:is([type='checkbox'], [type='radio'])) { min-height: var(--tap); display: inline-flex; align-items: center; gap: 10px; }
+
+/* Phone toolbars: search takes the full row, filters share the next row, spacers collapse */
+html[data-device='mobile'] .toolbar { gap: 8px; }
+html[data-device='mobile'] .toolbar .search-input-wrapper { flex: 1 1 100%; min-width: 0; }
+html[data-device='mobile'] .toolbar > :is(select, .form-select, .m-filter-select) { flex: 1 1 140px; width: auto !important; min-width: 0; }
+html[data-device='mobile'] .toolbar > .segmented { flex: 1 1 100%; }
+html[data-device='mobile'] .toolbar > .spacer { display: none; }
+
+/* Tablets: two-column forms where the old < 900px rule collapsed them to one */
+html[data-device='tablet'] .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+html[data-device='tablet'] .form-grid-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+html[data-device='tablet'][data-orientation='landscape'] .form-grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+/* …but never inside a narrow drawer */
+html[data-device='tablet'] .drawer:not(.wide) :is(.form-grid, .form-grid-3) { grid-template-columns: 1fr; }
+html[data-device='tablet'] :is(.form-input, .form-select, .form-textarea) { min-height: 40px; }
+
 @media (prefers-reduced-motion: reduce) {
   .sheet, .sheet-backdrop, .rail, .fsm, .m-topbar-title, .app-layout.is-tablet .main-content, .app-layout.is-tablet .topbar { transition: none !important; }
 }

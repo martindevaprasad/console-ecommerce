@@ -36,7 +36,9 @@ export function useFocusTrap(ref: React.RefObject<HTMLElement>, active: boolean,
     const node = ref.current;
     if (!node) return;
     const previous = document.activeElement as HTMLElement | null;
-    const first = node.querySelector<HTMLElement>('[data-autofocus]') || node.querySelector<HTMLElement>(FOCUSABLE);
+    // Focus an explicit [data-autofocus] or [autofocus] field, else the dialog itself: screen readers
+    // announce the dialog, Tab moves to the first control, and no stray focus ring appears on open.
+    const first = node.querySelector<HTMLElement>('[data-autofocus], [autofocus]');
     (first || node).focus({ preventScroll: true });
 
     const onKey = (e: KeyboardEvent) => {

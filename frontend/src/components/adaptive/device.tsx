@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useEffect, useLayoutEffect, useState } from 'react';
+import { useAutoTableCards } from './autoTableCards';
+import { useAutoInputHints } from './autoInputHints';
 
 /**
  * Device classes used across the adaptive UI.
@@ -85,6 +87,17 @@ export const DeviceProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     root.dataset.orientation = info.isPortrait ? 'portrait' : 'landscape';
   }, [info.device, info.isPortrait]);
   return <DeviceContext.Provider value={info}>{children}</DeviceContext.Provider>;
+};
+
+/**
+ * App-wide adaptive behaviour that needs no page changes (rendered once inside DeviceProvider):
+ * table rows as cards on phones, keyboard hints on touch devices.
+ */
+export const AdaptiveEnhancers: React.FC = () => {
+  const { device } = useContext(DeviceContext);
+  useAutoTableCards(device === 'mobile');
+  useAutoInputHints(device !== 'desktop');
+  return null;
 };
 
 /**

@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { IconPlus, IconTrash, IconToolsKitchen2, IconCategory, IconAdjustments, IconReceiptTax, IconDownload, IconPhoto, IconUpload } from '@tabler/icons-react';
+import { MobileSelect } from '../adaptive/MobileSelect';
 import { useApi, useCan, useLocation, useModule, useMutate, useOrg } from '@/hooks';
 import { CATALOG, INVENTORY } from '@/services/api';
 import { money, pct, downloadCsv, label } from '@/lib/format';
@@ -141,10 +142,8 @@ const ProductDrawer: React.FC<{ product: any | null; open: boolean; categories: 
         {imagesOn && <Field label="Image" full hint="Shown on the POS button. Uploads are resized automatically."><ImageField value={f.imageUrl || ''} onChange={(v) => set({ imageUrl: v })} /></Field>}
         <Field label="Description" full><input className="form-input" value={f.description || ''} onChange={(e) => set({ description: e.target.value })} /></Field>
         <Field label="Category">
-          <select className="form-select" value={f.categoryId || ''} onChange={(e) => set({ categoryId: e.target.value })}>
-            <option value="">Uncategorised</option>
-            {categories.filter((c) => c.isActive).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-          </select>
+          <MobileSelect label="Category" placeholder="Uncategorised" value={f.categoryId || ''} onChange={(v) => set({ categoryId: v })}
+            options={categories.filter((c) => c.isActive).map((c) => ({ value: c.id, label: c.name }))} />
         </Field>
         <Field label="Kitchen station (routing)" hint="Routed by station name at every location">
           <select className="form-select" value={f.stationId || ''} onChange={(e) => set({ stationId: e.target.value })}>
@@ -216,10 +215,9 @@ const ProductDrawer: React.FC<{ product: any | null; open: boolean; categories: 
             const item = stock.data?.stockItems.find((s: any) => s.id === l.stockItemId);
             return (
               <div key={i} className="row" style={{ marginBottom: 6 }}>
-                <select className="form-select" value={l.stockItemId} onChange={(e) => setLines(lines.map((x, j) => (j === i ? { ...x, stockItemId: e.target.value } : x)))}>
-                  <option value="">Select ingredient…</option>
-                  {(stock.data?.stockItems || []).filter((s: any) => s.isActive).map((s: any) => <option key={s.id} value={s.id}>{s.name} ({s.unit})</option>)}
-                </select>
+                <MobileSelect label="Ingredient" placeholder="Select ingredient…" value={l.stockItemId}
+                  onChange={(v) => setLines(lines.map((x, j) => (j === i ? { ...x, stockItemId: v } : x)))}
+                  options={(stock.data?.stockItems || []).filter((s: any) => s.isActive).map((s: any) => ({ value: s.id, label: `${s.name} (${s.unit})` }))} />
                 <input className="form-input" style={{ width: 90 }} type="number" step="0.001" value={l.quantity} onChange={(e) => setLines(lines.map((x, j) => (j === i ? { ...x, quantity: e.target.value } : x)))} />
                 <span className="small muted" style={{ width: 70 }}>{item ? money((parseFloat(l.quantity) || 0) * item.costPerUnit) : ''}</span>
                 <button className="btn btn-ghost btn-icon btn-sm" onClick={() => setLines(lines.filter((_, j) => j !== i))}><IconTrash size={12} /></button>
@@ -254,10 +252,8 @@ const ItemsTab: React.FC = () => {
     <>
       <div className="toolbar">
         <SearchBox value={search} onChange={setSearch} placeholder="Search items or SKU" />
-        <select className="form-select" style={{ width: 170 }} value={cat} onChange={(e) => setCat(e.target.value)}>
-          <option value="">All categories</option>
-          {categories.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
-        </select>
+        <MobileSelect label="Category" placeholder="All categories" style={{ width: 170 }} className="m-filter-select" value={cat} onChange={setCat}
+          options={categories.map((c: any) => ({ value: c.id, label: c.name }))} />
         <div className="spacer" />
         <button className="btn btn-secondary btn-sm" onClick={() => downloadCsv('menu.csv', products.map((p: any) => ({ name: p.name, category: p.category?.name, sku: p.sku, price: p.price, cost: p.cost, tax: p.tax?.name, station: p.station?.name, active: p.isActive })))}>
           <IconDownload size={13} /> Export

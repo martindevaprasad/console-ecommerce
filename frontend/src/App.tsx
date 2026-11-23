@@ -6,7 +6,7 @@ import { logout } from '@/store/authSlice';
 import { clearOrganization } from '@/store/organizationSlice';
 import { useSessionLoader } from '@/hooks/useSession';
 import { visibleNav } from '@/lib/nav';
-import { DeviceProvider, useDevice } from './components/adaptive/device';
+import { AdaptiveEnhancers, DeviceProvider, useDevice } from './components/adaptive/device';
 
 import Layout from './components/layout/Layout';
 import Login from './components/auth/Login';
@@ -141,6 +141,7 @@ export const App: React.FC = () => {
 
   return (
     <DeviceProvider>
+    <AdaptiveEnhancers />
     <BrowserRouter>
       <AdaptiveToaster />
       <Suspense fallback={<LoadingSpinner fullPage text="Loading module..." />}>

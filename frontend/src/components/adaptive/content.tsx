@@ -167,6 +167,46 @@ export const KeyValue: React.FC<{ label: React.ReactNode; children: React.ReactN
   <div className={`m-kv${align === 'left' ? ' left' : ''}`}><span className="m-kv-label">{label}</span><span className="m-kv-value">{children}</span></div>
 );
 
+/* ───────────────────────── Infinite list ───────────────────────── */
+
+/**
+ * Keeps every page fetched so far, merged by id, for infinite scrolling over an offset-paged
+ * API. Page 0 starts fresh (filters changed or refreshed); later pages append; refetched rows
+ * replace their old copy in place.
+ */
+export function useAccumulatedPages<T extends { id: string }>(items: T[] | undefined, page: number): T[] {
+  const [acc, setAcc] = useState<T[]>([]);
+  useEffect(() => {
+    if (!items) return;
+    setAcc((prev) => {
+      const merged = new Map((page === 0 ? [] : prev).map((x) => [x.id, x] as const));
+      items.forEach((x) => merged.set(x.id, x));
+      return Array.from(merged.values());
+    });
+  }, [items, page]);
+  return acc;
+}
+
+/** Loads the next page as it scrolls into view; a "Load more" button is the fallback. */
+export const LoadMore: React.FC<{ hasMore: boolean; loading?: boolean; onLoadMore: () => void }> = ({ hasMore, loading, onLoadMore }) => {
+  const ref = useRef<HTMLDivElement>(null);
+  const cb = useRef(onLoadMore);
+  cb.current = onLoadMore;
+  useEffect(() => {
+    const node = ref.current;
+    if (!hasMore || loading || !node || !('IntersectionObserver' in window)) return;
+    const io = new IntersectionObserver((entries) => { if (entries[0].isIntersecting) cb.current(); }, { rootMargin: '400px 0px' });
+    io.observe(node);
+    return () => io.disconnect();
+  }, [hasMore, loading]);
+  if (!hasMore) return null;
+  return (
+    <div ref={ref} className="load-more">
+      {loading ? <span className="spinner" aria-label="Loading more" /> : <button type="button" className="btn btn-secondary" onClick={onLoadMore}>Load more</button>}
+    </div>
+  );
+};
+
 /* ───────────────────────── FAB ───────────────────────── */
 
 /**

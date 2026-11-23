@@ -16,8 +16,10 @@ export interface Column<T> {
   /** Card slot on phones: title, subtitle, or the top-right trailing value */
   slot?: 'title' | 'subtitle' | 'trailing';
   align?: 'left' | 'right';
-  /** Extra class for th/td (e.g. 'strong', 'small') */
+  /** Extra class for body cells (e.g. 'strong', 'small') */
   className?: string;
+  /** Extra class for the header cell */
+  headerClassName?: string;
   /** The cell holds its own controls (toggles, buttons): clicks don't trigger onRowClick */
   interactive?: boolean;
 }
@@ -33,21 +35,25 @@ export interface ResponsiveTableProps<T> {
   empty?: React.ReactNode;
   /** Extra content under each phone card (e.g. action buttons) */
   cardActions?: (row: T) => React.ReactNode;
+  /** 'cards' forces the card list on any device (e.g. the list pane of a master–detail split) */
+  variant?: 'auto' | 'cards';
+  /** Highest column priority shown as card lines (default 2; 1 = compact cards, e.g. split lists) */
+  cardPriority?: 1 | 2;
 }
 
 /**
  * Full table on desktop, condensed table (priority ≤ 2) on tablet, stacked cards on phones.
  * Desktop output is the existing `.table-container > table.data-table` markup.
  */
-export function ResponsiveTable<T>({ columns, rows, rowKey, onRowClick, rowClassName, rowStyle, empty, cardActions }: ResponsiveTableProps<T>) {
+export function ResponsiveTable<T>({ columns, rows, rowKey, onRowClick, rowClassName, rowStyle, empty, cardActions, variant = 'auto', cardPriority = 2 }: ResponsiveTableProps<T>) {
   const { device } = useDevice();
   if (!rows.length && empty) return <>{empty}</>;
 
-  if (device === 'mobile') {
+  if (device === 'mobile' || variant === 'cards') {
     const title = columns.find((c) => c.slot === 'title') || columns[0];
     const subtitle = columns.find((c) => c.slot === 'subtitle');
     const trailing = columns.find((c) => c.slot === 'trailing');
-    const rest = columns.filter((c) => c !== title && c !== subtitle && c !== trailing && (c.priority ?? 1) <= 2);
+    const rest = columns.filter((c) => c !== title && c !== subtitle && c !== trailing && (c.priority ?? 1) <= cardPriority);
     const labelOf = (c: Column<T>) => c.mobileLabel ?? (typeof c.header === 'string' ? c.header : '');
     return (
       <div className="m-card-list">
@@ -76,17 +82,19 @@ export function ResponsiveTable<T>({ columns, rows, rowKey, onRowClick, rowClass
   }
 
   const visible = device === 'tablet' ? columns.filter((c) => (c.priority ?? 1) <= 2) : columns;
-  const cls = (c: Column<T>) => [c.align === 'right' ? 'num' : '', c.className || ''].filter(Boolean).join(' ') || undefined;
+  const join = (...c: (string | undefined)[]) => c.filter(Boolean).join(' ') || undefined;
+  const cls = (c: Column<T>) => join(c.align === 'right' ? 'num' : undefined, c.className);
+  const thCls = (c: Column<T>) => join(c.align === 'right' ? 'num' : undefined, c.headerClassName);
 
   return (
     <div className="table-container">
       <table className="data-table">
-        <thead><tr>{visible.map((c) => <th key={c.key} className={cls(c)}>{c.header}</th>)}</tr></thead>
+        <thead><tr>{visible.map((c) => <th key={c.key} className={thCls(c)}>{c.header}</th>)}</tr></thead>
         <tbody>
           {rows.map((row) => (
             <tr
               key={rowKey(row)}
-              className={[onRowClick ? 'clickable' : '', rowClassName?.(row) || ''].filter(Boolean).join(' ') || undefined}
+              className={join(onRowClick ? 'clickable' : undefined, rowClassName?.(row))}
               style={rowStyle?.(row)}
               onClick={onRowClick ? () => onRowClick(row) : undefined}
             >

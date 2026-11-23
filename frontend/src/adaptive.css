@@ -406,6 +406,136 @@ html:is([data-device='mobile'], [data-device='tablet']) .tab { flex-shrink: 0; m
 html[data-device='mobile'] .segmented { display: flex; width: 100%; }
 html[data-device='mobile'] .segmented > button { flex: 1; min-height: 40px; font-size: 14px; }
 
+/* ==========================================================================
+   Tables → cards on phones (automatic, for every .data-table with a header)
+   Labels come from useAutoTableCards (data-label = column header).
+   ========================================================================== */
+html[data-device='mobile'] .table-container:has(> .data-table > thead) {
+  overflow: visible; border: 0; border-radius: 0; background: none;
+}
+html[data-device='mobile'] .data-table:has(> thead) { display: block; background: none; border: 0; }
+html[data-device='mobile'] .data-table:has(> thead) > thead { display: none; }
+html[data-device='mobile'] .data-table:has(> thead) > tbody { display: flex; flex-direction: column; gap: 10px; }
+html[data-device='mobile'] .data-table:has(> thead) > tbody > tr {
+  position: relative; display: block; padding: 12px 16px;
+  background: var(--color-bg-secondary); border: 1px solid var(--color-border); border-radius: 16px;
+}
+html[data-device='mobile'] .data-table:has(> thead) > tbody > tr.clickable { padding-right: 38px; }
+/* Chevron on rows that open something */
+html[data-device='mobile'] .data-table:has(> thead) > tbody > tr.clickable::after {
+  content: ''; position: absolute; right: 16px; top: 22px; width: 8px; height: 8px;
+  border: solid var(--text-muted); border-width: 2px 2px 0 0; transform: rotate(45deg);
+}
+html[data-device='mobile'] .data-table:has(> thead) > tbody > tr > td {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 4px 0; border: 0; font-size: 14px; text-align: right; min-height: 28px;
+}
+html[data-device='mobile'] .data-table:has(> thead) > tbody > tr > td::before {
+  content: attr(data-label); flex-shrink: 0; text-align: left;
+  color: var(--text-muted); font-size: 13px; font-weight: 500;
+}
+/* First cell is the card title: full width, larger, no label */
+html[data-device='mobile'] .data-table:has(> thead) > tbody > tr > td:first-child {
+  display: block; text-align: left; font-size: 16px; padding: 2px 0 8px; margin-bottom: 4px;
+  border-bottom: 1px solid var(--color-border);
+}
+html[data-device='mobile'] .data-table:has(> thead) > tbody > tr > td:first-child::before,
+html[data-device='mobile'] .data-table:has(> thead) > tbody > tr > td[data-label='']::before { content: none; }
+/* Unlabelled cells (row actions) and empty-state rows span the card */
+html[data-device='mobile'] .data-table:has(> thead) > tbody > tr > td[data-label='']:not(:first-child) { justify-content: flex-end; padding-top: 8px; }
+html[data-device='mobile'] .data-table:has(> thead) > tbody > tr > td[colspan] { justify-content: center; text-align: center; border: 0; margin: 0; padding: 8px 0; }
+html[data-device='mobile'] .data-table:has(> thead) > tbody > tr:has(> td[colspan]) { background: none; border-style: dashed; }
+html[data-device='mobile'] .data-table:has(> thead) > tbody > tr:last-child td { border-bottom: 0; }
+html[data-device='mobile'] .data-table:has(> thead) > tbody > tr > td:first-child:last-child { border-bottom: 0; margin: 0; padding-bottom: 2px; }
+html[data-device='mobile'] .data-table:has(> thead) .btn-sm { min-height: 40px; }
+html[data-device='mobile'] .data-table:has(> thead) tbody tr:hover { background: var(--color-bg-secondary); }
+
+/* Tablet: condensed tables. ResponsiveTable drops priority-3 columns; these tighten the rest */
+html[data-device='tablet'] .data-table th { padding: 10px 14px; }
+html[data-device='tablet'] .data-table td { padding: 12px 14px; }
+html[data-device='tablet'] .table-container { -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
+
+/* ==========================================================================
+   MobileCard / KeyValue
+   ========================================================================== */
+.m-card-list { display: flex; flex-direction: column; gap: 10px; }
+.m-card {
+  position: relative; padding: 14px 16px; border-radius: 16px;
+  background: var(--color-bg-secondary); border: 1px solid var(--color-border); color: var(--text-primary);
+}
+.m-card.tappable { cursor: pointer; }
+.m-card.tappable:active { background: var(--color-surface-hover); }
+.m-card-head { display: flex; align-items: center; gap: 12px; }
+.m-card-media { flex-shrink: 0; }
+.m-card-titles { flex: 1; min-width: 0; }
+.m-card-title { font-size: 16px; font-weight: 600; }
+.m-card-sub { margin-top: 2px; font-size: 13px; color: var(--text-secondary); }
+.m-card-trailing { flex-shrink: 0; text-align: right; font-weight: 600; }
+.m-card-chevron { flex-shrink: 0; color: var(--text-muted); margin-right: -4px; }
+.m-card-body { margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--color-border); }
+.m-card-actions { display: flex; gap: 8px; margin-top: 10px; }
+.m-card-actions .btn { flex: 1; }
+.m-card-extra { padding: 4px 0; }
+.m-kv { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 4px 0; min-height: 28px; font-size: 14px; }
+.m-kv-label { flex-shrink: 0; color: var(--text-muted); font-size: 13px; font-weight: 500; }
+.m-kv-value { text-align: right; min-width: 0; }
+.m-kv.left { justify-content: flex-start; }
+
+/* ListItem extras (base row styles are above) */
+button.list-row { width: 100%; border-left: 0; border-right: 0; border-bottom: 0; background: none; font: inherit; text-align: left; cursor: pointer; }
+.list-group-body > .list-row:first-child { border-top: 0; }
+.list-row-avatar { flex-shrink: 0; display: flex; }
+.list-row-trailing { flex-shrink: 0; color: var(--text-secondary); font-size: 15px; }
+.list-row.danger, .list-row.danger .list-row-icon { color: var(--color-danger-light); }
+.list-row.disabled { opacity: .5; pointer-events: none; }
+.list-group-footer { padding: 6px 14px 0; font-size: 13px; color: var(--text-muted); }
+
+/* ==========================================================================
+   Swipeable row
+   ========================================================================== */
+.swipe-row { position: relative; overflow: hidden; }
+.swipe-actions { position: absolute; top: 0; right: 0; bottom: 0; display: flex; }
+.swipe-action {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  border: 0; color: #fff; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+}
+.swipe-action.neutral { background: var(--color-bg-tertiary); color: var(--text-primary); }
+.swipe-action.primary { background: var(--color-primary); }
+.swipe-action.danger { background: var(--color-danger); }
+.swipe-content { position: relative; background: var(--color-bg-tertiary); touch-action: pan-y; transition: transform .25s var(--ease-sheet); }
+.swipe-content.dragging { transition: none; }
+
+/* ==========================================================================
+   FAB + sticky action bar (phones)
+   ========================================================================== */
+.fab {
+  position: fixed; z-index: var(--z-fab);
+  right: calc(16px + var(--safe-right)); bottom: calc(var(--m-tabbar-h) + var(--safe-bottom) + 16px);
+  min-width: 56px; height: 56px; padding: 0 16px; border: 0; border-radius: 18px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  background: var(--color-primary); color: #fff; font: inherit; font-size: 16px; font-weight: 600;
+  box-shadow: 0 10px 28px rgba(var(--color-primary-rgb), .45), 0 2px 6px rgba(0, 0, 0, .3); cursor: pointer;
+  transition: transform .15s;
+}
+.fab svg { width: 24px; height: 24px; }
+.fab:active { transform: scale(.94); }
+.app-layout.no-tabbar .fab { bottom: calc(var(--safe-bottom) + 16px); }
+/* A page with a sticky action bar lifts the FAB above it */
+.app-layout:has(.sticky-actions) .fab { bottom: calc(var(--m-tabbar-h) + var(--safe-bottom) + 84px); }
+.app-layout.no-tabbar:has(.sticky-actions) .fab { bottom: calc(var(--safe-bottom) + 84px); }
+
+.sticky-actions {
+  position: fixed; z-index: calc(var(--z-bottom-nav) - 1); left: 0; right: 0;
+  bottom: calc(var(--m-tabbar-h) + var(--safe-bottom));
+  display: flex; gap: 10px; padding: 10px calc(var(--m-gutter) + var(--safe-right)) 10px calc(var(--m-gutter) + var(--safe-left));
+  background: var(--m-chrome-bg); -webkit-backdrop-filter: saturate(1.6) blur(20px); backdrop-filter: saturate(1.6) blur(20px);
+  border-top: 1px solid var(--color-border);
+}
+.sticky-actions .btn { flex: 1; min-height: 48px; font-size: 16px; }
+.app-layout.no-tabbar .sticky-actions { bottom: 0; padding-bottom: calc(10px + var(--safe-bottom)); }
+.sticky-actions-spacer { height: 72px; }
+.sticky-actions-inline { justify-content: flex-end; gap: var(--space-3); margin-top: var(--space-5); }
+
 @media (prefers-reduced-motion: reduce) {
   .sheet, .sheet-backdrop, .rail, .fsm, .m-topbar-title, .app-layout.is-tablet .main-content, .app-layout.is-tablet .topbar { transition: none !important; }
 }

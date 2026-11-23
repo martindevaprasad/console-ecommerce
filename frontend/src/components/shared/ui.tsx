@@ -29,15 +29,22 @@ export function Tabs<K extends string>({ tabs, active, onChange }: { tabs: TabDe
   );
 }
 
-export function Segmented<K extends string>({ options, value, onChange }: { options: { value: K; label: React.ReactNode }[]; value: K; onChange: (v: any) => void }) {
+/**
+ * Segmented control (one choice from a few). On phones it stretches to full width with
+ * finger-sized segments (adaptive.css). Exposed to assistive tech as a radio group.
+ */
+export function Segmented<K extends string>({ options, value, onChange, ariaLabel }: { options: { value: K; label: React.ReactNode }[]; value: K; onChange: (v: any) => void; ariaLabel?: string }) {
   return (
-    <div className="segmented">
+    <div className="segmented" role="radiogroup" aria-label={ariaLabel}>
       {options.map((o) => (
-        <button key={o.value} type="button" className={value === o.value ? 'active' : ''} onClick={() => onChange(o.value)}>{o.label}</button>
+        <button key={o.value} type="button" role="radio" aria-checked={value === o.value} className={value === o.value ? 'active' : ''} onClick={() => onChange(o.value)}>{o.label}</button>
       ))}
     </div>
   );
 }
+
+/** Alias matching the adaptive component naming in docs/mobile-tablet. */
+export const SegmentedControl = Segmented;
 
 type DrawerProps = { open: boolean; title: React.ReactNode; onClose: () => void; children: React.ReactNode; footer?: React.ReactNode; wide?: boolean };
 

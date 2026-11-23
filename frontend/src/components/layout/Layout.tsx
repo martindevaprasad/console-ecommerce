@@ -5,6 +5,7 @@ import { TopBar } from './TopBar';
 import { AppearanceContext, useAppearanceState } from '@/hooks/useAppearance';
 import { useDevice } from '../adaptive/device';
 import { PageMetaProvider, usePageMetaValue } from '../adaptive/pageMeta';
+import { useAutoTableCards } from '../adaptive/autoTableCards';
 
 // Device-specific chrome is code-split: desktop never downloads it.
 const MobileTopBar = lazy(() => import('../mobile/MobileTopBar'));
@@ -72,6 +73,7 @@ const AppShell: React.FC<LayoutProps> = ({ children }) => {
   }, [collapsed, device, railPushes]);
 
   useScrollRestoration(device !== 'desktop');
+  useAutoTableCards(device === 'mobile');
 
   const shellClass = device === 'desktop' ? '' : ` is-${device}${meta.hideTabBar ? ' no-tabbar' : ''}`;
 

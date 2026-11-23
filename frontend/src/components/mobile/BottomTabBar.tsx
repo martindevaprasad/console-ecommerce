@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { IconDots, IconChevronRight } from '@tabler/icons-react';
+import { IconDots } from '@tabler/icons-react';
 import { useCan, useOrg } from '@/hooks';
 import { NavItem, TAB_PRIORITY, shortLabel, visibleNav } from '@/lib/nav';
 import { BottomSheet } from '../adaptive/BottomSheet';
+import { ListGroup, ListItem } from '../adaptive/content';
 
 const SECTIONS = ['Operate', 'Catalog', 'People', 'Insights', 'Admin'] as const;
 const MAX_TABS = 5; // including "More" when it is needed
@@ -58,27 +59,24 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = ({ badges }) => {
 };
 
 /** Sheet listing the pages that don't fit in the tab bar, grouped like the desktop sidebar. */
-export const MoreSheet: React.FC<{ open: boolean; onClose: () => void; items: NavItem[] }> = ({ open, onClose, items }) => (
-  <BottomSheet open={open} onClose={onClose} title="More" snapPoints={[0.6, 0.92]}>
-    {SECTIONS.map((section) => {
-      const list = items.filter((i) => i.section === section);
-      if (!list.length) return null;
-      return (
-        <div className="list-group" key={section}>
-          <div className="list-group-label">{section}</div>
-          <div className="list-group-body">
+export const MoreSheet: React.FC<{ open: boolean; onClose: () => void; items: NavItem[] }> = ({ open, onClose, items }) => {
+  const { pathname } = useLocation();
+  return (
+    <BottomSheet open={open} onClose={onClose} title="More" snapPoints={[0.6, 0.92]}>
+      {SECTIONS.map((section) => {
+        const list = items.filter((i) => i.section === section);
+        if (!list.length) return null;
+        return (
+          <ListGroup label={section} key={section}>
             {list.map((item) => (
-              <NavLink key={item.path} to={item.path} className={({ isActive }) => `list-row${isActive ? ' active' : ''}`} onClick={onClose}>
-                <span className="list-row-icon">{item.icon}</span>
-                <span className="list-row-text"><b>{item.label}</b><small>{item.subtitle}</small></span>
-                <IconChevronRight size={18} className="list-row-chevron" />
-              </NavLink>
+              <ListItem key={item.path} to={item.path} icon={item.icon} title={item.label} subtitle={item.subtitle}
+                active={pathname.startsWith(item.path)} onClick={onClose} />
             ))}
-          </div>
-        </div>
-      );
-    })}
-  </BottomSheet>
-);
+          </ListGroup>
+        );
+      })}
+    </BottomSheet>
+  );
+};
 
 export default BottomTabBar;

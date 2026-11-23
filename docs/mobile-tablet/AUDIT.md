@@ -92,8 +92,10 @@ Effort: S < ½ day, M ≈ 1 day, L 2+ days.
 
 1. Tokens, global CSS, viewport meta, `useDevice` / `DeviceProvider` ✅
 2. `AppShell`, `MobileLayout`, `TabletLayout`, `BottomTabBar`, `MobileTopBar`, `NavigationRail`, `MoreSheet` ✅
-3. Overlays: `BottomSheet`, `ActionSheet`, `FullScreenModal`, shared `Modal`/`Drawer` adaptive, toast placement
-4. Content: `ListItem`/`ListGroup`, `MobileCard`, `ResponsiveTable`, `SegmentedControl`, `FAB`, `StickyActionBar`
+3. Overlays: `BottomSheet`, `ActionSheet`, `FullScreenModal`, shared `Modal`/`Drawer` adaptive, toast placement ✅
+4. Content: `ListItem`/`ListGroup`, `SwipeableListItem`, `MobileCard`, `ResponsiveTable` (+ automatic card
+   fallback for every existing `.data-table`), `SegmentedControl`, `FAB`, `StickyActionBar` ✅ — usage in
+   `frontend/src/components/adaptive/README.md`
 5. Forms: `MobileSelect`, input attributes, keyboard-safe focus
 6. Pages, in the order above (most used first: POS, Orders, Dashboard, Tables, KDS …), **after approval of this table**
 7. Polish: transitions, pull-to-refresh, skeletons, PWA manifest

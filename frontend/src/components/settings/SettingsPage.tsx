@@ -4,7 +4,9 @@ import {
   IconPalette, IconLock, IconLanguage, IconSun, IconMoon, IconDeviceDesktop, IconCheck, IconBuildingStore,
   IconToolsKitchen2, IconPuzzle, IconShieldCheck, IconStar, IconUserCircle, IconHistory, IconWand,
 } from '@tabler/icons-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useDevice } from '../adaptive/device';
+import { usePageMeta } from '../adaptive/pageMeta';
 import { useApi, useAppearance, useCan, useMutate, useOrg } from '@/hooks';
 import type { Theme, Palette, SidebarVariant, Density } from '@/hooks';
 import { useSessionLoader } from '@/hooks/useSession';
@@ -206,6 +208,17 @@ const SettingsPage: React.FC = () => {
   const setPos = (p: any) => setCfg({ ...cfg, pos: { ...cfg.pos, ...p } });
   const setSec = (p: any) => setCfg({ ...cfg, security: { ...cfg.security, ...p } });
 
+  // Phones: iOS-style navigation – a list of sections, each opening as its own screen
+  // (pushed as ?section=… so the top-bar back chevron and the system back gesture return).
+  const { isMobile } = useDevice();
+  const [params, setParams] = useSearchParams();
+  const pushed = isMobile ? (params.get('section') as Tab | null) : null;
+  useEffect(() => { if (pushed) setTab(pushed); }, [pushed]);
+  const openTab = (key: Tab) => {
+    setTab(key);
+    if (isMobile) { setParams({ section: key }); window.scrollTo(0, 0); }
+  };
+
   const TABS: { key: Tab; label: string; sub: string; icon: React.ReactNode; admin?: boolean }[] = [
     { key: 'business', label: 'Business profile', sub: 'Brand, legal entity, format', icon: <IconBuildingStore size={16} />, admin: true },
     { key: 'region', label: 'Localization & tax', sub: 'Currency, timezone, tax mode', icon: <IconLanguage size={16} />, admin: true },
@@ -217,6 +230,8 @@ const SettingsPage: React.FC = () => {
     { key: 'account', label: 'My account', sub: 'Password & PIN', icon: <IconUserCircle size={16} /> },
     { key: 'appearance', label: 'Appearance', sub: 'Theme, palette, sidebar, density', icon: <IconPalette size={16} /> },
   ];
+  const pushedLabel = pushed ? TABS.find((t) => t.key === pushed)?.label : undefined;
+  usePageMeta(pushedLabel ? { title: pushedLabel, back: -1, largeTitle: false } : {}, [pushedLabel]);
 
   return (
     <div className="page-container settings-page">
@@ -228,10 +243,10 @@ const SettingsPage: React.FC = () => {
         {admin && <button className="btn btn-secondary btn-sm" onClick={() => navigate('/onboarding')}><IconWand size={13} /> Re-run setup wizard</button>}
       </div>
 
-      <div className="settings-layout">
+      <div className={`settings-layout${isMobile ? (pushed ? ' m-pushed' : ' m-root') : ''}`}>
         <aside className="settings-nav">
           {TABS.filter((t) => !t.admin || (t.key === 'audit' ? can('audit.view') : admin)).map((t) => (
-            <button key={t.key} className={`settings-nav-item${tab === t.key ? ' active' : ''}`} onClick={() => setTab(t.key)}>
+            <button key={t.key} className={`settings-nav-item${tab === t.key ? ' active' : ''}`} onClick={() => openTab(t.key)}>
               <span className="settings-nav-icon">{t.icon}</span>
               <span><div className="settings-nav-label">{t.label}</div><div className="settings-nav-sub">{t.sub}</div></span>
             </button>

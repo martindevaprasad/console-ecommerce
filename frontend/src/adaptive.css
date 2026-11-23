@@ -183,6 +183,9 @@ html[data-orientation='portrait'] .app-layout.is-tablet :is(.grid-2, .grid-3, .g
    (top bar and tab bar included) past the screen edge. */
 .app-layout:is(.is-mobile, .is-tablet) .main-content { min-width: 0; }
 .app-layout.is-mobile .main-content {
+  /* Safety net: on phones any overflow widens the layout viewport and drags the fixed bars
+     with it. Wide content must scroll inside its own container instead. */
+  overflow-x: clip;
   margin-left: 0 !important;
   padding-bottom: calc(var(--m-tabbar-h) + var(--safe-bottom));
 }
@@ -409,8 +412,10 @@ html:is([data-device='mobile'], [data-device='tablet']) .tabs { overflow-x: auto
 html:is([data-device='mobile'], [data-device='tablet']) .tabs::-webkit-scrollbar { display: none; }
 html:is([data-device='mobile'], [data-device='tablet']) .tab { flex-shrink: 0; min-height: var(--tap); }
 /* Segmented controls become full-width, finger-height controls on phones */
-html[data-device='mobile'] .segmented { display: flex; width: 100%; }
-html[data-device='mobile'] .segmented > button { flex: 1; min-height: 40px; font-size: 14px; }
+html[data-device='mobile'] .segmented { display: flex; width: 100%; max-width: 100%; overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain; }
+html[data-device='mobile'] .segmented::-webkit-scrollbar { display: none; }
+/* Grow to fill when few, never squash: long option sets (e.g. KDS stations) scroll sideways */
+html[data-device='mobile'] .segmented > button { flex: 1 0 auto; min-height: 40px; padding-inline: 12px; font-size: 14px; }
 
 /* ==========================================================================
    Tables → cards on phones (automatic, for every .data-table with a header)
@@ -599,6 +604,56 @@ html[data-device='tablet'] :is(.form-input, .form-select, .form-textarea) { min-
 .m-filter-btn { flex: 1 1 100%; }
 .m-filter-count { min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px; display: inline-grid; place-items: center; background: var(--color-primary); color: #fff; font-size: 12px; font-weight: 700; }
 .sheet-body .check { min-height: var(--tap); display: flex; align-items: center; gap: 10px; font-size: 16px; }
+
+/* ==========================================================================
+   Page: Settings on phones – section list → pushed section screen
+   ========================================================================== */
+.settings-layout.m-root .settings-panel { display: none; }
+.settings-layout.m-pushed .settings-nav { display: none; }
+.settings-page:has(> .settings-layout.m-pushed) > .page-header { display: none; }
+.settings-layout.m-root .settings-nav { padding: 0; overflow: hidden; border-radius: 14px; }
+.settings-layout.m-root .settings-nav-item { position: relative; min-height: 60px; padding: 10px 40px 10px 14px; border-radius: 0; border-left: 0; }
+.settings-layout.m-root .settings-nav-item + .settings-nav-item { border-top: 1px solid var(--color-border); }
+.settings-layout.m-root .settings-nav-item.active { background: none; color: inherit; box-shadow: none; }
+.settings-layout.m-root .settings-nav-item::after {
+  content: ''; position: absolute; right: 18px; top: 50%; width: 8px; height: 8px; margin-top: -4px;
+  border: solid var(--text-muted); border-width: 2px 2px 0 0; transform: rotate(45deg);
+}
+.settings-layout.m-pushed .settings-section { padding: 16px; }
+
+/* ==========================================================================
+   Page: Onboarding wizard (outside the shell)
+   Phones + portrait tablets: sticky horizontal step strip; phones: sticky Back/Next bar.
+   ========================================================================== */
+/* Strip row sizes to content; the step pane takes the rest of the screen */
+html:is([data-device='mobile'], [data-device='tablet'][data-orientation='portrait']) .onb-shell { grid-template-columns: 1fr; grid-template-rows: auto 1fr; align-content: start; }
+html:is([data-device='mobile'], [data-device='tablet'][data-orientation='portrait']) .onb-steps { align-items: center; }
+html:is([data-device='mobile'], [data-device='tablet'][data-orientation='portrait']) .onb-steps > div:first-child { margin: 0 8px 0 0 !important; flex-shrink: 0; }
+html:is([data-device='mobile'], [data-device='tablet'][data-orientation='portrait']) .onb-steps > .spacer { flex: 1 0 8px; }
+html:is([data-device='mobile'], [data-device='tablet'][data-orientation='portrait']) .onb-steps > .btn { flex-shrink: 0; white-space: nowrap; min-height: 36px; }
+html:is([data-device='mobile'], [data-device='tablet'][data-orientation='portrait']) .onb-steps {
+  display: flex !important; flex-direction: row; gap: 6px; overflow-x: auto; scrollbar-width: none;
+  position: sticky; top: 0; z-index: var(--z-header);
+  padding: calc(var(--safe-top) + 10px) calc(16px + var(--safe-right)) 10px calc(16px + var(--safe-left));
+  border-right: 0; border-bottom: 1px solid var(--color-border);
+  -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px);
+}
+html:is([data-device='mobile'], [data-device='tablet'][data-orientation='portrait']) .onb-steps::-webkit-scrollbar { display: none; }
+html:is([data-device='mobile'], [data-device='tablet'][data-orientation='portrait']) .onb-step { flex-shrink: 0; min-height: 36px; padding: 6px 12px; white-space: nowrap; }
+/* Only the current step spells out its name; the rest show their number */
+html[data-device='mobile'] .onb-step:not(.active) { font-size: 0; gap: 0; padding: 6px 8px; }
+html[data-device='mobile'] .onb-main { padding: 20px calc(16px + var(--safe-right)) 0 calc(16px + var(--safe-left)); }
+html[data-device='tablet'][data-orientation='portrait'] .onb-main { padding: 28px var(--t-gutter) 0; }
+html[data-device='mobile'] .onb-title { font-size: 24px; line-height: 1.2; }
+html[data-device='mobile'] .onb-sub { font-size: 15px; }
+html[data-device='mobile'] .onb-foot {
+  position: sticky; bottom: 0; z-index: var(--z-header); gap: 10px;
+  margin: 24px calc(-16px - var(--safe-right)) 0 calc(-16px - var(--safe-left));
+  padding: 12px calc(16px + var(--safe-right)) calc(12px + var(--safe-bottom)) calc(16px + var(--safe-left));
+  background: var(--m-chrome-bg); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px);
+}
+html[data-device='mobile'] .onb-foot .btn { flex: 1; min-height: 50px; font-size: 16px; }
+html[data-device='mobile'] .pick-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
 /* ==========================================================================
    Page: POS (phones + portrait tablets) – ticket as bottom sheet + cart bar

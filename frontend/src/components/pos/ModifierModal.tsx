@@ -105,7 +105,8 @@ export const ModifierModal: React.FC<Props> = ({ product, initial, showSeats, sh
             <button className="btn btn-secondary btn-icon" onClick={() => setQty(qty + 1)}><IconPlus size={14} /></button>
           </div>
           <div className="spacer" />
-          <button className="btn btn-secondary" onClick={onClose}>Cancel</button>
+          {/* Phones close from the full-screen top bar; the footer keeps room for qty + Add */}
+          <button className="btn btn-secondary not-mobile" onClick={onClose}>Cancel</button>
           <button className="btn btn-primary" disabled={!!invalid || (product.isOpenPrice && openPrice === '')} onClick={confirm}>
             <IconCheck size={14} /> {initial ? 'Update' : 'Add'} · {money(unit * qty)}
           </button>

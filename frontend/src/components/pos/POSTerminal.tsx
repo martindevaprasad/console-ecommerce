@@ -4,8 +4,10 @@ import toast from 'react-hot-toast';
 import {
   IconSearch, IconUser, IconUsers, IconDiscount2, IconSend, IconPlayerPause, IconCreditCard, IconTrash, IconMinus, IconPlus,
   IconClipboardList, IconFileInvoice, IconArrowsSplit, IconBan, IconNote, IconX, IconLayoutGrid, IconStar, IconChefHat,
-  IconPencil, IconKeyboard,
+  IconPencil, IconKeyboard, IconChevronUp,
 } from '@tabler/icons-react';
+import { useDevice } from '../adaptive/device';
+import { useBodyScrollLock } from '../adaptive/overlay';
 import { useApi, useCan, useCurrentLocation, useMutate, useOrg } from '@/hooks';
 import { CATALOG, ORDERS } from '@/services/api';
 import { money, minutesSince } from '@/lib/format';
@@ -95,6 +97,21 @@ export const POSTerminal: React.FC = () => {
   const [showNote, setShowNote] = useState(false);
   const [splitMode, setSplitMode] = useState(false);
   const [splitIds, setSplitIds] = useState<string[]>([]);
+
+  // Phones and portrait tablets: the ticket is a bottom sheet behind a sticky cart bar,
+  // so the product grid gets the whole screen. Desktop/landscape keep the side ticket.
+  const { device, isPortrait } = useDevice();
+  const compact = device === 'mobile' || (device === 'tablet' && isPortrait);
+  const [ticketOpen, setTicketOpen] = useState(false);
+  const sheetDrag = useRef<{ y: number; dy: number } | null>(null);
+  useBodyScrollLock(compact && ticketOpen);
+  useEffect(() => { if (!compact) setTicketOpen(false); }, [compact]);
+  useEffect(() => {
+    if (!compact || !ticketOpen) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setTicketOpen(false); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [compact, ticketOpen]);
 
   const openChecks = useApi(ORDERS.OPEN, { locationId: location?.id }, { skip: !showChecks, live: location?.id });
 
@@ -198,6 +215,9 @@ export const POSTerminal: React.FC = () => {
 
   const sentItems = (order?.items || []) as any[];
   const activeSent = sentItems.filter((i) => i.status !== 'VOIDED');
+  // An emptied ticket (paid, voided, cleared) closes the sheet. Kept above the loading early return.
+  const hasLines = activeSent.length + drafts.length > 0;
+  useEffect(() => { if (!hasLines) setTicketOpen(false); }, [hasLines]);
   const svcPct = orderType === 'DINE_IN' && settings && settings.pos.serviceChargePct > 0 && (!settings.pos.serviceChargeMinGuests || guestCount >= settings.pos.serviceChargeMinGuests) ? settings.pos.serviceChargePct : 0;
 
   const totals = useMemo(() => {
@@ -514,7 +534,7 @@ export const POSTerminal: React.FC = () => {
   };
 
   return (
-    <div className="pos-shell">
+    <div className={`pos-shell${compact ? ' pos-compact' : ''}`}>
       <section className="pos-main">
         <header className="pos-head">
           <div className="pos-search">
@@ -582,7 +602,21 @@ export const POSTerminal: React.FC = () => {
         </div>
       </section>
 
-      <aside className="ticket">
+      <aside
+        className={`ticket${compact && ticketOpen ? ' sheet-open' : ''}`}
+        {...(compact ? { role: 'dialog', 'aria-modal': ticketOpen, 'aria-label': 'Current order', 'aria-hidden': !ticketOpen } : {})}
+      >
+        {compact && (
+          <div
+            className="ticket-sheet-bar"
+            onPointerDown={(e) => { sheetDrag.current = { y: e.clientY, dy: 0 }; }}
+            onPointerMove={(e) => { if (sheetDrag.current) sheetDrag.current.dy = e.clientY - sheetDrag.current.y; }}
+            onPointerUp={() => { if ((sheetDrag.current?.dy || 0) > 60) setTicketOpen(false); sheetDrag.current = null; }}
+          >
+            <span className="ticket-sheet-handle" aria-hidden />
+            <button type="button" className="ticket-sheet-done" onClick={() => setTicketOpen(false)}>Done</button>
+          </div>
+        )}
         <div className="ticket-head">
           {orderTypes.length > 1 && (
             <div className="pos-types">
@@ -687,6 +721,17 @@ export const POSTerminal: React.FC = () => {
           )}
         </div>
       </aside>
+
+      {compact && ticketOpen && <div className="ticket-backdrop" onClick={() => setTicketOpen(false)} aria-hidden />}
+      {compact && !ticketOpen && (
+        <button type="button" className={`pos-cartbar${lineCount ? '' : ' empty'}`} onClick={() => setTicketOpen(true)} aria-haspopup="dialog"
+          aria-label={`Open current order: ${lineCount} items, ${money(payAmount)}`}>
+          <span className="pos-cartbar-count">{lineCount}</span>
+          <span className="pos-cartbar-label">{order ? `Check #${order.ticketNumber}` : lineCount ? 'Current order' : 'No items yet'}{tableName ? ` · ${tableName}` : ''}</span>
+          <span className="pos-cartbar-total">{money(payAmount)}</span>
+          <IconChevronUp size={18} aria-hidden />
+        </button>
+      )}
 
       <ModifierModal
         product={modProduct}

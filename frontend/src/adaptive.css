@@ -65,6 +65,7 @@ html:not([data-device='mobile']) .only-mobile { display: none !important; }
 html:not([data-device='tablet']) .only-tablet { display: none !important; }
 html:is([data-device='mobile'], [data-device='tablet']) .only-desktop { display: none !important; }
 html[data-device='desktop'] .touch-only { display: none !important; }
+html[data-device='mobile'] .not-mobile { display: none !important; }
 
 /* ---------- Mobile + tablet: native feel ---------- */
 html:is([data-device='mobile'], [data-device='tablet']) {
@@ -376,8 +377,13 @@ html[data-orientation='landscape'] .app-layout.is-mobile .page-title { font-size
   padding: 12px calc(var(--m-gutter) + var(--safe-right)) calc(12px + var(--safe-bottom)) calc(var(--m-gutter) + var(--safe-left));
   background: var(--color-bg-secondary); border-top: 1px solid var(--color-border);
 }
-.fsm-foot .btn, .sheet-foot .btn { flex: 1; min-height: 50px; font-size: 16px; }
+.fsm-foot .btn, .sheet-foot .btn { flex: 1 1 auto; min-width: 0; min-height: 50px; font-size: 16px; padding: 0 14px; }
 .fsm-foot .btn-ghost, .sheet-foot .btn-ghost { flex: 0 0 auto; }
+/* Footers that build their own row (steppers, spacers): keep icon buttons square */
+:is(.fsm-foot, .sheet-foot) .btn-icon { flex: 0 0 auto; width: var(--tap); min-height: var(--tap); padding: 0; }
+:is(.fsm-foot, .sheet-foot) > .row { flex: 1; min-width: 0; gap: 8px; }
+:is(.fsm-foot, .sheet-foot) .row .row { gap: 8px; flex-shrink: 0; }
+:is(.fsm-foot, .sheet-foot) .spacer { flex: 0 1 0; }
 
 /* Content that used to sit in a centered dialog: comfortable spacing inside sheets */
 :is(.sheet-body, .fsm-body) :is(.form-grid, .form-grid-3) { grid-template-columns: 1fr; }
@@ -566,6 +572,50 @@ html[data-device='tablet'][data-orientation='landscape'] .form-grid-3 { grid-tem
 /* …but never inside a narrow drawer */
 html[data-device='tablet'] .drawer:not(.wide) :is(.form-grid, .form-grid-3) { grid-template-columns: 1fr; }
 html[data-device='tablet'] :is(.form-input, .form-select, .form-textarea) { min-height: 40px; }
+
+/* ==========================================================================
+   Page: POS (phones + portrait tablets) – ticket as bottom sheet + cart bar
+   ========================================================================== */
+.pos-shell.pos-compact { padding-bottom: 88px; }
+.pos-compact .ticket {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: var(--z-sheet);
+  margin: 0 auto; max-width: 640px; height: calc(var(--vh) * 88 - var(--safe-top)); max-height: none;
+  border-radius: var(--m-sheet-radius) var(--m-sheet-radius) 0 0; border-bottom: 0;
+  padding-bottom: var(--safe-bottom); box-shadow: var(--m-shadow-up);
+  transform: translateY(105%); visibility: hidden;
+  transition: transform .34s var(--ease-sheet), visibility 0s linear .34s;
+}
+.pos-compact .ticket.sheet-open { transform: none; visibility: visible; transition: transform .34s var(--ease-sheet), visibility 0s; }
+.ticket-backdrop { position: fixed; inset: 0; z-index: calc(var(--z-sheet) - 1); background: var(--m-backdrop); animation: fadeIn .2s ease; }
+.ticket-sheet-bar { position: relative; flex-shrink: 0; display: flex; justify-content: center; padding: 8px 12px 2px; min-height: 34px; touch-action: none; }
+.ticket-sheet-handle { width: 38px; height: 5px; margin-top: 2px; border-radius: 3px; background: var(--text-muted); opacity: .45; }
+.ticket-sheet-done { position: absolute; right: 8px; top: 2px; min-height: var(--tap); padding: 0 10px; border: 0; background: none; color: var(--color-primary-light); font: inherit; font-size: 16px; font-weight: 600; cursor: pointer; }
+.pos-compact .ticket-foot { padding-bottom: 12px; }
+
+.pos-cartbar {
+  position: fixed; z-index: var(--z-fab);
+  left: calc(12px + var(--safe-left)); right: calc(12px + var(--safe-right));
+  bottom: calc(var(--m-tabbar-h) + var(--safe-bottom) + 10px);
+  height: 58px; padding: 0 16px 0 10px; border: 0; border-radius: 18px;
+  display: flex; align-items: center; gap: 12px; cursor: pointer;
+  background: var(--color-primary); color: #fff; font: inherit;
+  box-shadow: 0 10px 28px rgba(var(--color-primary-rgb), .45), 0 2px 6px rgba(0, 0, 0, .3);
+}
+.pos-cartbar:active { transform: scale(.98); }
+.pos-cartbar.empty { background: var(--color-bg-tertiary); color: var(--text-secondary); box-shadow: var(--shadow-md); }
+.pos-cartbar-count { min-width: 36px; height: 36px; padding: 0 8px; border-radius: 11px; display: grid; place-items: center; background: rgba(255, 255, 255, .2); font-weight: 800; }
+.pos-cartbar.empty .pos-cartbar-count { background: var(--color-surface-hover); }
+.pos-cartbar-label { flex: 1; min-width: 0; text-align: left; font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pos-cartbar-total { font-size: 17px; font-weight: 800; }
+/* Portrait tablets have no tab bar: the cart bar sits at the bottom of the content area */
+.app-layout.is-tablet .pos-cartbar { left: calc(var(--sidebar-current-width) + var(--t-gutter)); right: var(--t-gutter); bottom: calc(var(--safe-bottom) + 16px); }
+.app-layout.is-tablet .pos-compact .ticket { left: var(--sidebar-current-width); }
+
+/* Touch devices: no keyboard-shortcut help button in the POS header */
+html:is([data-device='mobile'], [data-device='tablet']) .pos-head-btn[aria-label='Keyboard shortcuts'] { display: none; }
+html[data-device='mobile'] .pos-head { gap: 8px; }
+html[data-device='mobile'] .pos-head .pos-search { flex: 1 1 100%; }
+html[data-device='mobile'] .pos-head-btn { min-height: var(--tap); }
 
 @media (prefers-reduced-motion: reduce) {
   .sheet, .sheet-backdrop, .rail, .fsm, .m-topbar-title, .app-layout.is-tablet .main-content, .app-layout.is-tablet .topbar { transition: none !important; }

@@ -1,9 +1,12 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useLayoutEffect, useState } from 'react';
 
 /**
  * Device classes used across the adaptive UI.
- *   mobile  < 768px · tablet 768–1279px · desktop ≥ 1280px
- * Keep these queries in sync with the media queries in src/adaptive.css.
+ *   mobile  < 768px wide, or a phone in landscape (< 500px tall)
+ *   tablet  768–1279px
+ *   desktop ≥ 1280px (unchanged UI)
+ * Device-specific CSS keys off html[data-device], which DeviceProvider sets
+ * before first paint, so CSS and JS always agree.
  */
 export type Device = 'mobile' | 'tablet' | 'desktop';
 
@@ -18,8 +21,9 @@ export interface DeviceInfo {
 }
 
 export const MQ = {
-  mobile: '(max-width: 767.98px)',
-  tablet: '(min-width: 768px) and (max-width: 1279.98px)',
+  // A phone turned sideways (e.g. 844×390) keeps the phone UI instead of jumping to the tablet rail.
+  mobile: '(max-width: 767.98px), (max-height: 499.98px) and (max-width: 1279.98px)',
+  tablet: '(max-width: 1279.98px)', // checked after mobile
   portrait: '(orientation: portrait)',
 } as const;
 
@@ -73,8 +77,13 @@ const DeviceContext = createContext<DeviceInfo>(DESKTOP);
 /** Provides the current device class to the whole tree; read it with useDevice(). */
 export const DeviceProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const info = useBreakpoint();
-  // Exposed on <html> for debugging and for the rare style that cannot be a media query.
-  useEffect(() => { document.documentElement.dataset.device = info.device; }, [info.device]);
+  // html[data-device] / [data-orientation] drive the device-specific CSS (adaptive.css).
+  // Layout effect = set before the browser paints, so there is no flash of the wrong layout.
+  useLayoutEffect(() => {
+    const root = document.documentElement;
+    root.dataset.device = info.device;
+    root.dataset.orientation = info.isPortrait ? 'portrait' : 'landscape';
+  }, [info.device, info.isPortrait]);
   return <DeviceContext.Provider value={info}>{children}</DeviceContext.Provider>;
 };
 

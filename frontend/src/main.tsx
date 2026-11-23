@@ -6,6 +6,7 @@ import App from './App';
 import './index.css';
 import './enterprise.css';
 import './theme-bistro.css';
+import './adaptive.css';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

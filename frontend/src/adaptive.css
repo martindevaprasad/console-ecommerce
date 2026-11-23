@@ -1,0 +1,94 @@
+/* ==========================================================================
+   Adaptive layer: native-style mobile (< 768px) and tablet (768–1279px) UI.
+   Loaded after index.css / enterprise.css / theme-bistro.css.
+   RULE: nothing in this file may change how the app looks at ≥ 1280px.
+   Global tokens below are only *defined* here; they are consumed by
+   mobile/tablet-only rules and by the new adaptive components.
+   ========================================================================== */
+
+:root {
+  /* Safe areas (notch, home indicator, landscape side insets) */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+
+  /* Layering scale */
+  --z-content: 1;
+  --z-header: 50;
+  --z-bottom-nav: 60;
+  --z-rail: 100;
+  --z-fab: 70;
+  --z-sheet: 900;
+  --z-modal: 1000;
+  --z-toast: 1100;
+
+  /* Chrome sizes */
+  --m-topbar-h: 52px;
+  --m-tabbar-h: 58px;
+  --rail-w: 84px;
+  --rail-expanded-w: 248px;
+  --tap: 44px;
+
+  /* Page gutters */
+  --m-gutter: 16px;
+  --t-gutter: 24px;
+
+  /* Mobile type scale */
+  --m-large-title: 30px;
+  --m-title: 17px;
+  --m-body: 16px;
+  --m-secondary: 14px;
+  --m-caption: 12px;
+
+  /* Elevated surfaces (sheets, tab bar) */
+  --m-sheet-radius: 22px;
+  --m-shadow-up: 0 -8px 32px rgba(0, 0, 0, 0.35);
+  --m-chrome-bg: color-mix(in srgb, var(--color-bg-secondary) 86%, transparent);
+  --m-backdrop: rgba(0, 0, 0, 0.5);
+
+  /* Easing that feels like iOS sheets */
+  --ease-sheet: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* Safe-area utilities (the brief's pt-safe / pb-safe / pl-safe / pr-safe) */
+.pt-safe { padding-top: var(--safe-top); }
+.pb-safe { padding-bottom: var(--safe-bottom); }
+.pl-safe { padding-left: var(--safe-left); }
+.pr-safe { padding-right: var(--safe-right); }
+
+/* Show/hide by device. Prefer these over JS where the tree can stay the same. */
+@media (min-width: 768px) { .only-mobile { display: none !important; } }
+@media (max-width: 767.98px), (min-width: 1280px) { .only-tablet { display: none !important; } }
+@media (max-width: 1279.98px) { .only-desktop { display: none !important; } }
+@media (min-width: 1280px) { .touch-only { display: none !important; } }
+
+/* ---------- Mobile + tablet: native feel ---------- */
+@media (max-width: 1279.98px) {
+  html { -webkit-tap-highlight-color: transparent; -webkit-text-size-adjust: 100%; scroll-behavior: auto; }
+  body { overscroll-behavior-y: none; }
+  button, a, [role='button'], [role='tab'], label, summary, .btn, input[type='checkbox'], input[type='radio'] { touch-action: manipulation; }
+
+  /* Chrome is not selectable; content always is */
+  .sidebar, .topbar, .rail, .m-topbar, .m-tabbar, .sheet-handle, .tabs, .segmented, .btn { -webkit-user-select: none; user-select: none; }
+
+  /* Pressed states: every hover affordance gets a touch equivalent */
+  .btn:active:not(:disabled) { transform: scale(0.97); }
+  .data-table tbody tr:active { background: var(--color-surface-hover); }
+  .sidebar-item:active, .rail-item:active, .m-tab:active, .list-row:active { background: var(--color-surface-hover); }
+}
+
+/* Coarse pointers (touch tablets/phones) never show hover-only states stuck "on" after a tap */
+@media (hover: none) {
+  .data-table tbody tr:hover { background: transparent; }
+}
+
+/* ---------- Mobile ---------- */
+@media (max-width: 767.98px) {
+  /* Dynamic viewport height so the URL bar showing/hiding never cuts content */
+  @supports (height: 1dvh) { :root { --vh: 1dvh; } }
+
+  /* 16px stops iOS Safari zooming into a field on focus */
+  input:not([type='checkbox']):not([type='radio']):not([type='range']),
+  select, textarea, .form-input, .form-select, .form-textarea { font-size: 16px !important; }
+}

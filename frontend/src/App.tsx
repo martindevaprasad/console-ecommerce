@@ -6,6 +6,7 @@ import { logout } from '@/store/authSlice';
 import { clearOrganization } from '@/store/organizationSlice';
 import { useSessionLoader } from '@/hooks/useSession';
 import { visibleNav } from '@/lib/nav';
+import { DeviceProvider } from './components/adaptive/device';
 
 import Layout from './components/layout/Layout';
 import Login from './components/auth/Login';
@@ -118,6 +119,7 @@ export const App: React.FC = () => {
   if (initializing) return <LoadingSpinner fullPage text="Re-establishing secure session..." />;
 
   return (
+    <DeviceProvider>
     <BrowserRouter>
       <Toaster
         position="top-right"
@@ -135,6 +137,7 @@ export const App: React.FC = () => {
         <AppRoutes />
       </Suspense>
     </BrowserRouter>
+    </DeviceProvider>
   );
 };
 

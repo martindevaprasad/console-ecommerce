@@ -1,6 +1,6 @@
 import React, { useId, useRef, useState } from 'react';
 import { IconCheck, IconX } from '@tabler/icons-react';
-import { Portal, useBodyScrollLock, useFocusTrap, usePresence } from './overlay';
+import { Portal, useBodyScrollLock, useFocusTrap, useKeyboardSafeFocus, usePresence } from './overlay';
 
 export interface BottomSheetProps {
   open: boolean;
@@ -42,9 +42,11 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
   const [drag, setDrag] = useState<number | null>(null);
   const start = useRef<{ y: number; t: number; scrollTop: number } | null>(null);
 
+  const bodyRef = useRef<HTMLDivElement>(null);
   const close = () => { if (dismissible) onClose(); };
   useBodyScrollLock(mounted);
   useFocusTrap(sheetRef, shown, close);
+  useKeyboardSafeFocus(bodyRef, shown);
 
   // Snap geometry: the sheet is as tall as the largest snap; smaller snaps translate it down.
   const maxSnap = snapPoints?.length ? snapPoints[snapPoints.length - 1] : null;
@@ -130,7 +132,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
               )}
             </div>
           )}
-          <div className="sheet-body">{children}</div>
+          <div className="sheet-body" ref={bodyRef}>{children}</div>
           {footer && <div className="sheet-foot">{footer}</div>}
         </div>
       </div>

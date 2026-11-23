@@ -57,6 +57,24 @@ export function useFocusTrap(ref: React.RefObject<HTMLElement>, active: boolean,
 }
 
 /**
+ * When a field inside `ref` gets focus on a touch device, scroll it into the middle of the
+ * visible area once the on-screen keyboard has opened, so the keyboard never covers it.
+ */
+export function useKeyboardSafeFocus(ref: React.RefObject<HTMLElement>, active = true) {
+  useEffect(() => {
+    const node = ref.current;
+    if (!active || !node) return;
+    const onFocus = (e: FocusEvent) => {
+      const el = e.target as HTMLElement;
+      if (!el.matches('input, textarea, select, [contenteditable="true"]')) return;
+      window.setTimeout(() => el.scrollIntoView({ block: 'center', behavior: 'smooth' }), 320);
+    };
+    node.addEventListener('focusin', onFocus);
+    return () => node.removeEventListener('focusin', onFocus);
+  }, [ref, active]);
+}
+
+/**
  * Keeps an overlay mounted for its exit animation.
  * Returns `mounted` (render it) and `shown` (apply the "open" class).
  */

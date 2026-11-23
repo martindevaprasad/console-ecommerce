@@ -6,7 +6,7 @@ import { logout } from '@/store/authSlice';
 import { clearOrganization } from '@/store/organizationSlice';
 import { useSessionLoader } from '@/hooks/useSession';
 import { visibleNav } from '@/lib/nav';
-import { DeviceProvider } from './components/adaptive/device';
+import { DeviceProvider, useDevice } from './components/adaptive/device';
 
 import Layout from './components/layout/Layout';
 import Login from './components/auth/Login';
@@ -87,6 +87,27 @@ const AppRoutes: React.FC = () => {
   );
 };
 
+/** Desktop/tablet: top-right as before. Phones: bottom-center, clear of the tab bar and home indicator. */
+const AdaptiveToaster: React.FC = () => {
+  const { isMobile } = useDevice();
+  return (
+    <Toaster
+      position={isMobile ? 'bottom-center' : 'top-right'}
+      containerStyle={isMobile ? { bottom: 'calc(var(--m-tabbar-h) + var(--safe-bottom) + 12px)', zIndex: 1100 } : undefined}
+      toastOptions={{
+        style: {
+          background: 'var(--color-bg-secondary)',
+          color: 'var(--text-primary)',
+          border: '1px solid var(--color-border)',
+          fontFamily: 'var(--font-family)',
+          fontSize: isMobile ? 15 : 12,
+          ...(isMobile ? { borderRadius: 14, padding: '10px 14px', boxShadow: 'var(--shadow-lg)' } : {}),
+        },
+      }}
+    />
+  );
+};
+
 export const App: React.FC = () => {
   const dispatch = useAppDispatch();
   const { token } = useAuth();
@@ -121,18 +142,7 @@ export const App: React.FC = () => {
   return (
     <DeviceProvider>
     <BrowserRouter>
-      <Toaster
-        position="top-right"
-        toastOptions={{
-          style: {
-            background: 'var(--color-bg-secondary)',
-            color: 'var(--text-primary)',
-            border: '1px solid var(--color-border)',
-            fontFamily: 'var(--font-family)',
-            fontSize: 12,
-          },
-        }}
-      />
+      <AdaptiveToaster />
       <Suspense fallback={<LoadingSpinner fullPage text="Loading module..." />}>
         <AppRoutes />
       </Suspense>

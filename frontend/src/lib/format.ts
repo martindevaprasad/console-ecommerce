@@ -4,8 +4,24 @@ let ctx = { currency: 'USD', locale: 'en-US', timezone: undefined as string | un
 const cache = new Map<string, Intl.NumberFormat>();
 
 export function configureFormat(currency?: string, locale?: string, timezone?: string) {
-  ctx = { currency: currency || 'USD', locale: locale || 'en-US', timezone: timezone || undefined };
+  ctx = { currency: currency || 'USD', locale: locale || 'en-US', timezone: validTimeZone(timezone) };
   cache.clear();
+}
+
+/**
+ * An invalid IANA zone (e.g. "Mumbai/Kolkata" instead of "Asia/Kolkata") makes every
+ * toLocale*String call throw and crash the page. Fall back to the device's zone instead,
+ * as money() already does for an invalid currency.
+ */
+function validTimeZone(tz?: string) {
+  if (!tz) return undefined;
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone: tz });
+    return tz;
+  } catch {
+    console.warn(`[format] Invalid time zone "${tz}" in organization settings; using the device time zone. Fix it in Settings → Localization (e.g. "Asia/Kolkata").`);
+    return undefined;
+  }
 }
 
 export function money(value: number | null | undefined, opts?: { compact?: boolean }) {

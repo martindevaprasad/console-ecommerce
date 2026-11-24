@@ -96,6 +96,35 @@ Effort: S < ½ day, M ≈ 1 day, L 2+ days.
 4. Content: `ListItem`/`ListGroup`, `SwipeableListItem`, `MobileCard`, `ResponsiveTable` (+ automatic card
    fallback for every existing `.data-table`), `SegmentedControl`, `FAB`, `StickyActionBar` ✅ — usage in
    `frontend/src/components/adaptive/README.md`
-5. Forms: `MobileSelect`, input attributes, keyboard-safe focus
-6. Pages, in the order above (most used first: POS, Orders, Dashboard, Tables, KDS …), **after approval of this table**
-7. Polish: transitions, pull-to-refresh, skeletons, PWA manifest
+5. Forms: `MobileSelect`, input attributes, keyboard-safe focus ✅
+6. Pages, in the order above (most used first: POS, Orders, Dashboard, Tables, KDS …) ✅ (see checklist)
+7. Polish: transitions, pull-to-refresh, skeletons, PWA manifest — not started
+
+## Checklist (status after phase 6)
+
+✅ done · 🟡 works via a shared/automatic adaptation, page-specific plan not built · ⏳ not started
+
+| Item | Phone | Tablet | Notes |
+|---|---|---|---|
+| Shell (`Layout`, `Sidebar`, `TopBar`) | ✅ top bar + tab bar + More | ✅ rail + top bar | Phones previously had no navigation |
+| `Modal` | ✅ sheet / full screen | ✅ focus trap, Esc | All 21 uses |
+| `Drawer` | ✅ full screen | ✅ capped width, focus trap | All 14 uses |
+| `Tabs` / `Segmented` | ✅ scrollable / full width | ✅ | |
+| `.data-table` (27) | ✅ automatic cards | 🟡 condensed padding | Orders converted to `ResponsiveTable` |
+| Forms | ✅ keyboard hints, 16px, 44px | ✅ 2-col grids | `MobileSelect` in Menu |
+| Toasts | ✅ above tab bar | ✅ | |
+| POS | ✅ ticket sheet + cart bar | ✅ sheet (portrait) / side (landscape) | |
+| Orders | ✅ cards, filter sheet, infinite scroll | ✅ master–detail (landscape) | |
+| Dashboard | ✅ 2-up KPIs, stacked charts | ✅ | Via shared rules |
+| Floor & Tables | ✅ live floor (editor hidden) | ✅ editor kept | |
+| KDS | ✅ station chips scroll | ✅ | |
+| Settings | ✅ list → pushed sections | ✅ split (existing) | |
+| Onboarding | ✅ step strip, sticky footer | ✅ step strip (portrait) | |
+| Menu | 🟡 cards + full-screen editor | 🟡 | Master–detail not built |
+| Customers / Staff | 🟡 cards + full-screen detail | 🟡 | Master–detail not built |
+| Inventory, Promotions, Locations, Reports, Cash, Reservations | 🟡 cards / sheets | 🟡 | No page-specific work needed so far |
+| Login / Register | ✅ 16px inputs, keyboard hints | ✅ | |
+
+Desktop (≥ 1280px): verified pixel-identical to `main` on Dashboard, POS, Orders, Menu (+ drawer),
+Customers (+ modal), Settings, Floor & Tables, KDS and Inventory at 1280 / 1440 / 1920 (transitions frozen
+to avoid capturing the top bar's existing load-time slide mid-animation).

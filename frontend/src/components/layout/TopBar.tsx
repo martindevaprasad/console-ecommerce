@@ -6,6 +6,7 @@ import {
 import { NAV } from '@/lib/nav';
 import { time } from '@/lib/format';
 import { useAccount } from './useAccount';
+import { useDevice } from '../adaptive/device';
 
 /** Desktop and tablet top bar. Account/session logic lives in useAccount (shared with the mobile shell). */
 export const TopBar: React.FC = () => {
@@ -14,6 +15,10 @@ export const TopBar: React.FC = () => {
   const { user, locations, current, timeclock, clock, cashMgmt, shift } = acct;
 
   const page = NAV.find((n) => routerLocation.pathname.startsWith(n.path));
+  // Tablets hide button labels in portrait (adaptive.css), which needs a wrapper; desktop keeps the
+  // original bare text so its rendering stays byte-for-byte the same.
+  const { isTablet } = useDevice();
+  const btnText = (text: string) => (isTablet ? <span className="topbar-btn-text">{text}</span> : text);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -51,14 +56,14 @@ export const TopBar: React.FC = () => {
         {cashMgmt && (
           <button className="topbar-location" style={{ cursor: 'pointer' }} onClick={acct.openCash} title="Cash drawer">
             <span className={`dot ${shift?.currentShift ? 'success' : 'warning'}`} />
-            <IconCash size={13} /> <span className="topbar-btn-text">{shift?.currentShift ? 'Drawer open' : 'No drawer'}</span>
+            <IconCash size={13} /> {btnText(shift?.currentShift ? 'Drawer open' : 'No drawer')}
           </button>
         )}
 
         {timeclock && (
           <button className={`btn btn-sm ${clock?.myTimeEntry ? 'btn-success' : 'btn-secondary'}`} onClick={acct.toggleClock}>
             <IconClock size={13} />
-            <span className="topbar-btn-text">{clock?.myTimeEntry ? `On clock · ${time(clock.myTimeEntry.clockIn)}` : 'Clock in'}</span>
+            {btnText(clock?.myTimeEntry ? `On clock · ${time(clock.myTimeEntry.clockIn)}` : 'Clock in')}
           </button>
         )}
 

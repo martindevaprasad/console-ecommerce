@@ -130,6 +130,47 @@ Swipe actions are real buttons and also open on keyboard focus, so they are neve
   options={[{ value: 'today', label: 'Today' }, { value: '7d', label: '7 days' }]} />  {/* full width on phones */}
 ```
 
+### Forms
+
+Keyboard hints are automatic on touch devices (`useAutoInputHints`): number keypad for `type="number"`,
+email/tel/password autocomplete, search/done enter keys. Explicit props on a field always win.
+
+```tsx
+<MobileSelect label="Category" placeholder="All categories" value={cat} onChange={setCat}
+  options={categories.map((c) => ({ value: c.id, label: c.name }))} />
+{/* native <select> on desktop/tablet and ≤ 6 options; bottom-sheet picker on phones, searchable past 15 */}
+```
+
+### Infinite lists
+
+```tsx
+const all = useAccumulatedPages(data?.items, page);            // pages merged by id; page 0 starts fresh
+<LoadMore hasMore={all.length < total} loading={loading} onLoadMore={() => setPage((p) => p + 1)} />
+```
+
+### Polish
+
+```tsx
+<PullToRefresh onRefresh={() => reload(true)}>   {/* phones only; renders no wrapper element */}
+  <div className="page-container">…</div>
+</PullToRefresh>
+
+{loading && !data && (isMobile ? <SkeletonCards label="Loading orders" /> : <LoadingSpinner />)}
+<SkeletonKpis count={8} />   <SkeletonTiles count={8} />   <Skeleton w={240} h={28} />
+
+{error && !data && <ErrorState title="Couldn't load orders" message={error} onRetry={() => reload()} />}
+```
+
+Page transitions are CSS-only and need no code: on touch layouts each new page element fades/slides in
+when it mounts (`adaptive-page-in`), Settings sections push in from the right, and everything respects
+`prefers-reduced-motion`.
+
+### Installable app
+
+`public/manifest.webmanifest` (standalone, GMOS icons incl. maskable, shortcuts to POS / Orders / Kitchen)
+and `apple-touch-icon.png` are linked from `index.html`. There is deliberately **no service worker**: a POS
+must never run a stale cached build, so offline support needs its own design.
+
 ## Rules of thumb
 
 - Tap targets ≥ 44px; every `:hover` style has an `:active` equivalent.

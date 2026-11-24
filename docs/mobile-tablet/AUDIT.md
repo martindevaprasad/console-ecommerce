@@ -98,7 +98,9 @@ Effort: S < ½ day, M ≈ 1 day, L 2+ days.
    `frontend/src/components/adaptive/README.md`
 5. Forms: `MobileSelect`, input attributes, keyboard-safe focus ✅
 6. Pages, in the order above (most used first: POS, Orders, Dashboard, Tables, KDS …) ✅ (see checklist)
-7. Polish: transitions, pull-to-refresh, skeletons, PWA manifest — not started
+7. Polish ✅: CSS page transitions (touch only, reduced-motion aware), pull-to-refresh (Orders, Dashboard),
+   skeleton loaders (Orders, Dashboard, POS), error state with retry (touch layouts), PWA manifest + icons
+   (no service worker on purpose — see the components README)
 
 ## Checklist (status after phase 6)
 

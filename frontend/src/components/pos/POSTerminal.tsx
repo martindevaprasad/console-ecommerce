@@ -8,6 +8,7 @@ import {
 } from '@tabler/icons-react';
 import { useDevice } from '../adaptive/device';
 import { useBodyScrollLock } from '../adaptive/overlay';
+import { Skeleton, SkeletonTiles } from '../adaptive/polish';
 import { useApi, useCan, useCurrentLocation, useMutate, useOrg } from '@/hooks';
 import { CATALOG, ORDERS } from '@/services/api';
 import { money, minutesSince } from '@/lib/format';
@@ -345,7 +346,9 @@ export const POSTerminal: React.FC = () => {
     setTimeout(() => window.print(), 50);
   };
 
-  if (loading) return <div className="page-container"><LoadingSpinner text="Loading menu..." /></div>;
+  if (loading) return compact
+    ? <div className="pos-shell pos-compact"><section className="pos-main"><Skeleton h={44} r={12} /><SkeletonTiles count={8} /></section></div>
+    : <div className="page-container"><LoadingSpinner text="Loading menu..." /></div>;
 
   const selectedDraft = drafts.find((d) => d.key === selected);
   const isClosed = order && !['OPEN', 'PENDING', 'IN_PROGRESS', 'READY'].includes(order.status);

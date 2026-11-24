@@ -699,6 +699,58 @@ html[data-device='mobile'] .pos-head { gap: 8px; }
 html[data-device='mobile'] .pos-head .pos-search { flex: 1 1 100%; }
 html[data-device='mobile'] .pos-head-btn { min-height: var(--tap); }
 
+/* ==========================================================================
+   Phase 7 polish
+   ========================================================================== */
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* Page transitions (touch shell only). Every route renders a fresh page element, so a CSS
+   animation on insertion plays on each navigation without wrappers or remounts. No fill mode:
+   the transform is gone when it ends, so fixed-position children are never re-anchored. */
+@keyframes adaptive-page-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes adaptive-push-in { from { opacity: .3; transform: translateX(32px); } to { opacity: 1; transform: none; } }
+@keyframes adaptive-pop-in { from { opacity: .3; transform: translateX(-32px); } to { opacity: 1; transform: none; } }
+.app-layout:is(.is-mobile, .is-tablet) .main-content > :is(.page-container, .pos-shell, .kds-shell) { animation: adaptive-page-in .24s cubic-bezier(.2, .8, .2, 1); }
+/* Settings: a section pushes in from the right; going back, the list comes in from the left */
+.settings-layout.m-pushed .settings-panel { animation: adaptive-push-in .3s var(--ease-sheet); }
+.settings-layout.m-root.m-back .settings-nav { animation: adaptive-pop-in .3s var(--ease-sheet); }
+/* Split view: the detail panel eases in when the selected order changes */
+.md-detail-body > * { animation: adaptive-page-in .2s ease-out; }
+
+/* Pull to refresh indicator: slides out from under the top bar */
+.ptr {
+  position: fixed; left: 50%; top: calc(var(--topbar-height) - 44px); z-index: calc(var(--z-header) - 1);
+  width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--color-bg-secondary); border: 1px solid var(--color-border); box-shadow: var(--shadow-md);
+  color: var(--text-secondary); pointer-events: none;
+}
+.ptr.armed { color: var(--color-primary-light); }
+.ptr.refreshing { color: var(--color-primary-light); transition: transform .2s; }
+.ptr.refreshing svg { animation: adaptive-spin .8s linear infinite; }
+@keyframes adaptive-spin { to { transform: rotate(360deg); } }
+
+/* Skeletons */
+.skel {
+  display: block; flex-shrink: 0;
+  background: linear-gradient(90deg, var(--color-surface) 25%, var(--color-surface-hover) 37%, var(--color-surface) 63%);
+  background-size: 400% 100%; animation: skel-shimmer 1.4s ease infinite;
+}
+@keyframes skel-shimmer { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
+.skel-card .m-card-titles { display: flex; flex-direction: column; }
+.skel-kpi { min-height: 92px; }
+.skel-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.skel-tile { padding: 10px; border-radius: 16px; background: var(--color-bg-secondary); border: 1px solid var(--color-border); }
+
+/* Empty + error states feel at home on touch screens */
+html:is([data-device='mobile'], [data-device='tablet']) .empty-state { padding: 40px 20px; }
+html:is([data-device='mobile'], [data-device='tablet']) .empty-state-title { font-size: 17px; }
+html:is([data-device='mobile'], [data-device='tablet']) .empty-state .btn { min-height: var(--tap); }
+.error-state .empty-state-icon { color: var(--color-danger-light); }
+
+@media (prefers-reduced-motion: reduce) {
+  .app-layout .main-content > *, .settings-panel, .settings-nav, .md-detail-body > *, .skel, .ptr svg { animation: none !important; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .sheet, .sheet-backdrop, .rail, .fsm, .m-topbar-title, .app-layout.is-tablet .main-content, .app-layout.is-tablet .topbar { transition: none !important; }
 }

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import {
   IconPalette, IconLock, IconLanguage, IconSun, IconMoon, IconDeviceDesktop, IconCheck, IconBuildingStore,
@@ -214,6 +214,10 @@ const SettingsPage: React.FC = () => {
   const [params, setParams] = useSearchParams();
   const pushed = isMobile ? (params.get('section') as Tab | null) : null;
   useEffect(() => { if (pushed) setTab(pushed); }, [pushed]);
+  // Coming back from a section slides the list in from the left (first visit doesn't)
+  const prevPushed = useRef<Tab | null>(null);
+  const returned = isMobile && !pushed && prevPushed.current !== null;
+  useEffect(() => { prevPushed.current = pushed; }, [pushed]);
   const openTab = (key: Tab) => {
     setTab(key);
     if (isMobile) { setParams({ section: key }); window.scrollTo(0, 0); }
@@ -243,7 +247,7 @@ const SettingsPage: React.FC = () => {
         {admin && <button className="btn btn-secondary btn-sm" onClick={() => navigate('/onboarding')}><IconWand size={13} /> Re-run setup wizard</button>}
       </div>
 
-      <div className={`settings-layout${isMobile ? (pushed ? ' m-pushed' : ' m-root') : ''}`}>
+      <div className={`settings-layout${isMobile ? (pushed ? ' m-pushed' : ` m-root${returned ? ' m-back' : ''}`) : ''}`}>
         <aside className="settings-nav">
           {TABS.filter((t) => !t.admin || (t.key === 'audit' ? can('audit.view') : admin)).map((t) => (
             <button key={t.key} className={`settings-nav-item${tab === t.key ? ' active' : ''}`} onClick={() => openTab(t.key)}>

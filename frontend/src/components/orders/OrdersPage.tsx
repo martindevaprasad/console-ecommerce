@@ -14,6 +14,7 @@ import { useDevice } from '../adaptive/device';
 import { BottomSheet } from '../adaptive/BottomSheet';
 import { ResponsiveTable, Column } from '../adaptive/ResponsiveTable';
 import { LoadMore, useAccumulatedPages } from '../adaptive/content';
+import { ErrorState, PullToRefresh, SkeletonCards } from '../adaptive/polish';
 
 const PAGE = 50;
 
@@ -35,7 +36,7 @@ export const OrdersPage: React.FC = () => {
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   // Phones: cards + infinite scroll + filters sheet. Landscape tablets: list/detail split view.
-  const { device, isPortrait, isMobile } = useDevice();
+  const { device, isPortrait, isMobile, isTouchLayout } = useDevice();
   const split = device === 'tablet' && !isPortrait;
 
   const filter = useMemo(() => ({
@@ -46,7 +47,7 @@ export const OrdersPage: React.FC = () => {
     locationId: allLocations ? null : location?.id,
   }), [period, status, orderType, search, allLocations, location?.id]);
 
-  const { data, loading, reload } = useApi(ORDERS.LIST, { filter, limit: PAGE, offset: page * PAGE });
+  const { data, loading, error, reload } = useApi(ORDERS.LIST, { filter, limit: PAGE, offset: page * PAGE });
   const detail = useApi(ORDERS.GET, { id: openId }, { skip: !openId });
   const order = detail.data?.order;
   const allLoaded = useAccumulatedPages<any>(data?.orders.items, page);
@@ -113,7 +114,9 @@ export const OrdersPage: React.FC = () => {
     </div>
   );
 
-  const list = loading && !data ? <LoadingSpinner /> : !rows.length ? <Empty title="No orders found" hint="Adjust filters or period." /> : (
+  const list = loading && !data ? (isMobile || split ? <SkeletonCards label="Loading orders" /> : <LoadingSpinner />)
+    : error && !data && isTouchLayout ? <ErrorState title="Couldn't load orders" message={error} onRetry={() => reload()} />
+    : !rows.length ? <Empty title="No orders found" hint="Adjust filters or period." /> : (
     <>
       <ResponsiveTable
         variant={split ? 'cards' : 'auto'}
@@ -187,7 +190,11 @@ export const OrdersPage: React.FC = () => {
     </div>
   );
 
+  // Pull down: back to the first page (which refetches), or refetch it in place
+  const refresh = () => (page === 0 ? reload(true) : setPage(0));
+
   return (
+    <PullToRefresh onRefresh={refresh}>
     <div className="page-container">
       <PageHeader title="Orders" subtitle={`${total} orders · ${allLocations ? 'all locations' : location?.name}`}
         actions={<button className="btn btn-secondary btn-sm" onClick={exportCsv}><IconDownload size={13} /> Export CSV</button>} />
@@ -271,6 +278,7 @@ export const OrdersPage: React.FC = () => {
       </Modal>
       {approval.element}
     </div>
+    </PullToRefresh>
   );
 };
 

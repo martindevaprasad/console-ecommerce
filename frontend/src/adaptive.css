@@ -1,0 +1,756 @@
+/* ==========================================================================
+   Adaptive layer: native-style mobile (< 768px) and tablet (768–1279px) UI.
+   Loaded after index.css / enterprise.css / theme-bistro.css.
+   RULE: nothing in this file may change how the app looks at ≥ 1280px.
+   Global tokens below are only *defined* here; they are consumed by
+   mobile/tablet-only rules and by the new adaptive components.
+   ========================================================================== */
+
+:root {
+  /* Safe areas (notch, home indicator, landscape side insets) */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+
+  /* Layering scale */
+  --z-content: 1;
+  --z-header: 50;
+  --z-bottom-nav: 60;
+  --z-rail: 100;
+  --z-fab: 70;
+  --z-sheet: 900;
+  --z-modal: 1000;
+  --z-toast: 1100;
+
+  /* Chrome sizes */
+  --m-topbar-h: 52px;
+  --m-tabbar-h: 58px;
+  --rail-w: 84px;
+  --rail-expanded-w: 248px;
+  --tap: 44px;
+
+  /* Page gutters */
+  --m-gutter: 16px;
+  --t-gutter: 24px;
+
+  /* Mobile type scale */
+  --m-large-title: 30px;
+  --m-title: 17px;
+  --m-body: 16px;
+  --m-secondary: 14px;
+  --m-caption: 12px;
+
+  /* Elevated surfaces (sheets, tab bar) */
+  --m-sheet-radius: 22px;
+  --m-shadow-up: 0 -8px 32px rgba(0, 0, 0, 0.35);
+  --m-chrome-bg: color-mix(in srgb, var(--color-bg-secondary) 86%, transparent);
+  --m-backdrop: rgba(0, 0, 0, 0.5);
+
+  /* Easing that feels like iOS sheets */
+  --ease-sheet: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* Safe-area utilities (the brief's pt-safe / pb-safe / pl-safe / pr-safe) */
+.pt-safe { padding-top: var(--safe-top); }
+.pb-safe { padding-bottom: var(--safe-bottom); }
+.pl-safe { padding-left: var(--safe-left); }
+.pr-safe { padding-right: var(--safe-right); }
+
+/* Device-specific rules key off html[data-device] (set by DeviceProvider before first paint),
+   so they always match what the JS shell renders, including phones held in landscape. */
+
+/* Show/hide by device. Prefer these over JS where the tree can stay the same. */
+html:not([data-device='mobile']) .only-mobile { display: none !important; }
+html:not([data-device='tablet']) .only-tablet { display: none !important; }
+html:is([data-device='mobile'], [data-device='tablet']) .only-desktop { display: none !important; }
+html[data-device='desktop'] .touch-only { display: none !important; }
+html[data-device='mobile'] .not-mobile { display: none !important; }
+
+/* ---------- Mobile + tablet: native feel ---------- */
+html:is([data-device='mobile'], [data-device='tablet']) {
+  -webkit-tap-highlight-color: transparent; -webkit-text-size-adjust: 100%; scroll-behavior: auto;
+}
+html:is([data-device='mobile'], [data-device='tablet']) body { overscroll-behavior-y: none; }
+html:is([data-device='mobile'], [data-device='tablet']) :is(button, a, [role='button'], [role='tab'], label, summary, .btn, input[type='checkbox'], input[type='radio']) { touch-action: manipulation; }
+/* Chrome is not selectable; content always is */
+html:is([data-device='mobile'], [data-device='tablet']) :is(.topbar, .rail, .m-topbar, .m-tabbar, .sheet-handle, .tabs, .segmented, .btn) { -webkit-user-select: none; user-select: none; }
+/* Pressed states: every hover affordance gets a touch equivalent (.btn already scales on :active) */
+html:is([data-device='mobile'], [data-device='tablet']) :is(.data-table tbody tr, .rail-item, .m-tab, .list-row):active { background: var(--color-surface-hover); }
+
+/* Coarse pointers never show hover-only states stuck "on" after a tap */
+@media (hover: none) {
+  .data-table tbody tr:hover { background: transparent; }
+}
+
+/* ---------- Mobile ---------- */
+/* Dynamic viewport height so the URL bar showing/hiding never cuts content */
+@supports (height: 1dvh) { html[data-device='mobile'] { --vh: 1dvh; } }
+
+/* 16px stops iOS Safari zooming into a field on focus */
+html[data-device='mobile'] :is(input:not([type='checkbox']):not([type='radio']):not([type='range']), select, textarea, .form-input, .form-select, .form-textarea) { font-size: 16px !important; }
+
+/* ==========================================================================
+   Shared chrome atoms
+   ========================================================================== */
+.m-avatar {
+  width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+  display: grid; place-items: center;
+  background: var(--gradient-brand); color: #0b0e17; font-weight: 700; font-size: 12px; letter-spacing: .02em;
+}
+.m-avatar.lg { width: 48px; height: 48px; font-size: 16px; }
+.m-icon-btn {
+  width: var(--tap); height: var(--tap); display: grid; place-items: center; flex-shrink: 0;
+  border: 0; border-radius: 12px; background: transparent; color: var(--color-primary-light); cursor: pointer;
+}
+.m-icon-btn:active { background: var(--color-surface-hover); }
+
+/* ==========================================================================
+   Tablet shell: navigation rail + top bar
+   ========================================================================== */
+.app-layout.is-tablet .main-content { margin-left: var(--sidebar-current-width); transition: margin-left .28s var(--ease-sheet); }
+.app-layout.is-tablet .topbar { left: var(--sidebar-current-width); padding: 0 var(--t-gutter); transition: left .28s var(--ease-sheet); }
+.app-layout.is-tablet .page-container { padding: var(--space-6) var(--t-gutter); padding-top: calc(var(--topbar-height) + var(--space-6)); }
+
+/* Top bar controls: finger-sized */
+.app-layout.is-tablet .topbar-right { gap: 8px; }
+.app-layout.is-tablet .topbar-location,
+.app-layout.is-tablet .topbar .btn-sm { min-height: 40px; padding: 0 12px; font-size: 13px; border-radius: 10px; }
+.app-layout.is-tablet .topbar-select { height: 40px; min-width: 150px; font-size: 14px; }
+html[data-orientation='portrait'] .app-layout.is-tablet :is(.topbar-sub, .topbar-btn-text) { display: none; }
+
+/* Portrait tablets: 2-up grids instead of the old 1-column fallback below 900px */
+html[data-orientation='portrait'] .app-layout.is-tablet :is(.grid-2, .grid-3, .grid-4) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+.rail {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: var(--z-rail);
+  width: var(--rail-w); padding-top: var(--safe-top); padding-left: var(--safe-left);
+  box-sizing: content-box; /* safe-area padding adds to the rail instead of squeezing it */
+  display: flex; flex-direction: column; overflow: hidden;
+  background: var(--gradient-sidebar); border-right: 1px solid var(--color-border);
+  transition: width .28s var(--ease-sheet), box-shadow .28s;
+}
+.rail.expanded { width: var(--rail-expanded-w); }
+.rail.overlay.expanded { box-shadow: 24px 0 48px rgba(0, 0, 0, .35); }
+.rail-scrim { position: fixed; inset: 0; z-index: calc(var(--z-rail) - 1); background: var(--m-backdrop); animation: fadeIn .2s ease; }
+
+.rail-head { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 16px 0 12px; border-bottom: 1px solid var(--color-border); }
+.rail.expanded .rail-head { flex-direction: row; justify-content: space-between; padding: 16px 12px 14px 18px; }
+.rail-brand { min-width: 0; flex: 1; }
+.rail-org { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+.rail-toggle { width: var(--tap); height: var(--tap); flex-shrink: 0; display: grid; place-items: center; border: 0; border-radius: 12px; background: transparent; color: var(--text-secondary); cursor: pointer; }
+.rail-toggle:active { background: var(--color-surface-hover); }
+
+.rail-nav { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; padding: 10px 8px 16px; scrollbar-width: none; overscroll-behavior: contain; }
+.rail-nav::-webkit-scrollbar { display: none; }
+.rail-section { display: flex; flex-direction: column; gap: 2px; padding-bottom: 8px; margin-bottom: 8px; border-bottom: 1px solid var(--color-border); }
+.rail-section:last-child { border-bottom: 0; margin-bottom: 0; }
+.rail-section-label { padding: 6px 12px 4px; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted); }
+
+.rail-item {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  min-height: 58px; padding: 6px 2px; border-radius: 14px; text-align: center; text-decoration: none;
+  color: var(--text-secondary); transition: color .15s;
+}
+.rail-item:hover { color: var(--text-primary); }
+.rail-item-icon { width: 54px; height: 30px; border-radius: 15px; display: grid; place-items: center; transition: background .2s; }
+.rail-item-icon svg { width: 22px; height: 22px; }
+.rail-item-label { max-width: 100%; font-size: 11.5px; font-weight: 600; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rail-item.active { color: var(--text-primary); }
+.rail-item.active .rail-item-icon { background: rgba(var(--color-primary-rgb), .2); color: var(--color-primary-light); }
+
+.rail.expanded .rail-item { flex-direction: row; justify-content: flex-start; gap: 12px; min-height: var(--tap); padding: 4px 10px; text-align: left; border-radius: 12px; }
+.rail.expanded .rail-item-icon { width: 30px; height: 30px; border-radius: 9px; }
+.rail.expanded .rail-item-icon svg { width: 20px; height: 20px; }
+.rail.expanded .rail-item-label { font-size: 14px; font-weight: 500; }
+.rail.expanded .rail-item.active { background: rgba(var(--color-primary-rgb), .14); }
+.rail.expanded .rail-item.active .rail-item-icon { background: transparent; }
+
+.rail-foot { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 12px 12px calc(12px + var(--safe-bottom)); border-top: 1px solid var(--color-border); }
+.rail.expanded .rail-foot { justify-content: flex-start; padding-left: 18px; }
+.rail-user { min-width: 0; }
+.rail-user-name { font-size: 14px; font-weight: 600; }
+.rail-user-role { font-size: 12px; color: var(--text-muted); }
+
+/* ==========================================================================
+   Mobile shell: top bar + content + bottom tab bar
+   ========================================================================== */
+.app-layout.is-mobile {
+  /* Existing pages already pad by --topbar-height; point it at the mobile bar */
+  --topbar-height: calc(var(--m-topbar-h) + var(--safe-top));
+}
+/* .main-content is a flex child: without min-width:0 one wide table stretches the whole shell
+   (top bar and tab bar included) past the screen edge. */
+.app-layout:is(.is-mobile, .is-tablet) .main-content { min-width: 0; }
+.app-layout.is-mobile .main-content {
+  /* Safety net: on phones any overflow widens the layout viewport and drags the fixed bars
+     with it. Wide content must scroll inside its own container instead. */
+  overflow-x: clip;
+  margin-left: 0 !important;
+  padding-bottom: calc(var(--m-tabbar-h) + var(--safe-bottom));
+}
+.app-layout.is-mobile.no-tabbar .main-content { padding-bottom: var(--safe-bottom); }
+.app-layout.is-mobile .page-container {
+  padding: calc(var(--topbar-height) + 4px) calc(var(--m-gutter) + var(--safe-right)) 24px calc(var(--m-gutter) + var(--safe-left));
+}
+
+/* PageHeader becomes the iOS large title; its actions get a full-width row */
+.app-layout.is-mobile .page-header { flex-direction: column; align-items: stretch; gap: 14px; margin-bottom: 20px; }
+.app-layout.is-mobile .page-title { font-size: var(--m-large-title); line-height: 1.12; letter-spacing: -.02em; }
+.app-layout.is-mobile .page-subtitle { font-size: var(--m-secondary); }
+.app-layout.is-mobile .page-header > .row { width: 100%; gap: 8px; }
+.app-layout.is-mobile .page-header > .row > .btn { flex: 1 1 auto; }
+
+/* Finger-sized controls */
+.app-layout.is-mobile .btn { min-height: var(--tap); }
+.app-layout.is-mobile .btn-sm { min-height: 40px; padding: 0 14px; font-size: 14px; }
+.app-layout.is-mobile .btn-icon { width: var(--tap); height: var(--tap); }
+.app-layout.is-mobile .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+
+.m-topbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: var(--z-header);
+  height: calc(var(--m-topbar-h) + var(--safe-top));
+  padding: var(--safe-top) var(--safe-right) 0 var(--safe-left);
+  border-bottom: 1px solid transparent;
+  transition: background-color .2s, border-color .2s;
+}
+/* Solid once content scrolls under it, or whenever the compact title is showing */
+.m-topbar.scrolled, .m-topbar:has(.m-topbar-title.show) {
+  background: var(--m-chrome-bg);
+  -webkit-backdrop-filter: saturate(1.6) blur(20px); backdrop-filter: saturate(1.6) blur(20px);
+  border-bottom-color: var(--color-border);
+}
+.m-topbar-row { height: var(--m-topbar-h); display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 0 6px 0 10px; }
+.m-topbar-lead { justify-self: start; display: flex; align-items: center; }
+.m-topbar-mark { display: flex; }
+.m-back { margin-left: -10px; }
+.m-topbar-title {
+  max-width: 58vw; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; text-align: center;
+  font-size: var(--m-title); font-weight: 600; color: var(--text-primary);
+  opacity: 0; transform: translateY(4px); transition: opacity .2s, transform .2s;
+}
+.m-topbar-title.show { opacity: 1; transform: none; }
+.m-topbar-actions { justify-self: end; display: flex; align-items: center; gap: 2px; }
+.m-avatar-btn { width: var(--tap); height: var(--tap); display: grid; place-items: center; padding: 0; border: 0; border-radius: 50%; background: transparent; cursor: pointer; }
+.m-avatar-btn:active .m-avatar { transform: scale(.94); }
+.m-status-dot { width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; }
+.m-status-dot.success { background: var(--color-success); box-shadow: 0 0 0 3px var(--color-success-glow); }
+.m-status-dot.warning { background: var(--color-warning); box-shadow: 0 0 0 3px var(--color-warning-glow); }
+
+.m-tabbar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: var(--z-bottom-nav);
+  height: calc(var(--m-tabbar-h) + var(--safe-bottom));
+  padding: 0 var(--safe-right) var(--safe-bottom) var(--safe-left);
+  display: flex; align-items: stretch;
+  background: var(--m-chrome-bg);
+  -webkit-backdrop-filter: saturate(1.6) blur(20px); backdrop-filter: saturate(1.6) blur(20px);
+  border-top: 1px solid var(--color-border);
+}
+.m-tab {
+  flex: 1; min-width: var(--tap); padding: 6px 0 4px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  border: 0; background: none; font: inherit; color: var(--text-muted); text-decoration: none; cursor: pointer;
+}
+.m-tab:hover { color: var(--text-secondary); }
+.m-tab-icon { position: relative; width: 56px; height: 30px; border-radius: 15px; display: grid; place-items: center; transition: background .2s, color .2s; }
+.m-tab-icon svg { width: 24px; height: 24px; }
+.m-tab-label { font-size: 11px; font-weight: 600; letter-spacing: .01em; }
+.m-tab.active { color: var(--color-primary-light); }
+.m-tab.active .m-tab-icon { background: rgba(var(--color-primary-rgb), .16); }
+/* Phones held sideways: height is scarce, so a slimmer bar with icon and label side by side */
+html[data-orientation='landscape'] .app-layout.is-mobile { --m-tabbar-h: 46px; --m-topbar-h: 46px; }
+html[data-orientation='landscape'] .m-tab { flex-direction: row; gap: 6px; padding: 0; }
+html[data-orientation='landscape'] .m-tab-icon { width: 40px; height: 28px; }
+html[data-orientation='landscape'] .app-layout.is-mobile .page-title { font-size: 24px; }
+
+.m-badge {
+  position: absolute; top: -3px; right: 8px; min-width: 18px; height: 18px; padding: 0 5px;
+  display: grid; place-items: center; border-radius: 9px; border: 2px solid var(--color-bg-secondary);
+  background: var(--color-danger); color: #fff; font-size: 11px; font-weight: 700; line-height: 1;
+}
+
+/* ==========================================================================
+   Bottom sheet + action sheet
+   ========================================================================== */
+.sheet-root { position: fixed; inset: 0; z-index: var(--z-sheet); }
+.sheet-backdrop { position: absolute; inset: 0; background: var(--m-backdrop); opacity: 0; transition: opacity .28s ease; }
+.sheet-root.open .sheet-backdrop { opacity: 1; }
+.sheet {
+  position: absolute; left: 0; right: 0; bottom: 0; margin: 0 auto; max-width: 640px;
+  max-height: calc(var(--vh) * 92 - var(--safe-top));
+  display: flex; flex-direction: column; outline: none;
+  padding: 0 var(--safe-right) var(--safe-bottom) var(--safe-left);
+  background: var(--color-bg-secondary); color: var(--text-primary);
+  border-radius: var(--m-sheet-radius) var(--m-sheet-radius) 0 0; box-shadow: var(--m-shadow-up);
+  transform: translateY(100%); transition: transform .34s var(--ease-sheet); will-change: transform;
+}
+.sheet.dragging { transition: none; }
+.sheet-handle { display: flex; justify-content: center; padding: 8px 0 6px; touch-action: none; cursor: grab; }
+.sheet-handle span { width: 38px; height: 5px; border-radius: 3px; background: var(--text-muted); opacity: .45; }
+.sheet-head { display: flex; align-items: flex-start; gap: 12px; padding: 2px 16px 12px 20px; touch-action: none; }
+.sheet-head-text { flex: 1; min-width: 0; }
+.sheet-title { margin: 0; font-size: 20px; font-weight: 700; line-height: 1.25; }
+.sheet-desc { margin-top: 2px; font-size: var(--m-secondary); color: var(--text-secondary); }
+.sheet-close {
+  position: relative; width: 34px; height: 34px; flex-shrink: 0; margin-top: -2px;
+  display: grid; place-items: center; border: 0; border-radius: 50%;
+  background: var(--color-surface-hover); color: var(--text-secondary); cursor: pointer;
+}
+.sheet-close::after { content: ''; position: absolute; inset: -5px; } /* 44px hit area */
+.sheet-body { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; padding: 0 16px 16px; }
+.sheet-foot { display: flex; gap: 10px; padding: 12px 16px; border-top: 1px solid var(--color-border); }
+.sheet-foot .btn { flex: 1; min-height: 50px; font-size: 16px; }
+
+.action-sheet .sheet-body { padding: 0 12px 12px; }
+.as-account { display: flex; align-items: center; gap: 12px; padding: 2px 6px 16px; }
+.as-account-name { font-size: 17px; font-weight: 700; }
+.as-account-sub { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
+.as-intro { padding: 2px 16px 12px; text-align: center; }
+.as-title { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
+.as-message { margin-top: 2px; font-size: 13px; color: var(--text-muted); }
+.as-group { margin-bottom: 12px; overflow: hidden; border-radius: 14px; background: var(--color-bg-tertiary); }
+.as-group-label, .list-group-label { padding: 10px 16px 4px; font-size: 12px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--text-muted); }
+.as-item {
+  width: 100%; min-height: 52px; padding: 10px 16px;
+  display: flex; align-items: center; gap: 14px; text-align: left;
+  border: 0; border-top: 1px solid var(--color-border); background: none;
+  color: var(--text-primary); font: inherit; font-size: var(--m-body); cursor: pointer;
+}
+.as-group > .as-item:first-child, .as-group-label + .as-item { border-top: 0; }
+.as-item:active { background: var(--color-surface-hover); }
+.as-item:disabled { opacity: .45; cursor: default; }
+.as-icon { width: 24px; display: grid; place-items: center; color: var(--color-primary-light); }
+.as-item.danger, .as-item.danger .as-icon { color: var(--color-danger-light); }
+.as-label { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.as-label small { font-size: 13px; color: var(--text-secondary); }
+.as-check { color: var(--color-primary-light); flex-shrink: 0; }
+.as-cancel {
+  width: 100%; min-height: 54px; border: 0; border-radius: 14px; cursor: pointer;
+  background: var(--color-bg-tertiary); color: var(--color-primary-light); font: inherit; font-size: 17px; font-weight: 600;
+}
+.as-cancel:active { background: var(--color-surface-hover); }
+
+/* ==========================================================================
+   Grouped list rows (iOS settings style)
+   ========================================================================== */
+.list-group { margin-bottom: 18px; }
+.list-group-label { padding: 0 6px 6px; }
+.list-group-body { overflow: hidden; border-radius: 14px; background: var(--color-bg-tertiary); }
+.list-row {
+  min-height: 56px; padding: 10px 14px;
+  display: flex; align-items: center; gap: 14px;
+  border-top: 1px solid var(--color-border); color: var(--text-primary); text-decoration: none;
+}
+.list-row:first-child { border-top: 0; }
+.list-row:hover { color: var(--text-primary); }
+.list-row-icon { width: 34px; height: 34px; flex-shrink: 0; display: grid; place-items: center; border-radius: 10px; background: rgba(var(--color-primary-rgb), .14); color: var(--color-primary-light); }
+.list-row-icon svg { width: 20px; height: 20px; }
+.list-row-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.list-row-text b { font-size: 16px; font-weight: 500; }
+.list-row-text small { font-size: 13px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.list-row-chevron { flex-shrink: 0; color: var(--text-muted); }
+.list-row.active .list-row-icon { background: var(--color-primary); color: #fff; }
+
+/* ==========================================================================
+   Full-screen modal (phones: large dialogs, editors, drawers)
+   ========================================================================== */
+.fsm {
+  position: fixed; inset: 0; z-index: var(--z-modal);
+  display: flex; flex-direction: column; outline: none;
+  background: var(--color-bg-primary); color: var(--text-primary);
+  transform: translateY(100%); transition: transform .34s var(--ease-sheet);
+}
+.fsm.open { transform: none; }
+.fsm-bar {
+  flex-shrink: 0; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px;
+  height: calc(var(--m-topbar-h) + var(--safe-top)); padding: var(--safe-top) calc(8px + var(--safe-right)) 0 calc(8px + var(--safe-left));
+  background: var(--color-bg-secondary); border-bottom: 1px solid var(--color-border);
+}
+.fsm-bar > :first-child { justify-self: start; }
+.fsm-title { margin: 0; max-width: 60vw; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; text-align: center; font-size: var(--m-title); font-weight: 600; }
+.fsm-action { justify-self: end; display: flex; }
+.fsm-close { color: var(--text-secondary); }
+.fsm-text-btn { min-height: var(--tap); padding: 0 8px; border: 0; background: none; color: var(--color-primary-light); font: inherit; font-size: var(--m-body); cursor: pointer; }
+.fsm-body {
+  flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+  padding: 16px calc(var(--m-gutter) + var(--safe-right)) 24px calc(var(--m-gutter) + var(--safe-left));
+}
+.fsm-foot {
+  flex-shrink: 0; display: flex; gap: 10px;
+  padding: 12px calc(var(--m-gutter) + var(--safe-right)) calc(12px + var(--safe-bottom)) calc(var(--m-gutter) + var(--safe-left));
+  background: var(--color-bg-secondary); border-top: 1px solid var(--color-border);
+}
+.fsm-foot .btn, .sheet-foot .btn { flex: 1 1 auto; min-width: 0; min-height: 50px; font-size: 16px; padding: 0 14px; }
+.fsm-foot .btn-ghost, .sheet-foot .btn-ghost { flex: 0 0 auto; }
+/* Footers that build their own row (steppers, spacers): keep icon buttons square */
+:is(.fsm-foot, .sheet-foot) .btn-icon { flex: 0 0 auto; width: var(--tap); min-height: var(--tap); padding: 0; }
+:is(.fsm-foot, .sheet-foot) > .row { flex: 1; min-width: 0; gap: 8px; }
+:is(.fsm-foot, .sheet-foot) .row .row { gap: 8px; flex-shrink: 0; }
+:is(.fsm-foot, .sheet-foot) .spacer { flex: 0 1 0; }
+
+/* Content that used to sit in a centered dialog: comfortable spacing inside sheets */
+:is(.sheet-body, .fsm-body) :is(.form-grid, .form-grid-3) { grid-template-columns: 1fr; }
+:is(.sheet-body, .fsm-body) .form-group { margin-bottom: 14px; }
+
+/* ==========================================================================
+   Tablet: dialogs and drawers sized for touch
+   ========================================================================== */
+html[data-device='tablet'] .modal { max-width: min(560px, 92vw); max-height: calc(var(--vh) * 88); }
+html[data-device='tablet'] .modal-lg { max-width: min(760px, 92vw); }
+html[data-device='tablet'] .modal-xl { max-width: min(960px, 94vw); }
+html[data-device='tablet'] .modal-close { width: var(--tap); height: var(--tap); }
+html[data-device='tablet'] .modal-footer .btn, html[data-device='tablet'] .drawer-foot .btn { min-height: var(--tap); }
+html[data-device='tablet'] .drawer { width: min(460px, 80vw); }
+html[data-device='tablet'] .drawer.wide { width: min(640px, 88vw); }
+html[data-device='tablet'] .drawer-head .btn-icon { width: var(--tap); height: var(--tap); }
+
+/* ==========================================================================
+   Tabs and segmented controls on touch screens
+   ========================================================================== */
+/* Tabs scroll sideways instead of wrapping or overflowing the page */
+html:is([data-device='mobile'], [data-device='tablet']) .tabs { overflow-x: auto; scrollbar-width: none; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; }
+html:is([data-device='mobile'], [data-device='tablet']) .tabs::-webkit-scrollbar { display: none; }
+html:is([data-device='mobile'], [data-device='tablet']) .tab { flex-shrink: 0; min-height: var(--tap); }
+/* Segmented controls become full-width, finger-height controls on phones */
+html[data-device='mobile'] .segmented { display: flex; width: 100%; max-width: 100%; overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain; }
+html[data-device='mobile'] .segmented::-webkit-scrollbar { display: none; }
+/* Grow to fill when few, never squash: long option sets (e.g. KDS stations) scroll sideways */
+html[data-device='mobile'] .segmented > button { flex: 1 0 auto; min-height: 40px; padding-inline: 12px; font-size: 14px; }
+
+/* ==========================================================================
+   Tables → cards on phones (automatic, for every .data-table with a header)
+   Labels come from useAutoTableCards (data-label = column header).
+   ========================================================================== */
+html[data-device='mobile'] .table-container:has(> .data-table > thead) {
+  overflow: visible; border: 0; border-radius: 0; background: none;
+}
+html[data-device='mobile'] .data-table:has(> thead) { display: block; background: none; border: 0; }
+html[data-device='mobile'] .data-table:has(> thead) > thead { display: none; }
+html[data-device='mobile'] .data-table:has(> thead) > tbody { display: flex; flex-direction: column; gap: 10px; }
+html[data-device='mobile'] .data-table:has(> thead) > tbody > tr {
+  position: relative; display: block; padding: 12px 16px;
+  background: var(--color-bg-secondary); border: 1px solid var(--color-border); border-radius: 16px;
+}
+html[data-device='mobile'] .data-table:has(> thead) > tbody > tr.clickable { padding-right: 38px; }
+/* Chevron on rows that open something */
+html[data-device='mobile'] .data-table:has(> thead) > tbody > tr.clickable::after {
+  content: ''; position: absolute; right: 16px; top: 22px; width: 8px; height: 8px;
+  border: solid var(--text-muted); border-width: 2px 2px 0 0; transform: rotate(45deg);
+}
+html[data-device='mobile'] .data-table:has(> thead) > tbody > tr > td {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 4px 0; border: 0; font-size: 14px; text-align: right; min-height: 28px;
+}
+html[data-device='mobile'] .data-table:has(> thead) > tbody > tr > td::before {
+  content: attr(data-label); flex-shrink: 0; text-align: left;
+  color: var(--text-muted); font-size: 13px; font-weight: 500;
+}
+/* First cell is the card title: full width, larger, no label */
+html[data-device='mobile'] .data-table:has(> thead) > tbody > tr > td:first-child {
+  display: block; text-align: left; font-size: 16px; padding: 2px 0 8px; margin-bottom: 4px;
+  border-bottom: 1px solid var(--color-border);
+}
+html[data-device='mobile'] .data-table:has(> thead) > tbody > tr > td:first-child::before,
+html[data-device='mobile'] .data-table:has(> thead) > tbody > tr > td[data-label='']::before { content: none; }
+/* Unlabelled cells (row actions) and empty-state rows span the card */
+html[data-device='mobile'] .data-table:has(> thead) > tbody > tr > td[data-label='']:not(:first-child) { justify-content: flex-end; padding-top: 8px; }
+html[data-device='mobile'] .data-table:has(> thead) > tbody > tr > td[colspan] { justify-content: center; text-align: center; border: 0; margin: 0; padding: 8px 0; }
+html[data-device='mobile'] .data-table:has(> thead) > tbody > tr:has(> td[colspan]) { background: none; border-style: dashed; }
+html[data-device='mobile'] .data-table:has(> thead) > tbody > tr:last-child td { border-bottom: 0; }
+html[data-device='mobile'] .data-table:has(> thead) > tbody > tr > td:first-child:last-child { border-bottom: 0; margin: 0; padding-bottom: 2px; }
+html[data-device='mobile'] .data-table:has(> thead) .btn-sm { min-height: 40px; }
+html[data-device='mobile'] .data-table:has(> thead) tbody tr:hover { background: var(--color-bg-secondary); }
+
+/* Tablet: condensed tables. ResponsiveTable drops priority-3 columns; these tighten the rest */
+html[data-device='tablet'] .data-table th { padding: 10px 14px; }
+html[data-device='tablet'] .data-table td { padding: 12px 14px; }
+html[data-device='tablet'] .table-container { -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
+
+/* ==========================================================================
+   MobileCard / KeyValue
+   ========================================================================== */
+.m-card-list { display: flex; flex-direction: column; gap: 10px; }
+.m-card {
+  position: relative; padding: 14px 16px; border-radius: 16px;
+  background: var(--color-bg-secondary); border: 1px solid var(--color-border); color: var(--text-primary);
+}
+.m-card.tappable { cursor: pointer; }
+.m-card.tappable:active { background: var(--color-surface-hover); }
+.m-card-head { display: flex; align-items: center; gap: 12px; }
+.m-card-media { flex-shrink: 0; }
+.m-card-titles { flex: 1; min-width: 0; }
+.m-card-title { font-size: 16px; font-weight: 600; }
+.m-card-sub { margin-top: 2px; font-size: 13px; color: var(--text-secondary); }
+.m-card-trailing { flex-shrink: 0; text-align: right; font-weight: 600; }
+.m-card-chevron { flex-shrink: 0; color: var(--text-muted); margin-right: -4px; }
+.m-card-body { margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--color-border); }
+.m-card-actions { display: flex; gap: 8px; margin-top: 10px; }
+.m-card-actions .btn { flex: 1; }
+.m-card-extra { padding: 4px 0; }
+.m-kv { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 4px 0; min-height: 28px; font-size: 14px; }
+.m-kv-label { flex-shrink: 0; color: var(--text-muted); font-size: 13px; font-weight: 500; }
+.m-kv-value { text-align: right; min-width: 0; }
+.m-kv.left { justify-content: flex-start; }
+
+/* ListItem extras (base row styles are above) */
+button.list-row { width: 100%; border-left: 0; border-right: 0; border-bottom: 0; background: none; font: inherit; text-align: left; cursor: pointer; }
+.list-group-body > .list-row:first-child { border-top: 0; }
+.list-row-avatar { flex-shrink: 0; display: flex; }
+.list-row-trailing { flex-shrink: 0; color: var(--text-secondary); font-size: 15px; }
+.list-row.danger, .list-row.danger .list-row-icon { color: var(--color-danger-light); }
+.list-row.disabled { opacity: .5; pointer-events: none; }
+.list-group-footer { padding: 6px 14px 0; font-size: 13px; color: var(--text-muted); }
+
+/* ==========================================================================
+   Swipeable row
+   ========================================================================== */
+.swipe-row { position: relative; overflow: hidden; }
+.swipe-actions { position: absolute; top: 0; right: 0; bottom: 0; display: flex; }
+.swipe-action {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  border: 0; color: #fff; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+}
+.swipe-action.neutral { background: var(--color-bg-tertiary); color: var(--text-primary); }
+.swipe-action.primary { background: var(--color-primary); }
+.swipe-action.danger { background: var(--color-danger); }
+.swipe-content { position: relative; background: var(--color-bg-tertiary); touch-action: pan-y; transition: transform .25s var(--ease-sheet); }
+.swipe-content.dragging { transition: none; }
+
+/* ==========================================================================
+   FAB + sticky action bar (phones)
+   ========================================================================== */
+.fab {
+  position: fixed; z-index: var(--z-fab);
+  right: calc(16px + var(--safe-right)); bottom: calc(var(--m-tabbar-h) + var(--safe-bottom) + 16px);
+  min-width: 56px; height: 56px; padding: 0 16px; border: 0; border-radius: 18px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  background: var(--color-primary); color: #fff; font: inherit; font-size: 16px; font-weight: 600;
+  box-shadow: 0 10px 28px rgba(var(--color-primary-rgb), .45), 0 2px 6px rgba(0, 0, 0, .3); cursor: pointer;
+  transition: transform .15s;
+}
+.fab svg { width: 24px; height: 24px; }
+.fab:active { transform: scale(.94); }
+.app-layout.no-tabbar .fab { bottom: calc(var(--safe-bottom) + 16px); }
+/* A page with a sticky action bar lifts the FAB above it */
+.app-layout:has(.sticky-actions) .fab { bottom: calc(var(--m-tabbar-h) + var(--safe-bottom) + 84px); }
+.app-layout.no-tabbar:has(.sticky-actions) .fab { bottom: calc(var(--safe-bottom) + 84px); }
+
+.sticky-actions {
+  position: fixed; z-index: calc(var(--z-bottom-nav) - 1); left: 0; right: 0;
+  bottom: calc(var(--m-tabbar-h) + var(--safe-bottom));
+  display: flex; gap: 10px; padding: 10px calc(var(--m-gutter) + var(--safe-right)) 10px calc(var(--m-gutter) + var(--safe-left));
+  background: var(--m-chrome-bg); -webkit-backdrop-filter: saturate(1.6) blur(20px); backdrop-filter: saturate(1.6) blur(20px);
+  border-top: 1px solid var(--color-border);
+}
+.sticky-actions .btn { flex: 1; min-height: 48px; font-size: 16px; }
+.app-layout.no-tabbar .sticky-actions { bottom: 0; padding-bottom: calc(10px + var(--safe-bottom)); }
+.sticky-actions-spacer { height: 72px; }
+.sticky-actions-inline { justify-content: flex-end; gap: var(--space-3); margin-top: var(--space-5); }
+
+/* ==========================================================================
+   Forms on touch screens
+   ========================================================================== */
+/* MobileSelect trigger looks like the select it replaces */
+.m-select-trigger { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; text-align: left; cursor: pointer; background-image: none; }
+.m-select-trigger > span { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.m-select-search { margin-bottom: 12px; }
+
+/* Phones: one column, taller fields */
+html[data-device='mobile'] .app-layout :is(.form-input, .form-select, .form-textarea) { min-height: var(--tap); }
+html[data-device='mobile'] :is(.sheet-body, .fsm-body) :is(.form-input, .form-select, .form-textarea) { min-height: var(--tap); }
+html[data-device='mobile'] .form-label { font-size: 14px; }
+html[data-device='mobile'] .form-hint { font-size: 13px; }
+html:is([data-device='mobile'], [data-device='tablet']) input:is([type='checkbox'], [type='radio']) { width: 20px; height: 20px; }
+html:is([data-device='mobile'], [data-device='tablet']) label:has(> input:is([type='checkbox'], [type='radio'])) { min-height: var(--tap); display: inline-flex; align-items: center; gap: 10px; }
+
+/* Phone toolbars: search takes the full row, filters share the next row, spacers collapse */
+html[data-device='mobile'] .toolbar { gap: 8px; }
+html[data-device='mobile'] .toolbar .search-input-wrapper { flex: 1 1 100%; min-width: 0; }
+html[data-device='mobile'] .toolbar > :is(select, .form-select, .m-filter-select) { flex: 1 1 140px; width: auto !important; min-width: 0; }
+html[data-device='mobile'] .toolbar > .segmented { flex: 1 1 100%; }
+html[data-device='mobile'] .toolbar > .spacer { display: none; }
+
+/* Tablets: two-column forms where the old < 900px rule collapsed them to one */
+html[data-device='tablet'] .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+html[data-device='tablet'] .form-grid-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+html[data-device='tablet'][data-orientation='landscape'] .form-grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+/* …but never inside a narrow drawer */
+html[data-device='tablet'] .drawer:not(.wide) :is(.form-grid, .form-grid-3) { grid-template-columns: 1fr; }
+html[data-device='tablet'] :is(.form-input, .form-select, .form-textarea) { min-height: 40px; }
+
+/* ==========================================================================
+   Master–detail split (landscape tablets) + list helpers
+   ========================================================================== */
+.md-split { display: grid; grid-template-columns: minmax(300px, 380px) minmax(0, 1fr); gap: 16px; align-items: start; }
+.md-list { min-width: 0; }
+.md-detail {
+  position: sticky; top: calc(var(--topbar-height) + 12px);
+  display: flex; flex-direction: column; min-width: 0;
+  max-height: calc(var(--vh) * 100 - var(--topbar-height) - 24px);
+  background: var(--color-bg-secondary); border: 1px solid var(--color-border); border-radius: 18px; overflow: hidden;
+}
+.md-detail > .empty-state { margin: auto; padding: 48px 24px; }
+.md-detail-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px 14px 20px; border-bottom: 1px solid var(--color-border); }
+.md-detail-head h2 { margin: 0; font-size: 17px; font-weight: 700; }
+.md-detail-body { flex: 1; min-height: 0; overflow-y: auto; padding: 16px 20px; }
+.md-detail-foot { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; padding: 12px 16px; border-top: 1px solid var(--color-border); }
+.md-detail-foot .btn { min-height: var(--tap); }
+.m-card.selected { border-color: rgba(var(--color-primary-rgb), .7); box-shadow: 0 0 0 1px rgba(var(--color-primary-rgb), .5); background: rgba(var(--color-primary-rgb), .08); }
+
+.load-more { display: flex; justify-content: center; padding: 16px 0 8px; }
+.load-more .btn { min-width: 160px; }
+
+/* Phone filter button with active-filter count */
+.m-filter-btn { flex: 1 1 100%; }
+.m-filter-count { min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px; display: inline-grid; place-items: center; background: var(--color-primary); color: #fff; font-size: 12px; font-weight: 700; }
+.sheet-body .check { min-height: var(--tap); display: flex; align-items: center; gap: 10px; font-size: 16px; }
+
+/* ==========================================================================
+   Page: Settings on phones – section list → pushed section screen
+   ========================================================================== */
+.settings-layout.m-root .settings-panel { display: none; }
+.settings-layout.m-pushed .settings-nav { display: none; }
+.settings-page:has(> .settings-layout.m-pushed) > .page-header { display: none; }
+.settings-layout.m-root .settings-nav { padding: 0; overflow: hidden; border-radius: 14px; }
+.settings-layout.m-root .settings-nav-item { position: relative; min-height: 60px; padding: 10px 40px 10px 14px; border-radius: 0; border-left: 0; }
+.settings-layout.m-root .settings-nav-item + .settings-nav-item { border-top: 1px solid var(--color-border); }
+.settings-layout.m-root .settings-nav-item.active { background: none; color: inherit; box-shadow: none; }
+.settings-layout.m-root .settings-nav-item::after {
+  content: ''; position: absolute; right: 18px; top: 50%; width: 8px; height: 8px; margin-top: -4px;
+  border: solid var(--text-muted); border-width: 2px 2px 0 0; transform: rotate(45deg);
+}
+.settings-layout.m-pushed .settings-section { padding: 16px; }
+
+/* ==========================================================================
+   Page: Onboarding wizard (outside the shell)
+   Phones + portrait tablets: sticky horizontal step strip; phones: sticky Back/Next bar.
+   ========================================================================== */
+/* Strip row sizes to content; the step pane takes the rest of the screen */
+html:is([data-device='mobile'], [data-device='tablet'][data-orientation='portrait']) .onb-shell { grid-template-columns: 1fr; grid-template-rows: auto 1fr; align-content: start; }
+html:is([data-device='mobile'], [data-device='tablet'][data-orientation='portrait']) .onb-steps { align-items: center; }
+html:is([data-device='mobile'], [data-device='tablet'][data-orientation='portrait']) .onb-steps > div:first-child { margin: 0 8px 0 0 !important; flex-shrink: 0; }
+html:is([data-device='mobile'], [data-device='tablet'][data-orientation='portrait']) .onb-steps > .spacer { flex: 1 0 8px; }
+html:is([data-device='mobile'], [data-device='tablet'][data-orientation='portrait']) .onb-steps > .btn { flex-shrink: 0; white-space: nowrap; min-height: 36px; }
+html:is([data-device='mobile'], [data-device='tablet'][data-orientation='portrait']) .onb-steps {
+  display: flex !important; flex-direction: row; gap: 6px; overflow-x: auto; scrollbar-width: none;
+  position: sticky; top: 0; z-index: var(--z-header);
+  padding: calc(var(--safe-top) + 10px) calc(16px + var(--safe-right)) 10px calc(16px + var(--safe-left));
+  border-right: 0; border-bottom: 1px solid var(--color-border);
+  -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px);
+}
+html:is([data-device='mobile'], [data-device='tablet'][data-orientation='portrait']) .onb-steps::-webkit-scrollbar { display: none; }
+html:is([data-device='mobile'], [data-device='tablet'][data-orientation='portrait']) .onb-step { flex-shrink: 0; min-height: 36px; padding: 6px 12px; white-space: nowrap; }
+/* Only the current step spells out its name; the rest show their number */
+html[data-device='mobile'] .onb-step:not(.active) { font-size: 0; gap: 0; padding: 6px 8px; }
+html[data-device='mobile'] .onb-main { padding: 20px calc(16px + var(--safe-right)) 0 calc(16px + var(--safe-left)); }
+html[data-device='tablet'][data-orientation='portrait'] .onb-main { padding: 28px var(--t-gutter) 0; }
+html[data-device='mobile'] .onb-title { font-size: 24px; line-height: 1.2; }
+html[data-device='mobile'] .onb-sub { font-size: 15px; }
+html[data-device='mobile'] .onb-foot {
+  position: sticky; bottom: 0; z-index: var(--z-header); gap: 10px;
+  margin: 24px calc(-16px - var(--safe-right)) 0 calc(-16px - var(--safe-left));
+  padding: 12px calc(16px + var(--safe-right)) calc(12px + var(--safe-bottom)) calc(16px + var(--safe-left));
+  background: var(--m-chrome-bg); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px);
+}
+html[data-device='mobile'] .onb-foot .btn { flex: 1; min-height: 50px; font-size: 16px; }
+html[data-device='mobile'] .pick-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+/* ==========================================================================
+   Page: POS (phones + portrait tablets) – ticket as bottom sheet + cart bar
+   ========================================================================== */
+.pos-shell.pos-compact { padding-bottom: 88px; }
+.pos-compact .ticket {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: var(--z-sheet);
+  margin: 0 auto; max-width: 640px; height: calc(var(--vh) * 88 - var(--safe-top)); max-height: none;
+  border-radius: var(--m-sheet-radius) var(--m-sheet-radius) 0 0; border-bottom: 0;
+  padding-bottom: var(--safe-bottom); box-shadow: var(--m-shadow-up);
+  transform: translateY(105%); visibility: hidden;
+  transition: transform .34s var(--ease-sheet), visibility 0s linear .34s;
+}
+.pos-compact .ticket.sheet-open { transform: none; visibility: visible; transition: transform .34s var(--ease-sheet), visibility 0s; }
+.ticket-backdrop { position: fixed; inset: 0; z-index: calc(var(--z-sheet) - 1); background: var(--m-backdrop); animation: fadeIn .2s ease; }
+.ticket-sheet-bar { position: relative; flex-shrink: 0; display: flex; justify-content: center; padding: 8px 12px 2px; min-height: 34px; touch-action: none; }
+.ticket-sheet-handle { width: 38px; height: 5px; margin-top: 2px; border-radius: 3px; background: var(--text-muted); opacity: .45; }
+.ticket-sheet-done { position: absolute; right: 8px; top: 2px; min-height: var(--tap); padding: 0 10px; border: 0; background: none; color: var(--color-primary-light); font: inherit; font-size: 16px; font-weight: 600; cursor: pointer; }
+.pos-compact .ticket-foot { padding-bottom: 12px; }
+
+.pos-cartbar {
+  position: fixed; z-index: var(--z-fab);
+  left: calc(12px + var(--safe-left)); right: calc(12px + var(--safe-right));
+  bottom: calc(var(--m-tabbar-h) + var(--safe-bottom) + 10px);
+  height: 58px; padding: 0 16px 0 10px; border: 0; border-radius: 18px;
+  display: flex; align-items: center; gap: 12px; cursor: pointer;
+  background: var(--color-primary); color: #fff; font: inherit;
+  box-shadow: 0 10px 28px rgba(var(--color-primary-rgb), .45), 0 2px 6px rgba(0, 0, 0, .3);
+}
+.pos-cartbar:active { transform: scale(.98); }
+.pos-cartbar.empty { background: var(--color-bg-tertiary); color: var(--text-secondary); box-shadow: var(--shadow-md); }
+.pos-cartbar-count { min-width: 36px; height: 36px; padding: 0 8px; border-radius: 11px; display: grid; place-items: center; background: rgba(255, 255, 255, .2); font-weight: 800; }
+.pos-cartbar.empty .pos-cartbar-count { background: var(--color-surface-hover); }
+.pos-cartbar-label { flex: 1; min-width: 0; text-align: left; font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pos-cartbar-total { font-size: 17px; font-weight: 800; }
+/* Portrait tablets have no tab bar: the cart bar sits at the bottom of the content area */
+.app-layout.is-tablet .pos-cartbar { left: calc(var(--sidebar-current-width) + var(--t-gutter)); right: var(--t-gutter); bottom: calc(var(--safe-bottom) + 16px); }
+.app-layout.is-tablet .pos-compact .ticket { left: var(--sidebar-current-width); }
+
+/* Touch devices: no keyboard-shortcut help button in the POS header */
+html:is([data-device='mobile'], [data-device='tablet']) .pos-head-btn[aria-label='Keyboard shortcuts'] { display: none; }
+html[data-device='mobile'] .pos-head { gap: 8px; }
+html[data-device='mobile'] .pos-head .pos-search { flex: 1 1 100%; }
+html[data-device='mobile'] .pos-head-btn { min-height: var(--tap); }
+
+/* ==========================================================================
+   Phase 7 polish
+   ========================================================================== */
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* Page transitions (touch shell only). Every route renders a fresh page element, so a CSS
+   animation on insertion plays on each navigation without wrappers or remounts. No fill mode:
+   the transform is gone when it ends, so fixed-position children are never re-anchored. */
+@keyframes adaptive-page-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes adaptive-push-in { from { opacity: .3; transform: translateX(32px); } to { opacity: 1; transform: none; } }
+@keyframes adaptive-pop-in { from { opacity: .3; transform: translateX(-32px); } to { opacity: 1; transform: none; } }
+.app-layout:is(.is-mobile, .is-tablet) .main-content > :is(.page-container, .pos-shell, .kds-shell) { animation: adaptive-page-in .24s cubic-bezier(.2, .8, .2, 1); }
+/* Settings: a section pushes in from the right; going back, the list comes in from the left */
+.settings-layout.m-pushed .settings-panel { animation: adaptive-push-in .3s var(--ease-sheet); }
+.settings-layout.m-root.m-back .settings-nav { animation: adaptive-pop-in .3s var(--ease-sheet); }
+/* Split view: the detail panel eases in when the selected order changes */
+.md-detail-body > * { animation: adaptive-page-in .2s ease-out; }
+
+/* Pull to refresh indicator: slides out from under the top bar */
+.ptr {
+  position: fixed; left: 50%; top: calc(var(--topbar-height) - 44px); z-index: calc(var(--z-header) - 1);
+  width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--color-bg-secondary); border: 1px solid var(--color-border); box-shadow: var(--shadow-md);
+  color: var(--text-secondary); pointer-events: none;
+}
+.ptr.armed { color: var(--color-primary-light); }
+.ptr.refreshing { color: var(--color-primary-light); transition: transform .2s; }
+.ptr.refreshing svg { animation: adaptive-spin .8s linear infinite; }
+@keyframes adaptive-spin { to { transform: rotate(360deg); } }
+
+/* Skeletons */
+.skel {
+  display: block; flex-shrink: 0;
+  background: linear-gradient(90deg, var(--color-surface) 25%, var(--color-surface-hover) 37%, var(--color-surface) 63%);
+  background-size: 400% 100%; animation: skel-shimmer 1.4s ease infinite;
+}
+@keyframes skel-shimmer { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
+.skel-card .m-card-titles { display: flex; flex-direction: column; }
+.skel-kpi { min-height: 92px; }
+.skel-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.skel-tile { padding: 10px; border-radius: 16px; background: var(--color-bg-secondary); border: 1px solid var(--color-border); }
+
+/* Empty + error states feel at home on touch screens */
+html:is([data-device='mobile'], [data-device='tablet']) .empty-state { padding: 40px 20px; }
+html:is([data-device='mobile'], [data-device='tablet']) .empty-state-title { font-size: 17px; }
+html:is([data-device='mobile'], [data-device='tablet']) .empty-state .btn { min-height: var(--tap); }
+.error-state .empty-state-icon { color: var(--color-danger-light); }
+
+@media (prefers-reduced-motion: reduce) {
+  .app-layout .main-content > *, .settings-panel, .settings-nav, .md-detail-body > *, .skel, .ptr svg { animation: none !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheet, .sheet-backdrop, .rail, .fsm, .m-topbar-title, .app-layout.is-tablet .main-content, .app-layout.is-tablet .topbar { transition: none !important; }
+}

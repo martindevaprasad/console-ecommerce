@@ -10,6 +10,8 @@ import {
 export interface NavItem {
   path: string;
   label: string;
+  /** Short label for the mobile tab bar / tablet rail */
+  short?: string;
   subtitle: string;
   icon: React.ReactNode;
   /** Gradient colour of the icon (Windows 11 style). */
@@ -20,17 +22,17 @@ export interface NavItem {
 }
 
 export const NAV: NavItem[] = [
-  { path: '/dashboard', tone: 'blue', label: 'Dashboard', subtitle: 'Live operations & sales', icon: <IconLayoutDashboardFilled size={17} />, section: 'Operate', perms: ['reports.view', 'pos.access'] },
-  { path: '/pos', tone: 'purple', label: 'POS Terminal', subtitle: 'Take orders & payments', icon: <IconDeviceDesktopFilled size={17} />, section: 'Operate', perms: ['pos.access'] },
+  { path: '/dashboard', short: 'Home', tone: 'blue', label: 'Dashboard', subtitle: 'Live operations & sales', icon: <IconLayoutDashboardFilled size={17} />, section: 'Operate', perms: ['reports.view', 'pos.access'] },
+  { path: '/pos', short: 'POS', tone: 'purple', label: 'POS Terminal', subtitle: 'Take orders & payments', icon: <IconDeviceDesktopFilled size={17} />, section: 'Operate', perms: ['pos.access'] },
   { path: '/orders', tone: 'orange', label: 'Orders', subtitle: 'Checks, refunds & history', icon: <IconClipboardListFilled size={17} />, section: 'Operate', perms: ['orders.view'] },
-  { path: '/tables', tone: 'teal', label: 'Floor & Tables', subtitle: 'Live floor plan & seating', icon: <IconLayoutGridFilled size={17} />, section: 'Operate', perms: ['tables.manage'], module: 'tables' },
-  { path: '/reservations', tone: 'pink', label: 'Reservations', subtitle: 'Bookings & waitlist', icon: <IconCalendarEventFilled size={17} />, section: 'Operate', perms: ['reservations.manage'], module: 'reservations' },
-  { path: '/kds', tone: 'red', label: 'Kitchen Display', subtitle: 'Station tickets & bump', icon: <IconChefHatFilled size={17} />, section: 'Operate', perms: ['kds.access'], module: 'kds' },
-  { path: '/cash', tone: 'green', label: 'Cash & Shifts', subtitle: 'Drawer, pay-ins/outs, Z report', icon: <IconCashBanknoteFilled size={17} />, section: 'Operate', perms: ['cash.manage'], module: 'cashManagement' },
+  { path: '/tables', short: 'Tables', tone: 'teal', label: 'Floor & Tables', subtitle: 'Live floor plan & seating', icon: <IconLayoutGridFilled size={17} />, section: 'Operate', perms: ['tables.manage'], module: 'tables' },
+  { path: '/reservations', short: 'Bookings', tone: 'pink', label: 'Reservations', subtitle: 'Bookings & waitlist', icon: <IconCalendarEventFilled size={17} />, section: 'Operate', perms: ['reservations.manage'], module: 'reservations' },
+  { path: '/kds', short: 'Kitchen', tone: 'red', label: 'Kitchen Display', subtitle: 'Station tickets & bump', icon: <IconChefHatFilled size={17} />, section: 'Operate', perms: ['kds.access'], module: 'kds' },
+  { path: '/cash', short: 'Cash', tone: 'green', label: 'Cash & Shifts', subtitle: 'Drawer, pay-ins/outs, Z report', icon: <IconCashBanknoteFilled size={17} />, section: 'Operate', perms: ['cash.manage'], module: 'cashManagement' },
   { path: '/menu', tone: 'gold', label: 'Menu', subtitle: 'Items, modifiers & taxes', icon: <IconToolsKitchen2Filled size={17} />, section: 'Catalog', perms: ['menu.view'] },
   { path: '/promotions', tone: 'pink', label: 'Promotions', subtitle: 'Discounts & happy hours', icon: <IconRosetteDiscountFilled size={17} />, section: 'Catalog', perms: ['promotions.manage'], module: 'promotions' },
   { path: '/inventory', tone: 'teal', label: 'Inventory', subtitle: 'Stock, recipes & purchasing', icon: <IconArchiveFilled size={17} />, section: 'Catalog', perms: ['inventory.view'], module: 'inventory' },
-  { path: '/customers', tone: 'blue', label: 'Customers', subtitle: 'Guests & loyalty', icon: <IconMoodSmileFilled size={17} />, section: 'People', perms: ['customers.view'], module: 'customers' },
+  { path: '/customers', short: 'Guests', tone: 'blue', label: 'Customers', subtitle: 'Guests & loyalty', icon: <IconMoodSmileFilled size={17} />, section: 'People', perms: ['customers.view'], module: 'customers' },
   { path: '/staff', tone: 'purple', label: 'Staff', subtitle: 'Team, roles & time clock', icon: <IconUserFilled size={17} />, section: 'People', perms: ['staff.view'] },
   { path: '/reports', tone: 'green', label: 'Reports', subtitle: 'Sales analytics', icon: <IconChartPieFilled size={17} />, section: 'Insights', perms: ['reports.view'] },
   { path: '/locations', tone: 'orange', label: 'Locations', subtitle: 'Outlets, stations & devices', icon: <IconMapPinFilled size={17} />, section: 'Admin', perms: ['locations.manage'] },
@@ -40,3 +42,11 @@ export const NAV: NavItem[] = [
 export function visibleNav(can: (...p: string[]) => boolean, modules: Record<string, boolean> | undefined) {
   return NAV.filter((n) => (!n.perms || can(...n.perms)) && (!n.module || !!modules?.[n.module]));
 }
+
+/**
+ * Order in which pages claim the four bottom-tab slots on phones (after permission/module
+ * filtering). Everything else lives under "More".
+ */
+export const TAB_PRIORITY = ['/dashboard', '/pos', '/orders', '/tables', '/kds', '/reservations', '/menu', '/cash'];
+
+export const shortLabel = (n: NavItem) => n.short || n.label;

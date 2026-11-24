@@ -1,6 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { IconX, IconSearch, IconShieldLock, IconBackspace } from '@tabler/icons-react';
 import Modal from './Modal';
+import { useDevice } from '../adaptive/device';
+import { FullScreenModal } from '../adaptive/FullScreenModal';
+import { useBodyScrollLock, useFocusTrap } from '../adaptive/overlay';
 
 export const PageHeader: React.FC<{ title: string; subtitle?: string; actions?: React.ReactNode }> = ({ title, subtitle, actions }) => (
   <div className="page-header">
@@ -26,17 +29,41 @@ export function Tabs<K extends string>({ tabs, active, onChange }: { tabs: TabDe
   );
 }
 
-export function Segmented<K extends string>({ options, value, onChange }: { options: { value: K; label: React.ReactNode }[]; value: K; onChange: (v: any) => void }) {
+/**
+ * Segmented control (one choice from a few). On phones it stretches to full width with
+ * finger-sized segments (adaptive.css). Exposed to assistive tech as a radio group.
+ */
+export function Segmented<K extends string>({ options, value, onChange, ariaLabel }: { options: { value: K; label: React.ReactNode }[]; value: K; onChange: (v: any) => void; ariaLabel?: string }) {
   return (
-    <div className="segmented">
+    <div className="segmented" role="radiogroup" aria-label={ariaLabel}>
       {options.map((o) => (
-        <button key={o.value} type="button" className={value === o.value ? 'active' : ''} onClick={() => onChange(o.value)}>{o.label}</button>
+        <button key={o.value} type="button" role="radio" aria-checked={value === o.value} className={value === o.value ? 'active' : ''} onClick={() => onChange(o.value)}>{o.label}</button>
       ))}
     </div>
   );
 }
 
-export const Drawer: React.FC<{ open: boolean; title: React.ReactNode; onClose: () => void; children: React.ReactNode; footer?: React.ReactNode; wide?: boolean }> = ({ open, title, onClose, children, footer, wide }) => {
+/** Alias matching the adaptive component naming in docs/mobile-tablet. */
+export const SegmentedControl = Segmented;
+
+type DrawerProps = { open: boolean; title: React.ReactNode; onClose: () => void; children: React.ReactNode; footer?: React.ReactNode; wide?: boolean };
+
+/**
+ * Side panel for details and editors. Phones get a full-screen sheet with a sticky action bar;
+ * tablets and desktop keep the side drawer (tablets cap its width so the page stays visible).
+ */
+export const Drawer: React.FC<DrawerProps> = (props) => {
+  const { device } = useDevice();
+  if (device === 'mobile') {
+    return <FullScreenModal open={props.open} onClose={props.onClose} title={props.title} footer={props.footer}>{props.children}</FullScreenModal>;
+  }
+  return <SideDrawer {...props} trap={device === 'tablet'} />;
+};
+
+const SideDrawer: React.FC<DrawerProps & { trap?: boolean }> = ({ open, title, onClose, children, footer, wide, trap }) => {
+  const panelRef = useRef<HTMLElement>(null);
+  useBodyScrollLock(!!trap && open);
+  useFocusTrap(panelRef, !!trap && open);
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -46,7 +73,7 @@ export const Drawer: React.FC<{ open: boolean; title: React.ReactNode; onClose: 
   if (!open) return null;
   return (
     <div className="drawer-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <aside className={`drawer${wide ? ' wide' : ''}`} role="dialog" aria-modal="true">
+      <aside ref={panelRef} className={`drawer${wide ? ' wide' : ''}`} role="dialog" aria-modal="true" tabIndex={trap ? -1 : undefined}>
         <div className="drawer-head">
           <div className="drawer-title">{title}</div>
           <button className="btn btn-ghost btn-icon btn-sm" onClick={onClose} aria-label="Close"><IconX size={14} /></button>

@@ -7,6 +7,7 @@ import './index.css';
 import './enterprise.css';
 import './theme-bistro.css';
 import './theme-fluent.css';
+import './adaptive.css';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

@@ -10,6 +10,8 @@ import { dayRange, money, num, label } from '@/lib/format';
 import { ORDER_TYPE_LABELS, PAYMENT_LABELS } from '@/lib/constants';
 import { Kpi, PageHeader, Empty } from '../shared/ui';
 import LoadingSpinner from '../shared/LoadingSpinner';
+import { useDevice } from '../adaptive/device';
+import { ErrorState, PullToRefresh, Skeleton, SkeletonKpis } from '../adaptive/polish';
 
 const delta = (cur: number, prev?: number) => {
   if (!prev) return { text: 'vs. yesterday —', trend: undefined as any };
@@ -44,11 +46,21 @@ export const Dashboard: React.FC = () => {
     const yesterday = dayRange(1);
     return { locationId: location?.id, from: today.from, to: today.to, compareFrom: yesterday.from, compareTo: yesterday.to };
   }, [location?.id]);
-  const { data, loading, reload } = useApi(REPORTS.DASHBOARD, vars, { pollMs: 30000 });
+  const { data, loading, error, reload } = useApi(REPORTS.DASHBOARD, vars, { pollMs: 30000 });
   const d = data?.dashboard;
+  const { isTouchLayout } = useDevice();
 
-  if (loading && !d) return <div className="page-container"><LoadingSpinner text="Loading live operations..." /></div>;
-  if (!d) return <div className="page-container"><Empty title="Dashboard unavailable" /></div>;
+  // Touch layouts: skeleton that matches the page instead of a spinner, and a retryable error
+  if (loading && !d) return isTouchLayout ? (
+    <div className="page-container">
+      <div className="page-header"><div><Skeleton w={240} h={28} /><Skeleton w={180} h={12} style={{ marginTop: 10 }} /></div></div>
+      <SkeletonKpis count={8} label="Loading live operations" />
+      <Skeleton h={220} r={16} style={{ marginTop: 16 }} />
+    </div>
+  ) : <div className="page-container"><LoadingSpinner text="Loading live operations..." /></div>;
+  if (!d) return <div className="page-container">{isTouchLayout && error
+    ? <ErrorState title="Dashboard unavailable" message={error} onRetry={() => reload()} />
+    : <Empty title="Dashboard unavailable" />}</div>;
 
   const s = d.summary;
   const c = d.compare || {};
@@ -57,6 +69,7 @@ export const Dashboard: React.FC = () => {
   const hourly = d.hourly.filter((h: any, i: number) => h.orders > 0 || (i >= 7 && i <= 23));
 
   return (
+    <PullToRefresh onRefresh={() => reload(true)}>
     <div className="page-container">
       <PageHeader
         title={`Good ${new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 17 ? 'afternoon' : 'evening'}, ${org?.name}`}
@@ -139,6 +152,7 @@ export const Dashboard: React.FC = () => {
         ) : <p className="small muted">No items sold yet today.</p>}
       </div>
     </div>
+    </PullToRefresh>
   );
 };
 

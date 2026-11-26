@@ -1,11 +1,13 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
-import { IconPlus, IconTrash, IconPencil, IconCircle, IconSquare } from '@tabler/icons-react';
+import { IconPlus, IconTrash, IconPencil, IconCircle, IconSquare, IconDots } from '@tabler/icons-react';
 import { api, TABLE_MANAGEMENT } from '../../services/api';
 import { useAuth } from '@/hooks';
 import { Field } from '../shared/ui';
 import { FloorTable } from './FloorTable';
 import { appZoom } from '@/lib/zoom';
+import { useDevice } from '../adaptive/device';
+import { ActionSheet, BottomSheet } from '../adaptive/BottomSheet';
 
 interface FloorPlanEditorProps {
   locationId: string;
@@ -23,6 +25,15 @@ export const FloorPlanEditor: React.FC<FloorPlanEditorProps> = ({ locationId }) 
   const [zoneName, setZoneName] = useState('');
   const [drag, setDrag] = useState<{ id: string; dx: number; dy: number } | null>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
+
+  // Touch devices: one finger on empty canvas scrolls it, a finger on a table drags it.
+  // Phones get their own layout: zone chips + actions on top, table properties in a sheet
+  // that opens on a tap (not on a drag), zone options in an action sheet.
+  const { isMobile, isTouchLayout } = useDevice();
+  const dragStart = useRef<{ x: number; y: number; moved: boolean } | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
+  const [zoneSheet, setZoneSheet] = useState(false);
+  const [zoneMenu, setZoneMenu] = useState(false);
 
   const fetchZones = useCallback(async () => {
     try {
@@ -94,10 +105,17 @@ export const FloorPlanEditor: React.FC<FloorPlanEditorProps> = ({ locationId }) 
     const z = appZoom();
     setSelectedId(t.id);
     setDrag({ id: t.id, dx: (e.clientX - rect.left) / z + canvasRef.current!.scrollLeft - t.x, dy: (e.clientY - rect.top) / z + canvasRef.current!.scrollTop - t.y });
+    if (isTouchLayout) {
+      // Keep receiving moves even when the finger outruns the table
+      (e.currentTarget as Element).setPointerCapture?.(e.pointerId);
+      dragStart.current = { x: e.clientX, y: e.clientY, moved: false };
+    }
   };
 
   const onPointerMove = (e: React.PointerEvent) => {
     if (!drag || !canvasRef.current) return;
+    const s = dragStart.current;
+    if (s && !s.moved && Math.hypot(e.clientX - s.x, e.clientY - s.y) > 6) s.moved = true;
     const rect = canvasRef.current.getBoundingClientRect();
     const z = appZoom();
     patchLocal(drag.id, {
@@ -111,9 +129,91 @@ export const FloorPlanEditor: React.FC<FloorPlanEditorProps> = ({ locationId }) 
     const t = zone?.tables.find((x: any) => x.id === drag.id);
     if (t) saveTable(t.id, { x: t.x, y: t.y });
     setDrag(null);
+    // Phones: a tap (no movement) opens the table's properties sheet
+    if (isMobile && dragStart.current && !dragStart.current.moved) setEditOpen(true);
+    dragStart.current = null;
   };
 
   if (loading) return <div className="loading-overlay">Loading editor…</div>;
+
+  // Shared between the desktop side panel and the phone sheet
+  const tableFields = selected && (
+    <>
+      <Field label="Name"><input className="form-input" value={selected.name} onChange={(e) => patchLocal(selected.id, { name: e.target.value })} onBlur={() => saveTable(selected.id, { name: selected.name })} /></Field>
+      <div className="form-grid">
+        <Field label="Seats"><input className="form-input" type="number" min={1} value={selected.capacity} onChange={(e) => patchLocal(selected.id, { capacity: parseInt(e.target.value) || 1 })} onBlur={() => saveTable(selected.id, { capacity: selected.capacity })} /></Field>
+        <Field label="Shape">
+          <select className="form-select" value={selected.shape} onChange={(e) => { patchLocal(selected.id, { shape: e.target.value }); saveTable(selected.id, { shape: e.target.value }); }}>
+            <option value="RECTANGLE">Square</option><option value="ROUND">Round</option>
+          </select>
+        </Field>
+        <Field label="Width"><input className="form-input" type="number" value={selected.width} onChange={(e) => patchLocal(selected.id, { width: parseInt(e.target.value) || 60 })} onBlur={() => saveTable(selected.id, { width: selected.width })} /></Field>
+        <Field label="Height"><input className="form-input" type="number" value={selected.height} onChange={(e) => patchLocal(selected.id, { height: parseInt(e.target.value) || 60 })} onBlur={() => saveTable(selected.id, { height: selected.height })} /></Field>
+      </div>
+    </>
+  );
+
+  const canvas = (
+    <div ref={canvasRef} className="floor-canvas" style={{ overflow: 'auto', touchAction: isTouchLayout ? 'pan-x pan-y' : 'none' }} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerLeave={onPointerUp}
+      onPointerDown={(e) => { if (e.target === e.currentTarget) setSelectedId(null); }}>
+      {!zone && <div className="loading-overlay">Create a zone to start designing your floor.</div>}
+      {zone?.tables.map((t: any) => (
+        <FloorTable key={t.id} table={t} occupied={0} accent="var(--color-primary)" onPointerDown={(e) => onPointerDown(e, t)}
+          style={{ cursor: drag?.id === t.id ? 'grabbing' : 'grab' }}
+          bodyStyle={{
+            background: t.id === selectedId ? 'var(--color-primary-glow)' : 'var(--color-surface)',
+            borderColor: t.id === selectedId ? 'var(--color-primary)' : 'var(--color-border-hover)',
+          }}>
+          <span className="floor-table-name">{t.name}</span>
+          <span className="floor-table-meta">{t.capacity} seats</span>
+        </FloorTable>
+      ))}
+    </div>
+  );
+
+  if (isMobile) {
+    return (
+      <div className="fe-m">
+        <div className="fe-m-bar">
+          <div className="fe-m-zones" role="tablist" aria-label="Zones">
+            {zones.map((z) => (
+              <button key={z.id} role="tab" aria-selected={z.id === zoneId} className={`pos-cat${z.id === zoneId ? ' active' : ''}`} onClick={() => { setZoneId(z.id); setSelectedId(null); }}>
+                {z.name}<span className="pos-cat-count">{z.tables.length}</span>
+              </button>
+            ))}
+            <button className="pos-cat fe-m-addzone" onClick={() => setZoneSheet(true)}><IconPlus size={14} /> Zone</button>
+          </div>
+          {zone && (
+            <div className="fe-m-actions">
+              <button className="btn btn-secondary" onClick={() => addTable('RECTANGLE')}><IconSquare size={16} /> Square</button>
+              <button className="btn btn-secondary" onClick={() => addTable('ROUND')}><IconCircle size={16} /> Round</button>
+              <span className="spacer" />
+              <button className="btn btn-ghost btn-icon" onClick={() => setZoneMenu(true)} aria-label={`Options for ${zone.name}`}><IconDots size={18} /></button>
+            </div>
+          )}
+        </div>
+        {canvas}
+        <p className="fe-m-hint">Drag a table to move it · tap it to edit · drag empty space to scroll. Changes save automatically.</p>
+
+        <BottomSheet open={editOpen && !!selected} onClose={() => setEditOpen(false)} title={selected ? `Table ${selected.name}` : 'Table'}
+          footer={<button className="btn btn-danger" onClick={deleteTable}><IconTrash size={16} /> Delete table</button>}>
+          {tableFields}
+        </BottomSheet>
+
+        <BottomSheet open={zoneSheet} onClose={() => setZoneSheet(false)} title="New zone"
+          footer={<button className="btn btn-primary" disabled={!zoneName.trim()} onClick={async () => { await createZone(); setZoneSheet(false); }}>Create zone</button>}>
+          <Field label="Zone name"><input className="form-input" autoFocus placeholder="e.g. Patio" value={zoneName} onChange={(e) => setZoneName(e.target.value)}
+            onKeyDown={async (e) => { if (e.key === 'Enter' && zoneName.trim()) { await createZone(); setZoneSheet(false); } }} /></Field>
+        </BottomSheet>
+
+        <ActionSheet open={zoneMenu} onClose={() => setZoneMenu(false)} title={zone?.name}
+          actions={[
+            { label: 'Rename zone', icon: <IconPencil size={20} />, onSelect: renameZone },
+            { label: 'Delete zone', icon: <IconTrash size={20} />, destructive: true, onSelect: deleteZone },
+          ]} />
+      </div>
+    );
+  }
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', height: '100%' }}>
@@ -148,38 +248,14 @@ export const FloorPlanEditor: React.FC<FloorPlanEditorProps> = ({ locationId }) 
         {selected && (
           <>
             <div className="form-section-title">Table {selected.name}</div>
-            <Field label="Name"><input className="form-input" value={selected.name} onChange={(e) => patchLocal(selected.id, { name: e.target.value })} onBlur={() => saveTable(selected.id, { name: selected.name })} /></Field>
-            <div className="form-grid">
-              <Field label="Seats"><input className="form-input" type="number" min={1} value={selected.capacity} onChange={(e) => patchLocal(selected.id, { capacity: parseInt(e.target.value) || 1 })} onBlur={() => saveTable(selected.id, { capacity: selected.capacity })} /></Field>
-              <Field label="Shape">
-                <select className="form-select" value={selected.shape} onChange={(e) => { patchLocal(selected.id, { shape: e.target.value }); saveTable(selected.id, { shape: e.target.value }); }}>
-                  <option value="RECTANGLE">Square</option><option value="ROUND">Round</option>
-                </select>
-              </Field>
-              <Field label="Width"><input className="form-input" type="number" value={selected.width} onChange={(e) => patchLocal(selected.id, { width: parseInt(e.target.value) || 60 })} onBlur={() => saveTable(selected.id, { width: selected.width })} /></Field>
-              <Field label="Height"><input className="form-input" type="number" value={selected.height} onChange={(e) => patchLocal(selected.id, { height: parseInt(e.target.value) || 60 })} onBlur={() => saveTable(selected.id, { height: selected.height })} /></Field>
-            </div>
+            {tableFields}
             <button className="btn btn-danger btn-sm btn-block" onClick={deleteTable}><IconTrash size={12} /> Delete table</button>
           </>
         )}
         <p className="small muted" style={{ marginTop: 12 }}>Drag tables to arrange them. Changes save automatically.</p>
       </div>
 
-      <div ref={canvasRef} className="floor-canvas" style={{ overflow: 'auto', touchAction: 'none' }} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerLeave={onPointerUp}
-        onPointerDown={(e) => { if (e.target === e.currentTarget) setSelectedId(null); }}>
-        {!zone && <div className="loading-overlay">Create a zone to start designing your floor.</div>}
-        {zone?.tables.map((t: any) => (
-          <FloorTable key={t.id} table={t} occupied={0} accent="var(--color-primary)" onPointerDown={(e) => onPointerDown(e, t)}
-            style={{ cursor: drag?.id === t.id ? 'grabbing' : 'grab' }}
-            bodyStyle={{
-              background: t.id === selectedId ? 'var(--color-primary-glow)' : 'var(--color-surface)',
-              borderColor: t.id === selectedId ? 'var(--color-primary)' : 'var(--color-border-hover)',
-            }}>
-            <span className="floor-table-name">{t.name}</span>
-            <span className="floor-table-meta">{t.capacity} seats</span>
-          </FloorTable>
-        ))}
-      </div>
+      {canvas}
     </div>
   );
 };

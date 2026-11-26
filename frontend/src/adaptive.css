@@ -621,6 +621,59 @@ html[data-device='tablet'] :is(.form-input, .form-select, .form-textarea) { min-
 }
 .settings-layout.m-pushed .settings-section { padding: 16px; }
 
+/* Settings sections on touch screens (Service & POS, Appearance, Audit log, …) */
+/* Grid children must be allowed to shrink, or wide content (palette cards, segmented
+   controls) stretches the column past the screen and the overflow guard clips it. */
+html:is([data-device='mobile'], [data-device='tablet']) .settings-layout > * { min-width: 0; }
+/* Rows whose control is wide (segmented picker, text/number field, select) stack:
+   label + hint on top, full-width control below. Toggle rows stay side by side. */
+html[data-device='mobile'] .setting-row:has(> div:last-child :is(.segmented, .density-toggle, .form-input, .form-select, .form-textarea, input[type='text'], input[type='number'])) {
+  flex-direction: column; align-items: stretch; gap: 10px;
+}
+html[data-device='mobile'] .setting-row:has(> div:last-child :is(.segmented, .density-toggle, .form-input, .form-select, .form-textarea, input[type='text'], input[type='number'])) > div:last-child { width: 100%; }
+html[data-device='mobile'] .setting-row .density-toggle { display: flex; width: 100%; }
+html[data-device='mobile'] .setting-row .density-toggle > button { flex: 1; min-height: 40px; }
+html[data-device='mobile'] .setting-row :is(.form-input, .form-select) { width: 100% !important; max-width: none; }
+html[data-device='mobile'] .setting-row > div:first-child { min-width: 0; }
+html[data-device='mobile'] .setting-row-label { font-size: 15px; }
+html[data-device='mobile'] .setting-row-hint { font-size: 13px; }
+/* Checkbox groups (e.g. enabled order types) become a 2-up grid of tappable chips */
+html[data-device='mobile'] .settings-section .row-wrap:has(> label.check) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+html[data-device='mobile'] .settings-section .row-wrap > label.check {
+  min-height: var(--tap); padding: 0 12px; display: flex; align-items: center; gap: 10px;
+  border: 1px solid var(--color-border); border-radius: 12px; background: var(--color-surface); font-size: 15px;
+}
+html[data-device='mobile'] .settings-section .row-wrap > label.check:has(input:checked) { border-color: var(--color-primary); background: rgba(var(--color-primary-rgb), .1); }
+/* Appearance: theme tiles 3-up, palette and sidebar-variant cards 2-up */
+html[data-device='mobile'] .theme-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+html[data-device='mobile'] :is(.palette-grid, .variant-grid) { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+html[data-device='mobile'] :is(.palette-grid, .variant-grid) .variant-desc { font-size: 12px; }
+/* Audit log and other long values (JSON, IDs) wrap inside table cards instead of running off */
+html[data-device='mobile'] .data-table:has(> thead) > tbody > tr > td { overflow-wrap: anywhere; }
+html[data-device='mobile'] .data-table:has(> thead) > tbody > tr > td :is(code, .mono) { white-space: normal; overflow-wrap: anywhere; text-align: right; }
+/* Cells that truncate on desktop (e.g. audit "Details" JSON): label on top, value wraps below */
+html[data-device='mobile'] .data-table:has(> thead) > tbody > tr > td.truncate {
+  display: block; max-width: none !important; white-space: normal; text-overflow: clip; text-align: left;
+  font-size: 12.5px; line-height: 1.45; color: var(--text-secondary);
+}
+html[data-device='mobile'] .data-table:has(> thead) > tbody > tr > td.truncate::before { display: block; margin-bottom: 2px; font-family: var(--font-family); }
+
+/* ==========================================================================
+   Floor editor on phones (FloorPlanEditor isMobile layout)
+   ========================================================================== */
+.fe-m { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+.fe-m-bar { flex-shrink: 0; display: flex; flex-direction: column; gap: 10px; padding: 12px; border-bottom: 1px solid var(--color-border); background: var(--color-bg-secondary); }
+.fe-m-zones { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain; }
+.fe-m-zones::-webkit-scrollbar { display: none; }
+.fe-m-zones .pos-cat { flex-shrink: 0; width: auto; min-height: 40px; }
+.fe-m-addzone { color: var(--color-primary-light); }
+.fe-m-actions { display: flex; align-items: center; gap: 8px; }
+.fe-m-actions .btn { min-height: 40px; }
+.fe-m .floor-canvas { flex: 1; min-height: 0; }
+.fe-m-hint { flex-shrink: 0; margin: 0; padding: 8px 12px; font-size: 12px; text-align: center; color: var(--text-muted); border-top: 1px solid var(--color-border); }
+/* Touch: a finger on a table drags it; anywhere else on the canvas scrolls */
+html:is([data-device='mobile'], [data-device='tablet']) .floor-canvas .floor-table { touch-action: none; }
+
 /* ==========================================================================
    Page: Onboarding wizard (outside the shell)
    Phones + portrait tablets: sticky horizontal step strip; phones: sticky Back/Next bar.

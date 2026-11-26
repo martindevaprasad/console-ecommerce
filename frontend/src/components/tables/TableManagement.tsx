@@ -10,9 +10,9 @@ const TableManagementPage: React.FC = () => {
   const location = useCurrentLocation();
   const can = useCan();
   const [mode, setMode] = useState<'live' | 'editor'>('live');
-  // Phones get the live floor only: drag-and-drop layout editing needs a tablet or desktop screen.
+  // Phones get a touch layout of the editor (FloorPlanEditor), so it's available everywhere.
   const { isMobile } = useDevice();
-  const editorAvailable = can('tables.layout') && !isMobile;
+  const editorAvailable = can('tables.layout');
   const current = editorAvailable ? mode : 'live';
 
   if (!location) return <div className="page-container"><Empty title="No location selected" hint="Pick a location from the top bar." /></div>;
